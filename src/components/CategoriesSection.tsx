@@ -3,12 +3,13 @@ import { motion } from "framer-motion";
 import categoryTable from "@/assets/category-table.png";
 import categoryChairs from "@/assets/category-chairs.png";
 import categoryDecor from "@/assets/category-decor.png";
+import categoryShelves from "@/assets/category-shelves.png";
 
 const categories = [
   { name: "Столы", slug: "tables", image: categoryTable },
   { name: "Стулья", slug: "chairs", image: categoryChairs },
   { name: "Декор", slug: "decor", image: categoryDecor },
-  { name: "Кухня", slug: "kitchen", image: null },
+  { name: "Полки", slug: "shelves", image: categoryShelves },
 ];
 
 const CategoriesSection = () => {
