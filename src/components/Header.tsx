@@ -28,12 +28,12 @@ const Header = () => {
   }, [location.pathname]);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 pt-8">
+    <header className="fixed top-0 left-0 right-0 z-50 pt-10">
       <div className="container mx-auto px-4 flex items-center justify-center">
         {/* Desktop tubelight navbar */}
         {!isMobile ? (
-          <div className="flex items-center gap-3 bg-background/5 border border-border/40 backdrop-blur-lg py-2.5 px-2 rounded-full shadow-lg shadow-black/20">
-            <nav className="flex items-center gap-1">
+          <div className="flex items-center gap-4 bg-background/5 border border-border/40 backdrop-blur-lg py-3.5 px-3 rounded-full shadow-lg shadow-black/20">
+            <nav className="flex items-center gap-1.5">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.name;
@@ -44,19 +44,19 @@ const Header = () => {
                     to={item.url}
                     onClick={() => setActiveTab(item.name)}
                     className={cn(
-                      "relative cursor-pointer text-sm font-semibold px-5 py-2 rounded-full transition-colors",
+                      "relative cursor-pointer text-base font-semibold px-6 py-2.5 rounded-full transition-colors",
                       "text-foreground/80 hover:text-primary",
                       isActive && "bg-muted text-primary"
                     )}
                   >
                     <span className="hidden xl:inline">{item.name}</span>
                     <span className="xl:hidden">
-                      <Icon className="h-4 w-4" />
+                      <Icon className="h-5 w-5" />
                     </span>
                     {isActive && (
                       <motion.div
                         layoutId="tubelight"
-                        className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-8 h-1"
+                        className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-10 h-1"
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
                       >
                         <div className="w-full h-full bg-primary rounded-full" />
@@ -70,16 +70,16 @@ const Header = () => {
             </nav>
 
             {/* Action icons */}
-            <div className="flex items-center gap-1 border-l border-border/40 pl-2 ml-1">
-              <button className="p-2 rounded-full text-foreground/80 hover:text-primary hover:bg-muted transition-colors" aria-label="Поиск">
-                <Search className="h-4 w-4" />
+            <div className="flex items-center gap-1.5 border-l border-border/40 pl-3 ml-2">
+              <button className="p-2.5 rounded-full text-foreground/80 hover:text-primary hover:bg-muted transition-colors" aria-label="Поиск">
+                <Search className="h-5 w-5" />
               </button>
-              <button className="p-2 rounded-full text-foreground/80 hover:text-primary hover:bg-muted transition-colors" aria-label="Избранное">
-                <Heart className="h-4 w-4" />
+              <button className="p-2.5 rounded-full text-foreground/80 hover:text-primary hover:bg-muted transition-colors" aria-label="Избранное">
+                <Heart className="h-5 w-5" />
               </button>
-              <button className="relative p-2 rounded-full text-foreground/80 hover:text-primary hover:bg-muted transition-colors" aria-label="Корзина">
-                <ShoppingCart className="h-4 w-4" />
-                <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-semibold">
+              <button className="relative p-2.5 rounded-full text-foreground/80 hover:text-primary hover:bg-muted transition-colors" aria-label="Корзина">
+                <ShoppingCart className="h-5 w-5" />
+                <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold">
                   0
                 </span>
               </button>
