@@ -31,16 +31,11 @@ const CategoriesSection = () => {
                   transition={{ duration: 0.6, delay: i * 0.1 }}
                   className="absolute inset-0 flex items-center justify-center"
                 >
-                  <div className="relative w-full h-full">
-                    <img
-                      src={cat.image}
-                      alt={cat.name}
-                      className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 pointer-events-none" style={{
-                      background: `radial-gradient(ellipse 70% 70% at center, transparent 40%, black 100%)`
-                    }} />
-                  </div>
+                  <img
+                    src={cat.image}
+                    alt={cat.name}
+                    className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
+                  />
                 </motion.div>
               ) : (
                 <div className="absolute inset-0 bg-muted/30" />
