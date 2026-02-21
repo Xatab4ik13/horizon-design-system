@@ -1,10 +1,12 @@
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import categoryTable from "@/assets/category-table.png";
 
 const categories = [
-  { name: "Столы", slug: "tables", gradient: "from-[hsl(35,38%,40%)] to-[hsl(35,38%,25%)]" },
-  { name: "Стулья", slug: "chairs", gradient: "from-[hsl(34,24%,44%)] to-[hsl(34,24%,28%)]" },
-  { name: "Декор", slug: "decor", gradient: "from-[hsl(219,55%,20%)] to-[hsl(216,57%,14%)]" },
-  { name: "Кухня", slug: "kitchen", gradient: "from-[hsl(37,19%,30%)] to-[hsl(37,19%,15%)]" },
+  { name: "Столы", slug: "tables", image: categoryTable },
+  { name: "Стулья", slug: "chairs", image: null },
+  { name: "Декор", slug: "decor", image: null },
+  { name: "Кухня", slug: "kitchen", image: null },
 ];
 
 const CategoriesSection = () => {
@@ -15,16 +17,31 @@ const CategoriesSection = () => {
           Категории каталога
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {categories.map((cat) => (
+          {categories.map((cat, i) => (
             <Link
               key={cat.slug}
               to={`/catalog?category=${cat.slug}`}
-              className="group relative h-64 rounded-xl overflow-hidden"
+              className="group relative h-80 rounded-2xl overflow-hidden border border-border/30 bg-background"
             >
-              <div className={`absolute inset-0 bg-gradient-to-br ${cat.gradient} transition-transform duration-500 group-hover:scale-110`} />
-              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors duration-300" />
-              <div className="relative z-10 h-full flex items-end p-6">
-                <h3 className="text-xl font-semibold text-white group-hover:text-primary-foreground transition-colors">
+              {cat.image ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: i * 0.1 }}
+                  className="absolute inset-0 flex items-center justify-center p-4"
+                >
+                  <img
+                    src={cat.image}
+                    alt={cat.name}
+                    className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
+                  />
+                </motion.div>
+              ) : (
+                <div className="absolute inset-0 bg-muted/30" />
+              )}
+              <div className="absolute inset-x-0 bottom-0 z-10 p-6 bg-gradient-to-t from-black/70 to-transparent">
+                <h3 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
                   {cat.name}
                 </h3>
               </div>
