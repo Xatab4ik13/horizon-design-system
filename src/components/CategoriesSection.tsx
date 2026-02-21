@@ -4,7 +4,6 @@ import categoryTable from "@/assets/category-table.png";
 import categoryChairs from "@/assets/category-chairs.png";
 import categoryDecor from "@/assets/category-decor.png";
 import categoryShelves from "@/assets/category-shelves.png";
-import woodTextureBg from "@/assets/wood-texture-bg.jpg";
 
 const categories = [
   { name: "Столы", slug: "tables", image: categoryTable },
@@ -16,8 +15,10 @@ const categories = [
 const CategoriesSection = () => {
   return (
     <section
-      className="py-20 relative bg-cover bg-center"
-      style={{ backgroundImage: `url(${woodTextureBg})` }}
+      className="py-20 relative"
+      style={{
+        background: "linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(25 15% 8%) 40%, hsl(30 12% 6%) 70%, hsl(0 0% 0%) 100%)"
+      }}
     >
       <div className="container mx-auto px-4">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-foreground">
