@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600;700&family=Open+Sans:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,44 +6,6 @@
 
 @layer base {
   :root {
-    --background: 40 40% 98%;
-    --foreground: 216 57% 14%;
-    --card: 0 0% 100%;
-    --card-foreground: 216 57% 14%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 216 57% 14%;
-    --primary: 35 38% 59%;
-    --primary-foreground: 40 40% 98%;
-    --secondary: 39 26% 88%;
-    --secondary-foreground: 219 55% 20%;
-    --muted: 39 42% 92%;
-    --muted-foreground: 34 21% 29%;
-    --accent: 39 42% 92%;
-    --accent-foreground: 35 38% 59%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 214 22% 85%;
-    --input: 214 22% 85%;
-    --ring: 35 38% 59%;
-    --radius: 0.5rem;
-
-    --chart-1: 35 38% 59%;
-    --chart-2: 34 24% 44%;
-    --chart-3: 34 23% 29%;
-    --chart-4: 34 27% 15%;
-    --chart-5: 219 55% 20%;
-
-    --sidebar-background: 40 40% 98%;
-    --sidebar-foreground: 216 57% 14%;
-    --sidebar-primary: 35 38% 59%;
-    --sidebar-primary-foreground: 40 40% 98%;
-    --sidebar-accent: 39 42% 92%;
-    --sidebar-accent-foreground: 35 38% 59%;
-    --sidebar-border: 214 22% 85%;
-    --sidebar-ring: 35 38% 59%;
-  }
-
-  .dark {
     --background: 0 0% 0%;
     --foreground: 44 50% 87%;
     --card: 216 57% 14%;
@@ -63,6 +25,7 @@
     --border: 34 21% 29%;
     --input: 34 21% 29%;
     --ring: 35 50% 70%;
+    --radius: 0.5rem;
 
     --chart-1: 35 50% 70%;
     --chart-2: 44 50% 87%;
@@ -87,9 +50,9 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-family: 'Noto Sans', 'Open Sans', ui-sans-serif, system-ui, sans-serif;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Poppins', ui-serif, Georgia, serif;
+    font-family: 'Franklin Gothic Medium', 'Noto Sans', ui-sans-serif, system-ui, sans-serif;
   }
 }
