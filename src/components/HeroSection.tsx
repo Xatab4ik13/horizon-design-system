@@ -1,43 +1,17 @@
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import heroVideo from "@/assets/hero-video.mp4";
 
 const HeroSection = () => {
   return (
-    <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
-      {/* Background placeholder */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[hsl(33,15%,12%)] via-[hsl(0,0%,6%)] to-[hsl(30,8%,10%)]" />
-      <div className="absolute inset-0 bg-black/40" />
-
-      {/* Content */}
-      <div className="relative z-10 text-center px-4 max-w-3xl">
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight"
-          style={{ fontFamily: "'Poppins', serif" }}
-        >
-          Мастерская изделий из дерева
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-          className="text-lg md:text-xl text-white/80 mb-8 max-w-xl mx-auto"
-        >
-          Уникальные изделия ручной работы из натурального дерева. Каждый предмет — произведение искусства.
-        </motion.p>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-        >
-          <Button asChild size="lg" className="text-base px-8 py-6 rounded-full">
-            <Link to="/catalog">Перейти в каталог</Link>
-          </Button>
-        </motion.div>
-      </div>
+    <section className="relative h-screen w-full overflow-hidden">
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+        src={heroVideo}
+      />
+      <div className="absolute inset-0 bg-black/30" />
     </section>
   );
 };
