@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, Heart, ShoppingCart, Menu, Home, LayoutGrid, Image, BookOpen, Truck, Wrench, Phone } from "lucide-react";
+import { Search, Heart, ShoppingCart, Menu, Home, LayoutGrid, Image, BookOpen, Building2, CreditCard } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -11,9 +11,8 @@ const navItems = [
   { name: "Каталог", url: "/catalog", icon: LayoutGrid },
   { name: "Галерея", url: "/gallery", icon: Image },
   { name: "Блог", url: "/blog", icon: BookOpen },
-  { name: "Доставка", url: "/delivery", icon: Truck },
-  { name: "Услуги", url: "/services", icon: Wrench },
-  { name: "Контакты", url: "/contacts", icon: Phone },
+  { name: "О компании", url: "/about", icon: Building2 },
+  { name: "Доставка и оплата", url: "/delivery", icon: CreditCard },
 ];
 
 const Header = () => {
