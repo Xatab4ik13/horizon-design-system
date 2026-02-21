@@ -2,11 +2,12 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import categoryTable from "@/assets/category-table.png";
 import categoryChairs from "@/assets/category-chairs.png";
+import categoryDecor from "@/assets/category-decor.png";
 
 const categories = [
   { name: "Столы", slug: "tables", image: categoryTable },
   { name: "Стулья", slug: "chairs", image: categoryChairs },
-  { name: "Декор", slug: "decor", image: null },
+  { name: "Декор", slug: "decor", image: categoryDecor },
   { name: "Кухня", slug: "kitchen", image: null },
 ];
 
