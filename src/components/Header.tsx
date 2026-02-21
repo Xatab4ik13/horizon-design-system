@@ -5,12 +5,16 @@ import { Search, Heart, ShoppingCart, Menu, Home, LayoutGrid, Image, BookOpen, B
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import categoryTable from "@/assets/category-table.png";
+import categoryChairs from "@/assets/category-chairs.png";
+import categoryDecor from "@/assets/category-decor.png";
+import categoryShelves from "@/assets/category-shelves.png";
 
 const categories = [
-  { name: "Столы", slug: "tables" },
-  { name: "Стулья", slug: "chairs" },
-  { name: "Декор", slug: "decor" },
-  { name: "Полки", slug: "shelves" },
+  { name: "Столы", slug: "tables", image: categoryTable },
+  { name: "Стулья", slug: "chairs", image: categoryChairs },
+  { name: "Декор", slug: "decor", image: categoryDecor },
+  { name: "Полки", slug: "shelves", image: categoryShelves },
 ];
 
 const navItems = [
@@ -50,7 +54,7 @@ const Header = () => {
       <div className="container mx-auto px-4 flex items-center justify-center">
         {/* Desktop tubelight navbar */}
         {!isMobile ? (
-          <div className="flex items-center gap-4 bg-background/5 border border-border/40 backdrop-blur-lg py-3.5 px-3 rounded-full shadow-lg shadow-black/20">
+          <div className="flex items-center gap-4 bg-background/5 border border-border/40 backdrop-blur-lg py-3.5 px-3 rounded-full shadow-lg shadow-black/20 relative">
             <nav className="flex items-center gap-1.5">
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -102,14 +106,14 @@ const Header = () => {
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 8, scale: 0.95 }}
                             transition={{ duration: 0.2 }}
-                            className="absolute top-full left-1/2 -translate-x-1/2 mt-3 min-w-[200px] bg-background/10 border border-border/40 backdrop-blur-xl rounded-2xl shadow-xl shadow-black/30 overflow-hidden"
+                            className="absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 bg-card/95 border border-border/40 backdrop-blur-xl rounded-2xl shadow-xl shadow-black/30 overflow-hidden"
                           >
                             {/* Glow indicator */}
                             <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-10 h-1">
                               <div className="w-full h-full bg-primary rounded-full" />
                               <div className="absolute w-full h-full bg-primary/50 rounded-full blur-md" />
                             </div>
-                            <div className="py-2 px-1">
+                            <div className="grid grid-cols-4 gap-2 p-4">
                               {categories.map((cat) => (
                                 <Link
                                   key={cat.slug}
@@ -118,9 +122,18 @@ const Header = () => {
                                     setActiveTab("Каталог");
                                     setCatalogOpen(false);
                                   }}
-                                  className="flex items-center gap-3 px-5 py-3 text-sm font-medium text-foreground/80 hover:text-primary hover:bg-primary/10 rounded-xl transition-all duration-200"
+                                  className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-primary/10 transition-all duration-200 group"
                                 >
-                                  {cat.name}
+                                  <div className="w-16 h-16 flex items-center justify-center">
+                                    <img
+                                      src={cat.image}
+                                      alt={cat.name}
+                                      className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
+                                    />
+                                  </div>
+                                  <span className="text-xs font-medium text-foreground/70 group-hover:text-primary transition-colors whitespace-nowrap">
+                                    {cat.name}
+                                  </span>
                                 </Link>
                               ))}
                             </div>
