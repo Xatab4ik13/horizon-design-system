@@ -1,10 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Search, Heart, ShoppingCart, Menu, Home, LayoutGrid, Image, BookOpen, Building2, CreditCard } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+
+const categories = [
+  { name: "Столы", slug: "tables" },
+  { name: "Стулья", slug: "chairs" },
+  { name: "Декор", slug: "decor" },
+  { name: "Полки", slug: "shelves" },
+];
 
 const navItems = [
   { name: "Главная", url: "/", icon: Home },
@@ -21,11 +28,22 @@ const Header = () => {
   const [activeTab, setActiveTab] = useState(
     navItems.find((item) => item.url === location.pathname)?.name || navItems[0].name
   );
+  const [catalogOpen, setCatalogOpen] = useState(false);
+  const catalogTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const match = navItems.find((item) => item.url === location.pathname);
     if (match) setActiveTab(match.name);
   }, [location.pathname]);
+
+  const handleCatalogEnter = () => {
+    if (catalogTimeout.current) clearTimeout(catalogTimeout.current);
+    setCatalogOpen(true);
+  };
+
+  const handleCatalogLeave = () => {
+    catalogTimeout.current = setTimeout(() => setCatalogOpen(false), 200);
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 pt-10">
@@ -37,8 +55,9 @@ const Header = () => {
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.name;
+                const isCatalog = item.name === "Каталог";
 
-                return (
+                const linkEl = (
                   <Link
                     key={item.name}
                     to={item.url}
@@ -66,6 +85,53 @@ const Header = () => {
                     )}
                   </Link>
                 );
+
+                if (isCatalog) {
+                  return (
+                    <div
+                      key={item.name}
+                      className="relative"
+                      onMouseEnter={handleCatalogEnter}
+                      onMouseLeave={handleCatalogLeave}
+                    >
+                      {linkEl}
+                      <AnimatePresence>
+                        {catalogOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                            transition={{ duration: 0.2 }}
+                            className="absolute top-full left-1/2 -translate-x-1/2 mt-3 min-w-[200px] bg-background/10 border border-border/40 backdrop-blur-xl rounded-2xl shadow-xl shadow-black/30 overflow-hidden"
+                          >
+                            {/* Glow indicator */}
+                            <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-10 h-1">
+                              <div className="w-full h-full bg-primary rounded-full" />
+                              <div className="absolute w-full h-full bg-primary/50 rounded-full blur-md" />
+                            </div>
+                            <div className="py-2 px-1">
+                              {categories.map((cat) => (
+                                <Link
+                                  key={cat.slug}
+                                  to={`/catalog?category=${cat.slug}`}
+                                  onClick={() => {
+                                    setActiveTab("Каталог");
+                                    setCatalogOpen(false);
+                                  }}
+                                  className="flex items-center gap-3 px-5 py-3 text-sm font-medium text-foreground/80 hover:text-primary hover:bg-primary/10 rounded-xl transition-all duration-200"
+                                >
+                                  {cat.name}
+                                </Link>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                }
+
+                return linkEl;
               })}
             </nav>
 
