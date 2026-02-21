@@ -34,7 +34,7 @@ const CategoriesSection = () => {
                   <img
                     src={cat.image}
                     alt={cat.name}
-                    className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
+                    className="w-full h-full object-contain mix-blend-lighten transition-transform duration-700 group-hover:scale-110"
                   />
                 </motion.div>
               ) : (
