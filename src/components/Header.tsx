@@ -29,11 +29,11 @@ const Header = () => {
   }, [location.pathname]);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 pt-4">
+    <header className="fixed top-0 left-0 right-0 z-50 pt-8">
       <div className="container mx-auto px-4 flex items-center justify-center">
         {/* Desktop tubelight navbar */}
         {!isMobile ? (
-          <div className="flex items-center gap-3 bg-background/5 border border-border/40 backdrop-blur-lg py-1 px-1 rounded-full shadow-lg shadow-black/20">
+          <div className="flex items-center gap-3 bg-background/5 border border-border/40 backdrop-blur-lg py-2.5 px-2 rounded-full shadow-lg shadow-black/20">
             <nav className="flex items-center gap-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -57,12 +57,12 @@ const Header = () => {
                     {isActive && (
                       <motion.div
                         layoutId="tubelight"
-                        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-1"
+                        className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-8 h-1"
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
                       >
                         <div className="w-full h-full bg-primary rounded-full" />
                         <div className="absolute w-full h-full bg-primary/50 rounded-full blur-md" />
-                        <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-4 h-4 bg-primary/30 rounded-full blur-lg" />
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-6 bg-primary/20 rounded-full blur-xl" />
                       </motion.div>
                     )}
                   </Link>

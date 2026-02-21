@@ -6,7 +6,7 @@ const HeroSection = () => {
   return (
     <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
       {/* Background placeholder */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[hsl(34,27%,15%)] via-[hsl(216,57%,14%)] to-[hsl(219,55%,20%)]" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[hsl(33,15%,12%)] via-[hsl(0,0%,6%)] to-[hsl(30,8%,10%)]" />
       <div className="absolute inset-0 bg-black/40" />
 
       {/* Content */}
