@@ -106,14 +106,14 @@ const Header = () => {
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 8, scale: 0.95 }}
                             transition={{ duration: 0.2 }}
-                            className="absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 bg-card/95 border border-border/40 backdrop-blur-xl rounded-2xl shadow-xl shadow-black/30 overflow-hidden"
+                            className="absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 w-[480px] bg-card border border-border/40 backdrop-blur-xl rounded-2xl shadow-xl shadow-black/30 overflow-hidden"
                           >
                             {/* Glow indicator */}
-                            <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-10 h-1">
+                            <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-10 h-1 z-10">
                               <div className="w-full h-full bg-primary rounded-full" />
                               <div className="absolute w-full h-full bg-primary/50 rounded-full blur-md" />
                             </div>
-                            <div className="grid grid-cols-4 gap-2 p-4">
+                            <div className="grid grid-cols-4 gap-3 p-5">
                               {categories.map((cat) => (
                                 <Link
                                   key={cat.slug}
@@ -124,7 +124,7 @@ const Header = () => {
                                   }}
                                   className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-primary/10 transition-all duration-200 group"
                                 >
-                                  <div className="w-16 h-16 flex items-center justify-center">
+                                  <div className="w-20 h-20 flex items-center justify-center">
                                     <img
                                       src={cat.image}
                                       alt={cat.name}
