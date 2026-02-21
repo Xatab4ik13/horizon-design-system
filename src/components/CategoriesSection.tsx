@@ -4,6 +4,7 @@ import categoryTable from "@/assets/category-table.png";
 import categoryChairs from "@/assets/category-chairs.png";
 import categoryDecor from "@/assets/category-decor.png";
 import categoryShelves from "@/assets/category-shelves.png";
+import { EtherealShadow } from "./EtherealShadow";
 
 const categories = [
   { name: "Столы", slug: "tables", image: categoryTable },
@@ -14,8 +15,15 @@ const categories = [
 
 const CategoriesSection = () => {
   return (
-    <section className="py-20 bg-background">
-      <div className="container mx-auto px-4">
+    <section className="py-20 bg-background relative overflow-hidden">
+      <div className="absolute inset-0">
+        <EtherealShadow
+          color="hsl(35, 45%, 15%)"
+          animation={{ scale: 30, speed: 15 }}
+          noise={{ opacity: 0.3, scale: 1 }}
+        />
+      </div>
+      <div className="container mx-auto px-4 relative z-10">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-foreground">
           Категории каталога
         </h2>
