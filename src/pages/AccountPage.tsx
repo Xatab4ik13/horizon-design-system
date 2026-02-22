@@ -5,7 +5,7 @@ import {
   ChevronRight, User, Package, Heart, MapPin, LogOut,
   Clock, Eye, Settings, Truck, RefreshCw, FileText,
   Download, CheckCircle2, CircleDot, PackageCheck,
-  ShoppingCart, Trash2, Edit, Star, ExternalLink,
+  ShoppingCart, Trash2, Edit, Star, ExternalLink, Phone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
@@ -83,12 +83,10 @@ const mockAddresses = [
 ];
 
 const trackingSteps = [
-  { label: "Заказ оформлен", date: "2 фев, 14:30", done: true },
-  { label: "Оплата подтверждена", date: "2 фев, 14:35", done: true },
-  { label: "Передан в производство", date: "3 фев, 09:00", done: true },
-  { label: "Готов к отправке", date: "10 фев, 16:00", done: true },
+  { label: "Отправлен со склада", date: "10 фев, 16:00", done: true },
   { label: "Передан курьеру", date: "11 фев, 10:20", done: true },
   { label: "В пути", date: "11 фев, 12:00", done: true, active: true },
+  { label: "Прибыл в пункт выдачи", date: "—", done: false },
   { label: "Доставлен", date: "—", done: false },
 ];
 
@@ -114,6 +112,98 @@ const serviceForms = [
 ];
 
 const formatPrice = (n: number) => n.toLocaleString("ru-RU") + " ₽";
+
+// ─── Phone Login Form ───
+const PhoneLoginForm = () => {
+  const [phone, setPhone] = useState("");
+  const [codeSent, setCodeSent] = useState(false);
+  const [code, setCode] = useState("");
+
+  const formatPhone = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 11);
+    if (digits.length <= 1) return digits.length ? `+7` : "";
+    let formatted = "+7 (";
+    if (digits.length > 1) formatted += digits.slice(1, 4);
+    if (digits.length > 4) formatted += ") " + digits.slice(4, 7);
+    if (digits.length > 7) formatted += "-" + digits.slice(7, 9);
+    if (digits.length > 9) formatted += "-" + digits.slice(9, 11);
+    return formatted;
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPhone(formatPhone(e.target.value));
+  };
+
+  const handleSendCode = () => {
+    if (phone.replace(/\D/g, "").length === 11) {
+      setCodeSent(true);
+      toast.success("Код отправлен на " + phone);
+    }
+  };
+
+  const handleLogin = () => {
+    if (code.length === 4) {
+      toast.success("Вход выполнен!");
+      // В реальном приложении здесь будет авторизация
+    }
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-8 text-center">
+      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
+        <Phone className="h-8 w-8 text-primary" />
+      </div>
+      <h1 className="text-2xl font-bold text-foreground mb-2">Вход в кабинет</h1>
+      <p className="text-muted-foreground text-sm mb-8">Введите номер телефона — мы отправим код для входа</p>
+
+      {!codeSent ? (
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm text-muted-foreground mb-1.5 block text-left">Номер телефона</label>
+            <input
+              className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors"
+              placeholder="+7 (___) ___-__-__"
+              value={phone}
+              onChange={handlePhoneChange}
+              type="tel"
+            />
+          </div>
+          <Button size="lg" className="w-full rounded-xl" onClick={handleSendCode} disabled={phone.replace(/\D/g, "").length < 11}>
+            Получить код
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">Код отправлен на <span className="text-foreground font-medium">{phone}</span></p>
+          <div>
+            <label className="text-sm text-muted-foreground mb-1.5 block text-left">Код из SMS</label>
+            <input
+              className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors text-center text-2xl tracking-[0.5em] font-mono"
+              placeholder="• • • •"
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              maxLength={4}
+            />
+          </div>
+          <Button size="lg" className="w-full rounded-xl" onClick={handleLogin} disabled={code.length < 4}>
+            Войти
+          </Button>
+          <button className="text-sm text-primary hover:underline" onClick={() => { setCodeSent(false); setCode(""); }}>
+            Изменить номер
+          </button>
+        </div>
+      )}
+
+      <div className="relative my-6">
+        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border/50" /></div>
+        <div className="relative flex justify-center text-xs"><span className="bg-card/60 px-3 text-muted-foreground">или</span></div>
+      </div>
+      <Link to="/checkout">
+        <Button variant="outline" className="w-full rounded-xl">Оформить заказ как гость</Button>
+      </Link>
+    </motion.div>
+  );
+};
 
 // ─── Order Detail Modal ───
 const OrderDetail = ({ order, onClose }: { order: typeof mockOrders[0]; onClose: () => void }) => {
@@ -206,34 +296,7 @@ const AccountPage = () => {
               <span className="text-foreground">Личный кабинет</span>
             </nav>
             <div className="max-w-md mx-auto">
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-8 text-center">
-                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
-                  <User className="h-8 w-8 text-primary" />
-                </div>
-                <h1 className="text-2xl font-bold text-foreground mb-2">Вход в аккаунт</h1>
-                <p className="text-muted-foreground text-sm mb-8">Войдите, чтобы отслеживать заказы и управлять профилем</p>
-                <div className="space-y-4 mb-6">
-                  <div>
-                    <label className="text-sm text-muted-foreground mb-1.5 block text-left">Email</label>
-                    <input className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors" placeholder="mail@example.com" type="email" />
-                  </div>
-                  <div>
-                    <label className="text-sm text-muted-foreground mb-1.5 block text-left">Пароль</label>
-                    <input className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors" placeholder="••••••••" type="password" />
-                  </div>
-                </div>
-                <Button size="lg" className="w-full rounded-xl mb-4">Войти</Button>
-                <p className="text-sm text-muted-foreground">
-                  Нет аккаунта? <button className="text-primary hover:underline">Зарегистрироваться</button>
-                </p>
-                <div className="relative my-6">
-                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border/50" /></div>
-                  <div className="relative flex justify-center text-xs"><span className="bg-card/60 px-3 text-muted-foreground">или</span></div>
-                </div>
-                <Link to="/checkout">
-                  <Button variant="outline" className="w-full rounded-xl">Оформить заказ как гость</Button>
-                </Link>
-              </motion.div>
+              <PhoneLoginForm />
             </div>
           </div>
         </main>

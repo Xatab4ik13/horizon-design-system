@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Heart, ShoppingCart, Menu, Home, LayoutGrid, Image, BookOpen, Building2, CreditCard, Wrench, PhoneCall } from "lucide-react";
+import { Search, User, ShoppingCart, Menu, Home, LayoutGrid, Image, BookOpen, Building2, CreditCard, Wrench, PhoneCall } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -168,9 +168,9 @@ const Header = () => {
               <button className="p-2.5 rounded-full text-foreground/80 hover:text-primary hover:bg-muted transition-colors" aria-label="Поиск">
                 <Search className="h-5 w-5" />
               </button>
-              <button className="p-2.5 rounded-full text-foreground/80 hover:text-primary hover:bg-muted transition-colors" aria-label="Избранное">
-                <Heart className="h-5 w-5" />
-              </button>
+              <Link to="/account" className="p-2.5 rounded-full text-foreground/80 hover:text-primary hover:bg-muted transition-colors" aria-label="Личный кабинет">
+                <User className="h-5 w-5" />
+              </Link>
               <Link to="/cart" className="relative p-2.5 rounded-full text-foreground/80 hover:text-primary hover:bg-muted transition-colors" aria-label="Корзина">
                 <ShoppingCart className="h-5 w-5" />
                 {totalItems > 0 && (
@@ -188,9 +188,9 @@ const Header = () => {
               <button className="p-2 rounded-full text-foreground/80 hover:text-primary transition-colors" aria-label="Поиск">
                 <Search className="h-5 w-5" />
               </button>
-              <button className="p-2 rounded-full text-foreground/80 hover:text-primary transition-colors" aria-label="Избранное">
-                <Heart className="h-5 w-5" />
-              </button>
+              <Link to="/account" className="p-2 rounded-full text-foreground/80 hover:text-primary transition-colors" aria-label="Личный кабинет">
+                <User className="h-5 w-5" />
+              </Link>
               <Link to="/cart" className="relative p-2 rounded-full text-foreground/80 hover:text-primary transition-colors" aria-label="Корзина">
                 <ShoppingCart className="h-5 w-5" />
                 {totalItems > 0 && (
