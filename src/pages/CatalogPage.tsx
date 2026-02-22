@@ -1,16 +1,29 @@
 import { useState, useMemo } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Heart, ShoppingCart, SlidersHorizontal, X } from "lucide-react";
+import { Heart, ShoppingCart, SlidersHorizontal, X, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { products, categories, materials } from "@/data/products";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { cn } from "@/lib/utils";
+import categoryTable from "@/assets/category-table.png";
+import categoryChairs from "@/assets/category-chairs.png";
+import categoryDecor from "@/assets/category-decor.png";
+import categoryShelves from "@/assets/category-shelves.png";
+import categoryCrafts from "@/assets/category-crafts.png";
+
+const categoryImages: Record<string, string> = {
+  furniture: categoryTable,
+  kitchen: categoryChairs,
+  storage: categoryDecor,
+  interior: categoryShelves,
+  crafts: categoryCrafts,
+};
 
 const CatalogPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeCategory = searchParams.get("category") || "all";
+  const activeCategory = searchParams.get("category") || null;
   const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 200000]);
   const [showFilters, setShowFilters] = useState(false);
@@ -18,7 +31,7 @@ const CatalogPage = () => {
 
   const filteredProducts = useMemo(() => {
     let result = products;
-    if (activeCategory !== "all") {
+    if (activeCategory) {
       result = result.filter((p) => p.category === activeCategory);
     }
     if (selectedMaterials.length > 0) {
@@ -36,42 +49,103 @@ const CatalogPage = () => {
     );
   };
 
-  const setCategory = (slug: string) => {
-    if (slug === "all") {
+  const setCategory = (slug: string | null) => {
+    if (!slug) {
       searchParams.delete("category");
     } else {
       searchParams.set("category", slug);
     }
     setSearchParams(searchParams);
+    setSelectedMaterials([]);
+    setShowFilters(false);
   };
 
+  const activeCategoryData = categories.find((c) => c.slug === activeCategory);
+
+  // --- Category selection view ---
+  if (!activeCategory) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="pt-32 pb-20">
+          <section
+            className="py-16"
+            style={{
+              background: "linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(25 15% 8%) 40%, hsl(30 12% 6%) 70%, hsl(0 0% 0%) 100%)"
+            }}
+          >
+            <div className="container mx-auto px-4">
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-4xl md:text-5xl font-bold text-center text-foreground mb-16"
+              >
+                Категории каталога
+              </motion.h1>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
+                {categories.map((cat, i) => (
+                  <motion.div
+                    key={cat.slug}
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: i * 0.1 }}
+                  >
+                    <button
+                      onClick={() => setCategory(cat.slug)}
+                      className="group w-full text-center focus:outline-none"
+                    >
+                      <div className="relative h-56 md:h-72 flex items-center justify-center mb-4">
+                        {categoryImages[cat.slug] ? (
+                          <img
+                            src={categoryImages[cat.slug]}
+                            alt={cat.name}
+                            className="max-w-full max-h-full object-contain transition-transform duration-700 group-hover:scale-110"
+                          />
+                        ) : (
+                          <div className="w-32 h-32 rounded-full bg-muted/20 flex items-center justify-center text-muted-foreground text-4xl">✦</div>
+                        )}
+                      </div>
+                      <h3 className="text-lg md:text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
+                        {cat.name}
+                      </h3>
+                    </button>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </section>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // --- Products view with filters ---
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="pt-32 pb-20">
         <div className="container mx-auto px-4">
-          {/* Title */}
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-4xl md:text-5xl font-bold text-foreground mb-10"
-          >
-            Каталог
-          </motion.h1>
-
-          {/* Category tabs */}
-          <div className="flex flex-wrap gap-2 mb-8">
+          {/* Back + Title */}
+          <div className="flex items-center gap-4 mb-10">
             <button
-              onClick={() => setCategory("all")}
-              className={cn(
-                "px-5 py-2.5 rounded-full text-sm font-medium transition-all",
-                activeCategory === "all"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-card border border-border text-foreground/70 hover:text-primary hover:border-primary/40"
-              )}
+              onClick={() => setCategory(null)}
+              className="p-2.5 rounded-full bg-card border border-border hover:border-primary/40 transition-colors"
             >
-              Все
+              <ArrowLeft className="h-5 w-5 text-foreground/70" />
             </button>
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-4xl md:text-5xl font-bold text-foreground"
+            >
+              {activeCategoryData?.name || "Каталог"}
+            </motion.h1>
+          </div>
+
+          {/* Subcategory tabs (other categories as quick switch) */}
+          <div className="flex flex-wrap gap-2 mb-8">
             {categories.map((cat) => (
               <button
                 key={cat.slug}
@@ -131,7 +205,6 @@ const CatalogPage = () => {
                 </button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Material */}
                 <div>
                   <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Материал</p>
                   <div className="flex flex-wrap gap-2">
@@ -151,7 +224,6 @@ const CatalogPage = () => {
                     ))}
                   </div>
                 </div>
-                {/* Price range */}
                 <div>
                   <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Цена</p>
                   <div className="flex items-center gap-3">
@@ -207,10 +279,7 @@ const CatalogPage = () => {
                       </span>
                     )}
                     <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                       className="absolute top-3 right-3 p-2 rounded-full bg-background/70 hover:bg-background transition-colors"
                     >
                       <Heart className="h-4 w-4 text-muted-foreground hover:text-primary" />
@@ -236,10 +305,7 @@ const CatalogPage = () => {
                     <Button
                       size="sm"
                       className="w-full gap-2"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                     >
                       <ShoppingCart className="h-4 w-4" />
                       В корзину
@@ -253,7 +319,7 @@ const CatalogPage = () => {
           {filteredProducts.length === 0 && (
             <div className="text-center py-20">
               <p className="text-muted-foreground text-lg">Товары не найдены</p>
-              <Button variant="outline" className="mt-4" onClick={() => { setCategory("all"); setSelectedMaterials([]); }}>
+              <Button variant="outline" className="mt-4" onClick={() => { setCategory(activeCategory); setSelectedMaterials([]); }}>
                 Сбросить фильтры
               </Button>
             </div>
