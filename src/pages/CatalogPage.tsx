@@ -85,7 +85,7 @@ const CatalogPage = () => {
                 Категории каталога
               </motion.h1>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {categories.map((cat, i) => (
                   <motion.div
                     key={cat.slug}
@@ -97,7 +97,7 @@ const CatalogPage = () => {
                       onClick={() => setCategory(cat.slug)}
                       className="group w-full text-center focus:outline-none"
                     >
-                      <div className="relative h-56 md:h-72 flex items-center justify-center mb-4">
+                      <div className="relative h-64 md:h-80 flex items-center justify-center mb-4">
                         {categoryImages[cat.slug] ? (
                           <img
                             src={categoryImages[cat.slug]}

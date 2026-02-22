@@ -28,12 +28,12 @@ const CategoriesSection = () => {
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-foreground">
           Категории каталога
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {categories.map((cat, i) => (
             <Link
               key={cat.slug}
               to={`/catalog?category=${cat.slug}`}
-              className="group relative h-80 overflow-visible"
+              className="group relative h-96 overflow-visible"
             >
               {cat.image ? (
                 <motion.div
