@@ -250,7 +250,7 @@ const CatalogPage = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                className="bg-card/50 backdrop-blur border border-border rounded-xl px-3 py-2 text-xs text-foreground/70 focus:outline-none focus:ring-1 focus:ring-primary/30 appearance-none cursor-pointer hover:border-primary/30 transition-colors"
+                className="bg-card border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 appearance-none cursor-pointer hover:border-primary/30 transition-colors [&>option]:bg-card [&>option]:text-foreground"
               >
                 <option value="default">По умолчанию</option>
                 <option value="price-asc">Сначала дешевле</option>
