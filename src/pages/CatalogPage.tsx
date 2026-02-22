@@ -12,6 +12,7 @@ import categoryChairs from "@/assets/category-chairs.png";
 import categoryDecor from "@/assets/category-decor.png";
 import categoryShelves from "@/assets/category-shelves.png";
 import categoryCrafts from "@/assets/category-crafts.png";
+import categoryDoors from "@/assets/category-doors.png";
 
 const categoryImages: Record<string, string> = {
   furniture: categoryTable,
@@ -19,6 +20,7 @@ const categoryImages: Record<string, string> = {
   storage: categoryDecor,
   interior: categoryShelves,
   crafts: categoryCrafts,
+  doors: categoryDoors,
 };
 
 const CatalogPage = () => {
