@@ -1,80 +1,113 @@
-import { Heart, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { useRef } from "react";
-import { products } from "@/data/products";
+import { motion } from "framer-motion";
+import showcaseMirror from "@/assets/showcase-mirror.png";
+import productPano1 from "@/assets/product-pano-1.jpeg";
+import subEntranceDoors from "@/assets/sub-entrance-doors.jpg";
+
+const showcaseItems = [
+  {
+    title: "Зеркала",
+    subtitle: "Уникальные рамы ручной работы",
+    image: showcaseMirror,
+    link: "/catalog?category=interior&subcategory=mirrors",
+    transparent: true,
+  },
+  {
+    title: "Панно",
+    subtitle: "Резные декоративные панно из массива",
+    image: productPano1,
+    link: "/catalog?category=interior&subcategory=pano",
+    transparent: false,
+  },
+  {
+    title: "Двери",
+    subtitle: "Межкомнатные и входные из натурального дерева",
+    image: subEntranceDoors,
+    link: "/catalog?category=doors",
+    transparent: false,
+  },
+];
 
 const PopularProducts = () => {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const scroll = (dir: "left" | "right") => {
-    if (!scrollRef.current) return;
-    const amount = 300;
-    scrollRef.current.scrollBy({ left: dir === "left" ? -amount : amount, behavior: "smooth" });
-  };
-
   return (
-    <section className="py-20 bg-muted/50">
+    <section
+      className="py-24 md:py-32 relative overflow-hidden"
+      style={{
+        background:
+          "linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(25 15% 8%) 40%, hsl(30 12% 6%) 70%, hsl(0 0% 0%) 100%)",
+      }}
+    >
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl md:text-4xl text-center mb-12 text-foreground">
-          Популярные товары
-        </h2>
+        <div className="flex flex-col gap-20 md:gap-28">
+          {showcaseItems.map((item, i) => {
+            const isEven = i % 2 === 0;
 
-        <div className="relative">
-          <button onClick={() => scroll("left")} className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 bg-background/80 backdrop-blur rounded-full p-2 shadow-md hover:bg-background hidden md:block">
-            <ChevronLeft className="h-5 w-5 text-foreground" />
-          </button>
-          <button onClick={() => scroll("right")} className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 bg-background/80 backdrop-blur rounded-full p-2 shadow-md hover:bg-background hidden md:block">
-            <ChevronRight className="h-5 w-5 text-foreground" />
-          </button>
-
-          <div ref={scrollRef} className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
-            {products.map((p) => (
+            return (
               <Link
-                key={p.id}
-                to={`/product/${p.id}`}
-                className="min-w-[260px] snap-start bg-card rounded-xl border border-border overflow-hidden group flex-shrink-0"
+                key={item.title}
+                to={item.link}
+                className="group block"
               >
-                <div className="relative h-52 overflow-hidden">
-                  <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  <button
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                    className="absolute top-3 right-3 p-2 rounded-full bg-background/70 hover:bg-background transition-colors"
+                <div
+                  className={`flex flex-col ${
+                    isEven ? "md:flex-row" : "md:flex-row-reverse"
+                  } items-center gap-8 md:gap-16`}
+                >
+                  {/* Image */}
+                  <motion.div
+                    initial={{ opacity: 0, x: isEven ? -80 : 80 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true, margin: "-100px" }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    className="w-full md:w-1/2 flex justify-center"
                   >
-                    <Heart className="h-4 w-4 text-muted-foreground hover:text-primary" />
-                  </button>
-                  {p.isNew && (
-                    <span className="absolute top-3 left-3 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full">
-                      Новинка
-                    </span>
-                  )}
-                </div>
-                <div className="p-4">
-                  <h3 className="text-card-foreground mb-1">{p.name}</h3>
-                  <div className="flex items-center gap-2 mb-3">
-                    <p className="text-primary font-bold text-lg">
-                      {p.price.toLocaleString("ru-RU")} ₽
+                    <div
+                      className={`relative ${
+                        item.transparent ? "w-[320px] h-[400px] md:w-[420px] md:h-[520px]" : "w-full max-w-lg h-[320px] md:h-[440px] rounded-2xl overflow-hidden"
+                      }`}
+                    >
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        className={`w-full h-full ${
+                          item.transparent ? "object-contain" : "object-cover rounded-2xl"
+                        } transition-transform duration-700 group-hover:scale-105`}
+                      />
+                      {!item.transparent && (
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent rounded-2xl" />
+                      )}
+                    </div>
+                  </motion.div>
+
+                  {/* Text */}
+                  <motion.div
+                    initial={{ opacity: 0, x: isEven ? 80 : -80 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true, margin: "-100px" }}
+                    transition={{ duration: 0.8, delay: 0.15, ease: "easeOut" }}
+                    className={`w-full md:w-1/2 ${
+                      isEven ? "md:text-left" : "md:text-right"
+                    } text-center`}
+                  >
+                    <h3 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground mb-4 tracking-tight group-hover:text-primary transition-colors duration-500">
+                      {item.title}
+                    </h3>
+                    <p className="text-lg md:text-xl text-muted-foreground max-w-md mx-auto md:mx-0 leading-relaxed">
+                      {item.subtitle}
                     </p>
-                    {p.oldPrice && (
-                      <p className="text-muted-foreground line-through text-sm">
-                        {p.oldPrice.toLocaleString("ru-RU")} ₽
-                      </p>
-                    )}
-                  </div>
-                  <Button size="sm" className="w-full gap-2" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-                    <ShoppingCart className="h-4 w-4" />
-                    В корзину
-                  </Button>
+                    <div
+                      className={`mt-6 inline-flex items-center gap-2 text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
+                        isEven ? "" : "md:justify-end"
+                      }`}
+                    >
+                      <span className="text-sm uppercase tracking-widest">Перейти в каталог</span>
+                      <span className="text-lg">→</span>
+                    </div>
+                  </motion.div>
                 </div>
               </Link>
-            ))}
-          </div>
-        </div>
-
-        <div className="text-center mt-8">
-          <Button variant="outline" asChild size="lg">
-            <Link to="/catalog">Все товары</Link>
-          </Button>
+            );
+          })}
         </div>
       </div>
     </section>
