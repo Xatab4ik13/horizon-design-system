@@ -205,32 +205,13 @@ const CatalogPage = () => {
           {/* Subcategory cards */}
           {activeCategoryData && activeCategoryData.subcategories.length > 0 && (
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 mb-10">
-              <button
-                onClick={() => setSubcategory(null)}
-                className={cn(
-                  "relative h-[4.5rem] rounded-xl overflow-hidden border-2 transition-all duration-300 group",
-                  !activeSubcategory
-                    ? "border-primary shadow-[0_0_20px_hsl(var(--primary)/0.3)]"
-                    : "border-border hover:border-primary/40"
-                )}
-              >
-                <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/50 to-background/20" />
-                <div className="relative z-10 h-full flex items-center justify-center">
-                  <span className={cn(
-                    "text-sm font-semibold transition-colors",
-                    !activeSubcategory ? "text-primary" : "text-foreground/70 group-hover:text-primary"
-                  )}>
-                    Все
-                  </span>
-                </div>
-              </button>
               {activeCategoryData.subcategories.map((sub, i) => (
                 <motion.button
                   key={sub.slug}
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: i * 0.05 }}
-                  onClick={() => setSubcategory(sub.slug)}
+                  onClick={() => setSubcategory(activeSubcategory === sub.slug ? null : sub.slug)}
                   className={cn(
                     "relative h-[4.5rem] rounded-xl overflow-hidden border-2 transition-all duration-300 group",
                     activeSubcategory === sub.slug
