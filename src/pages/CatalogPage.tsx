@@ -279,8 +279,9 @@ const CatalogPage = () => {
                     <img
                       src={subcategoryImages[sub.slug]}
                       alt={sub.name}
-                      loading="lazy"
                       decoding="async"
+                      width={200}
+                      height={72}
                       className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                     />
                   )}
