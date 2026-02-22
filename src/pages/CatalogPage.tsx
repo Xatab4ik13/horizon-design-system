@@ -14,6 +14,47 @@ import categoryShelves from "@/assets/category-shelves.png";
 import categoryCrafts from "@/assets/category-crafts.png";
 import categoryDoors from "@/assets/category-doors.png";
 
+// Subcategory images
+import subTables from "@/assets/sub-tables.jpg";
+import subBeds from "@/assets/sub-beds.jpg";
+import subNightstands from "@/assets/sub-nightstands.jpg";
+import subRacks from "@/assets/sub-racks.jpg";
+import subShelves from "@/assets/sub-shelves.jpg";
+import subCuttingBoards from "@/assets/sub-cutting-boards.jpg";
+import subServingBoards from "@/assets/sub-serving-boards.jpg";
+import subDishes from "@/assets/sub-dishes.jpg";
+import subCompartmentDishes from "@/assets/sub-compartment-dishes.jpg";
+import subSaladBowls from "@/assets/sub-salad-bowls.jpg";
+import subTrays from "@/assets/sub-trays.jpg";
+import subHangers from "@/assets/sub-hangers.jpg";
+import subPano from "@/assets/sub-pano.jpg";
+import subMirrors from "@/assets/sub-mirrors.jpg";
+import subDecoupageBases from "@/assets/sub-decoupage-bases.jpg";
+import subFigures from "@/assets/sub-figures.jpg";
+import subInteriorDoors from "@/assets/sub-interior-doors.jpg";
+import subEntranceDoors from "@/assets/sub-entrance-doors.jpg";
+
+const subcategoryImages: Record<string, string> = {
+  tables: subTables,
+  beds: subBeds,
+  nightstands: subNightstands,
+  racks: subRacks,
+  shelves: subShelves,
+  "cutting-boards": subCuttingBoards,
+  "serving-boards": subServingBoards,
+  dishes: subDishes,
+  "compartment-dishes": subCompartmentDishes,
+  "salad-bowls": subSaladBowls,
+  trays: subTrays,
+  hangers: subHangers,
+  pano: subPano,
+  mirrors: subMirrors,
+  "decoupage-bases": subDecoupageBases,
+  figures: subFigures,
+  "interior-doors": subInteriorDoors,
+  "entrance-doors": subEntranceDoors,
+};
+
 const categoryImages: Record<string, string> = {
   furniture: categoryTable,
   kitchen: categoryChairs,
@@ -161,33 +202,59 @@ const CatalogPage = () => {
             </motion.h1>
           </div>
 
-          {/* Subcategory tabs */}
+          {/* Subcategory cards */}
           {activeCategoryData && activeCategoryData.subcategories.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-10">
               <button
                 onClick={() => setSubcategory(null)}
                 className={cn(
-                  "px-4 py-2 rounded-full text-xs font-medium transition-all",
+                  "relative h-28 rounded-2xl overflow-hidden border-2 transition-all duration-300 group",
                   !activeSubcategory
-                    ? "bg-primary/20 text-primary border border-primary/30"
-                    : "bg-card border border-border text-foreground/60 hover:text-primary hover:border-primary/40"
+                    ? "border-primary shadow-[0_0_20px_hsl(var(--primary)/0.3)]"
+                    : "border-border hover:border-primary/40"
                 )}
               >
-                Все
+                <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/50 to-background/20" />
+                <div className="relative z-10 h-full flex items-center justify-center">
+                  <span className={cn(
+                    "text-sm font-semibold transition-colors",
+                    !activeSubcategory ? "text-primary" : "text-foreground/70 group-hover:text-primary"
+                  )}>
+                    Все
+                  </span>
+                </div>
               </button>
-              {activeCategoryData.subcategories.map((sub) => (
-                <button
+              {activeCategoryData.subcategories.map((sub, i) => (
+                <motion.button
                   key={sub.slug}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: i * 0.05 }}
                   onClick={() => setSubcategory(sub.slug)}
                   className={cn(
-                    "px-4 py-2 rounded-full text-xs font-medium transition-all",
+                    "relative h-28 rounded-2xl overflow-hidden border-2 transition-all duration-300 group",
                     activeSubcategory === sub.slug
-                      ? "bg-primary/20 text-primary border border-primary/30"
-                      : "bg-card border border-border text-foreground/60 hover:text-primary hover:border-primary/40"
+                      ? "border-primary shadow-[0_0_20px_hsl(var(--primary)/0.3)]"
+                      : "border-border hover:border-primary/40"
                   )}
                 >
-                  {sub.name}
-                </button>
+                  {subcategoryImages[sub.slug] && (
+                    <img
+                      src={subcategoryImages[sub.slug]}
+                      alt={sub.name}
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/40 to-transparent" />
+                  <div className="relative z-10 h-full flex items-end justify-center pb-3 px-2">
+                    <span className={cn(
+                      "text-xs font-semibold text-center leading-tight transition-colors",
+                      activeSubcategory === sub.slug ? "text-primary" : "text-foreground/90 group-hover:text-primary"
+                    )}>
+                      {sub.name}
+                    </span>
+                  </div>
+                </motion.button>
               ))}
             </div>
           )}
