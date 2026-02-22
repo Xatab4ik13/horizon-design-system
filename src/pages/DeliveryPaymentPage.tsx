@@ -3,6 +3,12 @@ import {
   Truck, MapPin, Calculator, Clock, Package, CreditCard,
   ShieldCheck, Receipt, Tag, ChevronRight, Phone, CheckCircle2,
 } from "lucide-react";
+import logoCdek from "@/assets/logo-cdek.png";
+import logoBoxberry from "@/assets/logo-boxberry.png";
+import logoPek from "@/assets/logo-pek.png";
+import logoDelovyeLinii from "@/assets/logo-delovye-linii.png";
+import logoPochta from "@/assets/logo-pochta.png";
+import logoYandex from "@/assets/logo-yandex-delivery.png";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -13,44 +19,44 @@ import { useState } from "react";
 const deliveryCompanies = [
   {
     name: "СДЭК",
+    logo: logoCdek,
     description: "Доставка по всей России и СНГ. Более 3 000 пунктов выдачи.",
     timing: "2–7 дней",
-    color: "hsl(120 60% 40%)",
     features: ["Пункты выдачи", "Курьерская доставка", "Примерка при получении"],
   },
   {
     name: "Boxberry",
+    logo: logoBoxberry,
     description: "Сеть из 4 500+ пунктов выдачи по всей стране.",
     timing: "3–10 дней",
-    color: "hsl(350 70% 50%)",
     features: ["Пункты выдачи", "Постаматы", "Частичный выкуп"],
   },
   {
     name: "ПЭК",
+    logo: logoPek,
     description: "Перевозка крупногабаритных грузов и мебели по России.",
     timing: "3–14 дней",
-    color: "hsl(210 70% 50%)",
     features: ["Крупногабарит", "Страхование", "До терминала / до двери"],
   },
   {
     name: "Деловые Линии",
+    logo: logoDelovyeLinii,
     description: "Транспортная компания для крупных и тяжёлых отправлений.",
     timing: "2–10 дней",
-    color: "hsl(30 80% 50%)",
     features: ["Сборный груз", "Доставка до двери", "Жёсткая упаковка"],
   },
   {
     name: "Почта России",
+    logo: logoPochta,
     description: "Доставка в любой населённый пункт страны, включая отдалённые.",
     timing: "5–21 день",
-    color: "hsl(220 60% 45%)",
     features: ["Любой адрес РФ", "Наложенный платёж", "Трекинг"],
   },
   {
     name: "Яндекс Доставка",
+    logo: logoYandex,
     description: "Быстрая курьерская доставка в крупных городах за 1–2 дня.",
     timing: "1–2 дня",
-    color: "hsl(45 100% 50%)",
     features: ["Экспресс-доставка", "Курьер до двери", "Отслеживание в реальном времени"],
   },
 ];
@@ -219,22 +225,13 @@ const DeliveryPaymentPage = () => {
                   transition={{ delay: i * 0.08 }}
                   className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-6 hover:border-primary/30 transition-all duration-300 group"
                 >
-                  {/* Logo placeholder */}
                   <div className="flex items-center gap-4 mb-4">
-                    <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0"
-                      style={{ background: company.color }}
-                    >
-                      {company.name.slice(0, 2).toUpperCase()}
+                    <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center shrink-0 p-2">
+                      <img src={company.logo} alt={company.name} className="w-full h-full object-contain" />
                     </div>
-                    <div>
-                      <h3 className="text-foreground font-semibold text-lg group-hover:text-primary transition-colors">
-                        {company.name}
-                      </h3>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="h-3 w-3" /> {company.timing}
-                      </p>
-                    </div>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Clock className="h-3 w-3" /> {company.timing}
+                    </p>
                   </div>
 
                   <p className="text-foreground/70 text-sm mb-4 leading-relaxed">
