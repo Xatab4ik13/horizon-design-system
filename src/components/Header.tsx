@@ -104,44 +104,48 @@ const Header = () => {
                       <AnimatePresence>
                         {catalogOpen && (
                           <motion.div
-                            initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                            transition={{ duration: 0.2 }}
-                            className="absolute top-full left-1/2 -translate-x-1/2 mt-3 z-50 w-72 bg-card border border-border/40 backdrop-blur-xl rounded-2xl shadow-xl shadow-black/30 overflow-hidden"
+                            initial={{ opacity: 0, y: 4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 4 }}
+                            transition={{ duration: 0.25, ease: "easeOut" }}
+                            className="absolute top-full left-0 pt-2 z-50"
                           >
-                            {/* Glow indicator */}
-                            <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-10 h-1 z-10">
-                              <div className="w-full h-full bg-primary rounded-full" />
-                              <div className="absolute w-full h-full bg-primary/50 rounded-full blur-md" />
-                            </div>
-                            <div className="flex flex-col gap-1 p-3">
-                              {categories.map((cat) => (
-                                <Link
-                                  key={cat.slug}
-                                  to={`/catalog?category=${cat.slug}`}
-                                  onClick={() => {
-                                    setActiveTab("Каталог");
-                                    setCatalogOpen(false);
-                                  }}
-                                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-primary/10 transition-all duration-200 group"
-                                >
-                                  <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
-                                    {cat.image ? (
-                                      <img
-                                        src={cat.image}
-                                        alt={cat.name}
-                                        className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
-                                      />
-                                    ) : (
-                                      <div className="w-full h-full rounded-lg bg-muted/30 flex items-center justify-center text-muted-foreground text-sm">✦</div>
-                                    )}
-                                  </div>
-                                  <span className="text-sm font-medium text-foreground/70 group-hover:text-primary transition-colors">
-                                    {cat.name}
-                                  </span>
-                                </Link>
-                              ))}
+                            {/* Invisible bridge to prevent hover gap */}
+                            <div className="absolute -top-2 left-0 right-0 h-2" />
+                            <div className="w-72 bg-card border border-border/40 backdrop-blur-xl rounded-2xl shadow-xl shadow-black/30 overflow-hidden">
+                              {/* Glow indicator */}
+                              <div className="absolute -top-0.5 left-8 w-10 h-1 z-10">
+                                <div className="w-full h-full bg-primary rounded-full" />
+                                <div className="absolute w-full h-full bg-primary/50 rounded-full blur-md" />
+                              </div>
+                              <div className="flex flex-col gap-1 p-3">
+                                {categories.map((cat) => (
+                                  <Link
+                                    key={cat.slug}
+                                    to={`/catalog?category=${cat.slug}`}
+                                    onClick={() => {
+                                      setActiveTab("Каталог");
+                                      setCatalogOpen(false);
+                                    }}
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-primary/10 transition-all duration-200 group"
+                                  >
+                                    <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
+                                      {cat.image ? (
+                                        <img
+                                          src={cat.image}
+                                          alt={cat.name}
+                                          className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
+                                        />
+                                      ) : (
+                                        <div className="w-full h-full rounded-lg bg-muted/30 flex items-center justify-center text-muted-foreground text-sm">✦</div>
+                                      )}
+                                    </div>
+                                    <span className="text-sm font-medium text-foreground/70 group-hover:text-primary transition-colors">
+                                      {cat.name}
+                                    </span>
+                                  </Link>
+                                ))}
+                              </div>
                             </div>
                           </motion.div>
                         )}
