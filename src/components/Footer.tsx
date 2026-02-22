@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import Logo from "@/components/Logo";
 
 const Footer = () => {
   return (
@@ -7,9 +8,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Logo & description */}
           <div>
-            <h3 className="text-lg text-foreground mb-3" style={{ fontFamily: "'Franklin Gothic Medium', sans-serif" }}>
-              WoodCraft
-            </h3>
+            <Logo size="md" className="mb-3" />
             <p className="text-sm text-muted-foreground leading-relaxed font-light">
               Мастерская уникальных изделий из натурального дерева. Качество, проверенное временем.
             </p>
