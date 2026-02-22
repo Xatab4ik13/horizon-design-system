@@ -13,6 +13,7 @@ import { useState, useMemo, useCallback } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/contexts/CartContext";
+import SEO, { buildProductJsonLd, buildBreadcrumbJsonLd, buildFAQJsonLd } from "@/components/SEO";
 
 // ─── Stars ───
 const Stars = ({ rating, size = 16 }: { rating: number; size?: number }) => (
@@ -242,8 +243,26 @@ const ProductPage = () => {
   const relatedProducts = (product.relatedIds || []).filter((rid) => getProductById(rid));
   const crossSellProducts = (product.crossSellIds || []).filter((rid) => getProductById(rid));
 
+  const productJsonLd = buildProductJsonLd(product);
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: "Главная", url: "/" },
+    { name: "Каталог", url: "/catalog" },
+    { name: categoryData?.name || "", url: `/catalog?category=${product.category}` },
+    { name: product.name, url: `/product/${product.id}` },
+  ]);
+  const faqJsonLd = product.qa.length > 0
+    ? buildFAQJsonLd(product.qa.map((q) => ({ question: q.question, answer: q.answer })))
+    : null;
+
   return (
     <div className="min-h-screen" style={{ background: "linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(25 15% 8%) 40%, hsl(30 12% 6%) 70%, hsl(0 0% 0%) 100%)" }}>
+      <SEO
+        title={`${product.name} — ${product.material}`}
+        description={product.description}
+        image={product.images[0]}
+        type="product"
+        jsonLd={[productJsonLd, breadcrumbJsonLd, ...(faqJsonLd ? [faqJsonLd] : [])]}
+      />
       <Header />
       <main className="pt-32 pb-20">
         <div className="container mx-auto px-4">

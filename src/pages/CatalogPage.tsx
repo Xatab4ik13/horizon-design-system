@@ -7,6 +7,7 @@ import { products, categories, type Category } from "@/data/products";
 import CatalogFilters from "@/components/CatalogFilters";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import SEO, { buildBreadcrumbJsonLd } from "@/components/SEO";
 import { cn } from "@/lib/utils";
 import categoryTable from "@/assets/category-table.png";
 import categoryChairs from "@/assets/category-chairs.png";
@@ -163,6 +164,11 @@ const CatalogPage = () => {
   if (!activeCategory) {
     return (
       <div className="min-h-screen bg-background">
+        <SEO
+          title="Каталог изделий из дерева"
+          description="Каталог изделий из натурального дерева: мебель, панно, зеркала, кухонные принадлежности, двери. Ручная работа, доставка по России."
+          jsonLd={[buildBreadcrumbJsonLd([{ name: "Главная", url: "/" }, { name: "Каталог", url: "/catalog" }])]}
+        />
         <Header />
         <main className="pt-32 pb-20">
           <section
@@ -221,6 +227,15 @@ const CatalogPage = () => {
   // --- Products view with filters ---
   return (
     <div className="min-h-screen" style={{ background: "linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(25 15% 8%) 40%, hsl(30 12% 6%) 70%, hsl(0 0% 0%) 100%)" }}>
+      <SEO
+        title={`${activeCategoryData?.name || "Каталог"} — изделия из дерева`}
+        description={`${activeCategoryData?.name || "Каталог"} из натурального дерева ручной работы. Выбирайте породу, покрытие и размер.`}
+        jsonLd={[buildBreadcrumbJsonLd([
+          { name: "Главная", url: "/" },
+          { name: "Каталог", url: "/catalog" },
+          ...(activeCategoryData ? [{ name: activeCategoryData.name, url: `/catalog?category=${activeCategory}` }] : []),
+        ])]}
+      />
       <Header />
       <main className="pt-32 pb-20">
         <div className="container mx-auto px-4">

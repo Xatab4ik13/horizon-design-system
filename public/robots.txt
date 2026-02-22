@@ -1,8 +1,15 @@
 User-agent: Googlebot
 Allow: /
+Crawl-delay: 1
 
 User-agent: Bingbot
 Allow: /
+Crawl-delay: 2
+
+User-agent: Yandex
+Allow: /
+Crawl-delay: 2
+Host: https://faktura.ru
 
 User-agent: Twitterbot
 Allow: /
@@ -12,3 +19,8 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /account
+Disallow: /cart
+Disallow: /checkout
+
+Sitemap: https://faktura.ru/sitemap.xml

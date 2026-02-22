@@ -6,6 +6,7 @@ import {
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 import { useCart } from "@/contexts/CartContext";
 
 const CartPage = () => {
@@ -22,6 +23,7 @@ const CartPage = () => {
           "linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(25 15% 8%) 40%, hsl(30 12% 6%) 70%, hsl(0 0% 0%) 100%)",
       }}
     >
+      <SEO title="Корзина" description="Ваша корзина покупок в FAKTURA." noindex />
       <Header />
       <main className="pt-32 pb-20">
         <div className="container mx-auto px-4">
