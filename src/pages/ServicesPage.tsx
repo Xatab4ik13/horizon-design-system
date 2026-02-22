@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 
 const services = [
   {
@@ -62,6 +63,10 @@ const ServicesPage = () => {
           "linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(25 15% 8%) 40%, hsl(30 12% 6%) 70%, hsl(0 0% 0%) 100%)",
       }}
     >
+      <SEO
+        title="Услуги мастерской"
+        description="Изготовление мебели на заказ, реставрация, покрытие, проектирование. Индивидуальный подход, гарантия качества."
+      />
       <Header />
       <main className="pt-32 pb-20">
         <div className="container mx-auto px-4">

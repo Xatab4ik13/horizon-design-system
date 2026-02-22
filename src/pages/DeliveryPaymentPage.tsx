@@ -12,6 +12,7 @@ import logoYandex from "@/assets/logo-yandex-delivery.png";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import SEO, { buildFAQJsonLd } from "@/components/SEO";
 import { Link } from "react-router-dom";
 
 
@@ -95,6 +96,15 @@ const DeliveryPaymentPage = () => {
           "linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(25 15% 8%) 40%, hsl(30 12% 6%) 70%, hsl(0 0% 0%) 100%)",
       }}
     >
+      <SEO
+        title="Доставка и оплата"
+        description="Доставка по всей России: СДЭК, Boxberry, ПЭК, Деловые Линии, Почта России. Оплата картой, онлайн-чеки 54-ФЗ."
+        jsonLd={[buildFAQJsonLd([
+          { question: "Сколько стоит доставка?", answer: "Стоимость доставки рассчитывается автоматически при оформлении заказа в зависимости от региона и веса." },
+          { question: "Какие способы оплаты доступны?", answer: "Банковские карты Visa, Mastercard, МИР через защищённый шлюз YooKassa. Все чеки формируются в соответствии с 54-ФЗ." },
+          { question: "Сколько времени занимает доставка?", answer: "Сроки зависят от транспортной компании и региона: от 2 до 14 дней по России." },
+        ])]}
+      />
       <Header />
       <main className="pt-32 pb-20">
         <div className="container mx-auto px-4">

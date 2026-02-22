@@ -3,6 +3,7 @@ import { ChevronRight, Calendar, Clock, ArrowRight, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import SEO, { buildArticleJsonLd, buildBreadcrumbJsonLd } from "@/components/SEO";
 
 const blogPosts = [
   {
@@ -70,6 +71,21 @@ const blogPosts = [
 const categories = ["Все", "Материалы", "Советы", "Дизайн", "Мастерская"];
 
 const BlogPage = () => {
+  const articleJsonLd = blogPosts.map((post) =>
+    buildArticleJsonLd({
+      title: post.title,
+      description: post.excerpt,
+      author: post.author,
+      datePublished: post.date,
+      id: post.id,
+    })
+  );
+
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: "Главная", url: "/" },
+    { name: "Блог", url: "/blog" },
+  ]);
+
   return (
     <div
       className="min-h-screen"
@@ -78,6 +94,12 @@ const BlogPage = () => {
           "linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(25 15% 8%) 40%, hsl(30 12% 6%) 70%, hsl(0 0% 0%) 100%)",
       }}
     >
+      <SEO
+        title="Блог о дереве и интерьере"
+        description="Статьи о породах дерева, уходе за мебелью, трендах дизайна интерьера и процессах мастерской FAKTURA."
+        type="website"
+        jsonLd={[...articleJsonLd, breadcrumbJsonLd]}
+      />
       <Header />
       <main className="pt-32 pb-20">
         <div className="container mx-auto px-4">

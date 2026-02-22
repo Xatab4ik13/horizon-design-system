@@ -6,6 +6,7 @@ import {
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 import ContactForm from "@/components/ContactForm";
 
 const contactInfo = [
@@ -48,6 +49,10 @@ const ContactsPage = () => {
           "linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(25 15% 8%) 40%, hsl(30 12% 6%) 70%, hsl(0 0% 0%) 100%)",
       }}
     >
+      <SEO
+        title="Контакты"
+        description="Свяжитесь с мастерской FAKTURA: телефон, email, адрес в Москве. Оставьте заявку на изготовление изделия из дерева."
+      />
       <Header />
       <main className="pt-32 pb-20">
         <div className="container mx-auto px-4">

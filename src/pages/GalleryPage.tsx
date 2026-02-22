@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 
 import gallery1 from "@/assets/gallery-1.jpg";
 import gallery2 from "@/assets/gallery-2.jpg";
@@ -34,6 +35,10 @@ const GalleryPage = () => {
           "linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(25 15% 8%) 40%, hsl(30 12% 6%) 70%, hsl(0 0% 0%) 100%)",
       }}
     >
+      <SEO
+        title="Галерея работ"
+        description="Галерея интерьеров с мебелью и декором FAKTURA. Реальные проекты наших мастеров — вдохновляйтесь примерами."
+      />
       <Header />
       <main className="pt-32 pb-20">
         <div className="container mx-auto px-4">
