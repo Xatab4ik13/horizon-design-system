@@ -197,7 +197,7 @@ const PopularProducts = () => {
                     <img
                       src={item.image}
                       alt={item.title}
-                      className="w-[480px] h-[600px] md:w-[660px] md:h-[780px] lg:w-[780px] lg:h-[900px] object-contain drop-shadow-2xl"
+                      className="w-[306px] h-[306px] md:w-[450px] md:h-[450px] lg:w-[522px] lg:h-[522px] object-contain drop-shadow-2xl"
                     />
                   </motion.div>
                 ) : (
