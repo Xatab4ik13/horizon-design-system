@@ -31,7 +31,8 @@ const ProductPage = () => {
     );
   }
 
-  const categoryName = categories.find((c) => c.slug === product.category)?.name;
+  const categoryData = categories.find((c) => c.slug === product.category);
+  const categoryName = categoryData?.name;
 
   return (
     <div className="min-h-screen bg-background">
