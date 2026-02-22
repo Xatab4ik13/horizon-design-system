@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Heart, ShoppingCart, SlidersHorizontal, ArrowLeft } from "lucide-react";
+import { Heart, ShoppingCart, SlidersHorizontal, ArrowLeft, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { products, categories, type Category } from "@/data/products";
 import CatalogFilters from "@/components/CatalogFilters";
@@ -79,7 +79,24 @@ const CatalogPage = () => {
   });
   const [inStockOnly, setInStockOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState<"default" | "price-asc" | "price-desc">("default");
+  const [showSort, setShowSort] = useState(false);
+  const sortRef = useRef<HTMLDivElement>(null);
+  const [sortBy, setSortBy] = useState<"default" | "price-asc" | "price-desc" | "material">("default");
+
+  // Close sort dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) setShowSort(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const sortOptions = [
+    { value: "default" as const, label: "По новизне" },
+    { value: "price-asc" as const, label: "По цене (↑↓)" },
+    { value: "material" as const, label: "По материалу" },
+  ];
 
   const activeCategoryData = categories.find((c) => c.slug === activeCategory);
 
@@ -100,6 +117,7 @@ const CatalogPage = () => {
     }
     if (sortBy === "price-asc") result = [...result].sort((a, b) => a.price - b.price);
     if (sortBy === "price-desc") result = [...result].sort((a, b) => b.price - a.price);
+    if (sortBy === "material") result = [...result].sort((a, b) => a.material.localeCompare(b.material));
     return result;
   }, [activeCategory, activeSubcategory, selectedWoods, priceRange, inStockOnly, sortBy]);
 
@@ -268,15 +286,50 @@ const CatalogPage = () => {
               {filteredProducts.length === 1 ? "товар" : filteredProducts.length < 5 ? "товара" : "товаров"}
             </p>
             <div className="flex items-center gap-2">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                className="bg-card border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 appearance-none cursor-pointer hover:border-primary/30 transition-colors [&>option]:bg-card [&>option]:text-foreground"
-              >
-                <option value="default">По умолчанию</option>
-                <option value="price-asc">Сначала дешевле</option>
-                <option value="price-desc">Сначала дороже</option>
-              </select>
+              {/* Sort dropdown */}
+              <div ref={sortRef} className="relative">
+                <button
+                  onClick={() => setShowSort(!showSort)}
+                  className={cn(
+                    "p-2.5 rounded-xl border transition-all duration-300",
+                    showSort
+                      ? "bg-primary/10 border-primary/30 text-primary"
+                      : "bg-card/50 backdrop-blur border-border text-foreground/50 hover:border-primary/30 hover:text-primary"
+                  )}
+                >
+                  <ArrowUpDown className="h-4 w-4" />
+                </button>
+
+                {showSort && (
+                  <div className="absolute right-0 top-full mt-2 z-50 min-w-[180px] bg-card border border-border rounded-xl p-4 shadow-xl">
+                    <div className="flex items-center gap-2 mb-3">
+                      <ArrowUpDown className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-semibold text-foreground">Сортировка</span>
+                    </div>
+                    <div className="space-y-1">
+                      {sortOptions.map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => {
+                            setSortBy(opt.value);
+                            setShowSort(false);
+                          }}
+                          className={cn(
+                            "w-full text-left px-2 py-1.5 rounded-lg text-sm transition-colors",
+                            sortBy === opt.value
+                              ? "text-primary"
+                              : "text-muted-foreground hover:text-foreground"
+                          )}
+                        >
+                          · {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Filter toggle */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 className={cn(
