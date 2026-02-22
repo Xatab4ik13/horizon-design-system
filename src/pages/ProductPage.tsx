@@ -340,11 +340,6 @@ const ProductPage = () => {
                               )}
                             >
                               {opt.label}
-                              {opt.priceModifier ? (
-                                <span className="ml-1 text-xs text-muted-foreground">
-                                  {opt.priceModifier > 0 ? "+" : ""}{opt.priceModifier.toLocaleString("ru-RU")} ₽
-                                </span>
-                              ) : null}
                             </button>
                           );
                         })}
