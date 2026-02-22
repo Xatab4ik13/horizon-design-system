@@ -6,6 +6,7 @@ import { Search, User, ShoppingCart, Menu, X, ChevronDown } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import LiveSearch from "@/components/LiveSearch";
+import Logo from "@/components/Logo";
 import categoryTable from "@/assets/category-table.png";
 import categoryChairs from "@/assets/category-chairs.png";
 import categoryDecor from "@/assets/category-decor.png";
@@ -79,6 +80,9 @@ const Header = () => {
         {/* Desktop navbar */}
         {!isMobile ? (
           <div className="flex items-center gap-4 bg-background/5 border border-border/40 backdrop-blur-lg py-3.5 px-3 rounded-full shadow-lg shadow-black/20 relative">
+            <div className="pl-3 pr-2 border-r border-border/40 mr-1">
+              <Logo size="sm" />
+            </div>
             <nav className="flex items-center gap-1.5">
               {navItems.map((item) => {
                 const isActive = activeTab === item.name;
@@ -187,6 +191,7 @@ const Header = () => {
         ) : (
           /* Mobile / Tablet navbar */
           <div className="flex items-center justify-between w-full bg-background/5 border border-border/40 backdrop-blur-lg py-2.5 px-4 rounded-full shadow-lg shadow-black/20">
+            <Logo size="sm" />
             <div className="flex items-center gap-1">
               <button onClick={() => setSearchOpen(true)} className="p-2 rounded-full text-foreground/80 hover:text-primary transition-colors" aria-label="Поиск">
                 <Search className="h-5 w-5" />
@@ -239,7 +244,7 @@ const Header = () => {
             >
               {/* Header with close */}
               <div className="flex items-center justify-between px-6 py-5 border-b border-border/30">
-                <span className="text-foreground font-semibold text-lg">Меню</span>
+                <Logo size="sm" linkTo="" />
                 <button
                   onClick={() => setMobileMenuOpen(false)}
                   className="p-2 rounded-full text-foreground/60 hover:text-primary hover:bg-primary/10 transition-colors"
