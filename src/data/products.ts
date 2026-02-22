@@ -185,6 +185,30 @@ export const categories: Category[] = [
 
 export const materials = ["Дуб", "Орех", "Бук", "Ясень", "Берёза"];
 
+export const woodTypes = [
+  { name: "Дуб", emoji: "🪵" },
+  { name: "Орех", emoji: "🌰" },
+  { name: "Бук", emoji: "🌳" },
+  { name: "Ясень", emoji: "🍃" },
+  { name: "Берёза", emoji: "🌲" },
+  { name: "Сосна", emoji: "🌿" },
+  { name: "Лиственница", emoji: "🍂" },
+  { name: "Карагач", emoji: "🪴" },
+];
+
+export const coatings = [
+  { name: "Натуральное масло", color: "#C4A46C" },
+  { name: "Масло с воском", color: "#D4B77E" },
+  { name: "Лак матовый", color: "#E8D5B7" },
+  { name: "Лак глянцевый", color: "#F5E6CC" },
+  { name: "Морилка тёмная", color: "#5C3A1E" },
+  { name: "Морилка светлая", color: "#8B6914" },
+  { name: "Обжиг", color: "#2C1810" },
+  { name: "Белая эмаль", color: "#F0EDE8" },
+  { name: "Чёрная эмаль", color: "#1A1A1A" },
+  { name: "Без покрытия", color: "#BFA67A" },
+];
+
 export const getProductById = (id: string) => products.find((p) => p.id === id);
 export const getProductsByCategory = (cat: string) => products.filter((p) => p.category === cat);
 export const getProductsBySubcategory = (sub: string) => products.filter((p) => p.subcategory === sub);
