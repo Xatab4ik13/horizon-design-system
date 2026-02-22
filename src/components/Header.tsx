@@ -112,9 +112,9 @@ const Header = () => {
                           >
                             {/* Invisible bridge to prevent hover gap */}
                             <div className="absolute -top-2 left-0 right-0 h-2" />
-                            <div className="w-72 bg-card border border-border/40 backdrop-blur-xl rounded-2xl shadow-xl shadow-black/30 overflow-hidden relative">
-                              {/* Glow indicator - matching tubelight height */}
-                              <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-10 h-1 z-10">
+                            <div className="w-72 bg-card border border-border/40 backdrop-blur-xl rounded-2xl shadow-xl shadow-black/30 overflow-hidden">
+                              {/* Glow indicator */}
+                              <div className="absolute -top-0.5 left-8 w-10 h-1 z-10">
                                 <div className="w-full h-full bg-primary rounded-full" />
                                 <div className="absolute w-full h-full bg-primary/50 rounded-full blur-md" />
                               </div>
