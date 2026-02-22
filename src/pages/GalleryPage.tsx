@@ -1,7 +1,7 @@
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import ThreeDCarousel from "@/components/ThreeDCarousel";
 
 import gallery1 from "@/assets/gallery-1.jpg";
 import gallery2 from "@/assets/gallery-2.jpg";
@@ -12,12 +12,20 @@ import gallery6 from "@/assets/gallery-6.jpg";
 import gallery7 from "@/assets/gallery-7.jpg";
 import gallery8 from "@/assets/gallery-8.jpg";
 
-const galleryImages = [
-  gallery1, gallery2, gallery3, gallery4,
-  gallery5, gallery6, gallery7, gallery8,
+const galleryItems = [
+  { src: gallery1, title: "Гостиная с деревянными панелями", span: "tall" },
+  { src: gallery2, title: "Столовая из массива дуба", span: "wide" },
+  { src: gallery3, title: "Спальня с резным зеркалом", span: "normal" },
+  { src: gallery4, title: "Прихожая с резной дверью", span: "normal" },
+  { src: gallery5, title: "Кухня с деревянными аксессуарами", span: "tall" },
+  { src: gallery6, title: "Гостиная с декоративным панно", span: "wide" },
+  { src: gallery7, title: "Кабинет из натурального дерева", span: "normal" },
+  { src: gallery8, title: "Ванная с деревянным зеркалом", span: "normal" },
 ];
 
 const GalleryPage = () => {
+  const [lightbox, setLightbox] = useState<number | null>(null);
+
   return (
     <div
       className="min-h-screen"
@@ -33,7 +41,7 @@ const GalleryPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-12"
+            className="text-center mb-16"
           >
             <h1 className="text-4xl md:text-5xl lg:text-6xl text-foreground mb-4">
               Галерея
@@ -42,22 +50,72 @@ const GalleryPage = () => {
               Наши изделия в интерьерах — вдохновляйтесь реальными примерами
             </p>
           </motion.div>
-        </div>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-        >
-          <ThreeDCarousel images={galleryImages} />
-        </motion.div>
-
-        <div className="container mx-auto px-4 mt-16 text-center">
-          <p className="text-muted-foreground text-sm">
-            Перетаскивайте карусель для просмотра · Нажмите на фото для увеличения
-          </p>
+          {/* Masonry grid */}
+          <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
+            {galleryItems.map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-80px" }}
+                transition={{ duration: 0.6, delay: i * 0.08, ease: [0.25, 0.1, 0.25, 1] }}
+                className="break-inside-avoid group cursor-pointer relative overflow-hidden rounded-2xl"
+                onClick={() => setLightbox(i)}
+              >
+                <img
+                  src={item.src}
+                  alt={item.title}
+                  className="w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  loading="lazy"
+                />
+                {/* Hover overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6">
+                  <span className="text-white text-sm font-medium tracking-wide">
+                    {item.title}
+                  </span>
+                </div>
+                {/* Border glow on hover */}
+                <div className="absolute inset-0 rounded-2xl border-2 border-primary/0 group-hover:border-primary/30 transition-all duration-500" />
+              </motion.div>
+            ))}
+          </div>
         </div>
       </main>
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightbox !== null && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center cursor-pointer"
+            onClick={() => setLightbox(null)}
+          >
+            <motion.img
+              key={lightbox}
+              src={galleryItems[lightbox].src}
+              alt={galleryItems[lightbox].title}
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.85, opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+              className="max-w-[92vw] max-h-[88vh] rounded-2xl shadow-2xl object-contain"
+            />
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="absolute bottom-8 text-white/70 text-sm"
+            >
+              {galleryItems[lightbox].title}
+            </motion.p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <Footer />
     </div>
   );
