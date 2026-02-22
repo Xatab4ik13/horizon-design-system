@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRef, useCallback, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import showcaseMirror from "@/assets/showcase-mirror.png";
 import showcasePano from "@/assets/showcase-pano.png";
@@ -36,29 +36,36 @@ const showcaseItems = [
   },
 ];
 
-const Tilt3D = ({ children }: { children: React.ReactNode }) => {
-  const ref = useRef<HTMLDivElement>(null);
+/** Autonomous 3D tilt — animates on its own, ignores mouse */
+const AutoTilt3D = ({ children }: { children: React.ReactNode }) => {
   const [style, setStyle] = useState({ rotateX: 0, rotateY: 0 });
+  const raf = useRef<number>(0);
+  const t = useRef(Math.random() * 1000);
 
-  const handleMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!ref.current) return;
-    const rect = ref.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    setStyle({ rotateX: -y * 18, rotateY: x * 22 });
-  }, []);
-
-  const handleLeave = useCallback(() => {
-    setStyle({ rotateX: 0, rotateY: 0 });
+  useEffect(() => {
+    let running = true;
+    const animate = () => {
+      if (!running) return;
+      t.current += 0.008;
+      const rx = Math.sin(t.current * 1.3) * 8 + Math.sin(t.current * 2.7) * 4;
+      const ry = Math.cos(t.current * 0.9) * 10 + Math.cos(t.current * 2.1) * 5;
+      setStyle({ rotateX: rx, rotateY: ry });
+      raf.current = requestAnimationFrame(animate);
+    };
+    raf.current = requestAnimationFrame(animate);
+    return () => {
+      running = false;
+      cancelAnimationFrame(raf.current);
+    };
   }, []);
 
   return (
-    <div ref={ref} onMouseMove={handleMove} onMouseLeave={handleLeave} style={{ perspective: "1200px" }}>
+    <div style={{ perspective: "1200px" }}>
       <div
         style={{
           transform: `rotateX(${style.rotateX}deg) rotateY(${style.rotateY}deg)`,
-          transition: "transform 0.15s ease-out",
           transformStyle: "preserve-3d",
+          willChange: "transform",
         }}
       >
         {children}
@@ -103,7 +110,6 @@ const PopularProducts = () => {
     setCurrent(i);
   }, [current]);
 
-  // Auto-advance every 7s
   useEffect(() => {
     if (paused) return;
     const timer = setInterval(() => paginate(1), 7000);
@@ -114,7 +120,7 @@ const PopularProducts = () => {
 
   return (
     <section
-      className="relative overflow-hidden group/section"
+      className="relative overflow-hidden"
       style={{
         background:
           "linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(25 15% 8%) 40%, hsl(30 12% 6%) 70%, hsl(0 0% 0%) 100%)",
@@ -181,7 +187,7 @@ const PopularProducts = () => {
 
               {/* Image */}
               <div className="w-full md:w-7/12 flex justify-center">
-                <Tilt3D>
+                <AutoTilt3D>
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -203,23 +209,23 @@ const PopularProducts = () => {
                       </div>
                     )}
                   </motion.div>
-                </Tilt3D>
+                </AutoTilt3D>
               </div>
             </motion.div>
           </AnimatePresence>
         </div>
 
-        {/* Navigation arrows — hidden until hover */}
+        {/* Navigation arrows — visible only on self-hover */}
         <button
           onClick={() => paginate(-1)}
-          className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-all duration-500 backdrop-blur-sm opacity-0 group-hover/section:opacity-100"
+          className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full border border-white/0 flex items-center justify-center text-transparent hover:text-white hover:border-white/40 hover:backdrop-blur-sm transition-all duration-300"
           aria-label="Предыдущий"
         >
           <ChevronLeft className="w-6 h-6" />
         </button>
         <button
           onClick={() => paginate(1)}
-          className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-all duration-500 backdrop-blur-sm opacity-0 group-hover/section:opacity-100"
+          className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full border border-white/0 flex items-center justify-center text-transparent hover:text-white hover:border-white/40 hover:backdrop-blur-sm transition-all duration-300"
           aria-label="Следующий"
         >
           <ChevronRight className="w-6 h-6" />
