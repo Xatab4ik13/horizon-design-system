@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useRef, useCallback, useState } from "react";
 import showcaseMirror from "@/assets/showcase-mirror.png";
-import productPano1 from "@/assets/product-pano-1.jpeg";
+import showcasePano from "@/assets/showcase-pano.png";
 import subEntranceDoors from "@/assets/sub-entrance-doors.jpg";
 
 const showcaseItems = [
@@ -17,10 +17,10 @@ const showcaseItems = [
   {
     title: "Панно",
     subtitle: "Резные декоративные панно из массива",
-    image: productPano1,
+    image: showcasePano,
     link: "/catalog?category=interior&subcategory=pano",
-    transparent: false,
-    tilt3d: false,
+    transparent: true,
+    tilt3d: true,
   },
   {
     title: "Двери",
