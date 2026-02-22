@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useRef, useCallback, useState } from "react";
 import showcaseMirror from "@/assets/showcase-mirror.png";
 import productPano1 from "@/assets/product-pano-1.jpeg";
 import subEntranceDoors from "@/assets/sub-entrance-doors.jpg";
@@ -11,6 +12,7 @@ const showcaseItems = [
     image: showcaseMirror,
     link: "/catalog?category=interior&subcategory=mirrors",
     transparent: true,
+    tilt3d: true,
   },
   {
     title: "Панно",
@@ -18,6 +20,7 @@ const showcaseItems = [
     image: productPano1,
     link: "/catalog?category=interior&subcategory=pano",
     transparent: false,
+    tilt3d: false,
   },
   {
     title: "Двери",
@@ -25,8 +28,55 @@ const showcaseItems = [
     image: subEntranceDoors,
     link: "/catalog?category=doors",
     transparent: false,
+    tilt3d: false,
   },
 ];
+
+const Tilt3D = ({ children }: { children: React.ReactNode }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [style, setStyle] = useState({ rotateX: 0, rotateY: 0, shadow: "0 20px 60px -15px rgba(0,0,0,0.5)" });
+
+  const handleMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    const rotateY = x * 25;
+    const rotateX = -y * 20;
+    const shadowX = -x * 30;
+    const shadowY = y * 30 + 20;
+    setStyle({
+      rotateX,
+      rotateY,
+      shadow: `${shadowX}px ${shadowY}px 60px -15px rgba(0,0,0,0.6)`,
+    });
+  }, []);
+
+  const handleLeave = useCallback(() => {
+    setStyle({ rotateX: 0, rotateY: 0, shadow: "0 20px 60px -15px rgba(0,0,0,0.5)" });
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+      style={{ perspective: "1000px" }}
+    >
+      <div
+        style={{
+          transform: `rotateX(${style.rotateX}deg) rotateY(${style.rotateY}deg)`,
+          boxShadow: style.shadow,
+          transition: "transform 0.15s ease-out, box-shadow 0.15s ease-out",
+          transformStyle: "preserve-3d",
+          borderRadius: "12px",
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+};
 
 const PopularProducts = () => {
   return (
@@ -61,22 +111,34 @@ const PopularProducts = () => {
                     transition={{ duration: 0.8, ease: "easeOut" }}
                     className="w-full md:w-1/2 flex justify-center"
                   >
-                    <div
-                      className={`relative ${
-                        item.transparent ? "w-[320px] h-[400px] md:w-[420px] md:h-[520px]" : "w-full max-w-lg h-[320px] md:h-[440px] rounded-2xl overflow-hidden"
-                      }`}
-                    >
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className={`w-full h-full ${
-                          item.transparent ? "object-contain" : "object-cover rounded-2xl"
-                        } transition-transform duration-700 group-hover:scale-105`}
-                      />
-                      {!item.transparent && (
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent rounded-2xl" />
-                      )}
-                    </div>
+                    {item.tilt3d ? (
+                      <Tilt3D>
+                        <div className="w-[320px] h-[400px] md:w-[420px] md:h-[520px]">
+                          <img
+                            src={item.image}
+                            alt={item.title}
+                            className="w-full h-full object-contain drop-shadow-2xl"
+                          />
+                        </div>
+                      </Tilt3D>
+                    ) : (
+                      <div
+                        className={`relative ${
+                          item.transparent ? "w-[320px] h-[400px] md:w-[420px] md:h-[520px]" : "w-full max-w-lg h-[320px] md:h-[440px] rounded-2xl overflow-hidden"
+                        }`}
+                      >
+                        <img
+                          src={item.image}
+                          alt={item.title}
+                          className={`w-full h-full ${
+                            item.transparent ? "object-contain" : "object-cover rounded-2xl"
+                          } transition-transform duration-700 group-hover:scale-105`}
+                        />
+                        {!item.transparent && (
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent rounded-2xl" />
+                        )}
+                      </div>
+                    )}
                   </motion.div>
 
                   {/* Text */}
