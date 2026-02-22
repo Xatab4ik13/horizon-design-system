@@ -192,23 +192,6 @@ const Header = () => {
           /* Mobile / Tablet navbar */
           <div className="flex items-center justify-between w-full bg-background/5 border border-border/40 backdrop-blur-lg py-2.5 px-4 rounded-full shadow-lg shadow-black/20">
             <Logo size="sm" />
-            <div className="flex items-center gap-1">
-              <button onClick={() => setSearchOpen(true)} className="p-2 rounded-full text-foreground/80 hover:text-primary transition-colors" aria-label="Поиск">
-                <Search className="h-5 w-5" />
-              </button>
-              <Link to="/account" className="p-2 rounded-full text-foreground/80 hover:text-primary transition-colors" aria-label="Личный кабинет">
-                <User className="h-5 w-5" />
-              </Link>
-              <Link to="/cart" className="relative p-2 rounded-full text-foreground/80 hover:text-primary transition-colors" aria-label="Корзина">
-                <ShoppingCart className="h-5 w-5" />
-                {totalItems > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-semibold">
-                    {totalItems}
-                  </span>
-                )}
-              </Link>
-            </div>
-
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-full text-foreground/80 hover:text-primary transition-colors"
@@ -361,10 +344,31 @@ const Header = () => {
                 </motion.div>
               </nav>
 
+              {/* Action icons */}
+              <div className="flex items-center justify-around px-6 py-4 border-t border-border/30">
+                <button onClick={() => { setMobileMenuOpen(false); setSearchOpen(true); }} className="flex flex-col items-center gap-1 p-2 text-foreground/70 hover:text-primary transition-colors">
+                  <Search className="h-5 w-5" />
+                  <span className="text-[10px]">Поиск</span>
+                </button>
+                <Link to="/account" onClick={() => setMobileMenuOpen(false)} className="flex flex-col items-center gap-1 p-2 text-foreground/70 hover:text-primary transition-colors">
+                  <User className="h-5 w-5" />
+                  <span className="text-[10px]">Кабинет</span>
+                </Link>
+                <Link to="/cart" onClick={() => setMobileMenuOpen(false)} className="relative flex flex-col items-center gap-1 p-2 text-foreground/70 hover:text-primary transition-colors">
+                  <ShoppingCart className="h-5 w-5" />
+                  {totalItems > 0 && (
+                    <span className="absolute top-0 right-1 bg-primary text-primary-foreground text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-semibold">
+                      {totalItems}
+                    </span>
+                  )}
+                  <span className="text-[10px]">Корзина</span>
+                </Link>
+              </div>
+
               {/* Bottom section */}
-              <div className="px-6 py-6 mt-auto border-t border-border/30">
+              <div className="px-6 py-4 border-t border-border/30">
                 <p className="text-xs text-muted-foreground/50 text-center">
-                  © 2026 WoodCraft
+                  © 2026 FAKTURA
                 </p>
               </div>
             </motion.div>
