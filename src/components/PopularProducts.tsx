@@ -34,26 +34,18 @@ const showcaseItems = [
 
 const Tilt3D = ({ children }: { children: React.ReactNode }) => {
   const ref = useRef<HTMLDivElement>(null);
-  const [style, setStyle] = useState({ rotateX: 0, rotateY: 0, shadow: "0 20px 60px -15px rgba(0,0,0,0.5)" });
+  const [style, setStyle] = useState({ rotateX: 0, rotateY: 0 });
 
   const handleMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!ref.current) return;
     const rect = ref.current.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width - 0.5;
     const y = (e.clientY - rect.top) / rect.height - 0.5;
-    const rotateY = x * 25;
-    const rotateX = -y * 20;
-    const shadowX = -x * 30;
-    const shadowY = y * 30 + 20;
-    setStyle({
-      rotateX,
-      rotateY,
-      shadow: `${shadowX}px ${shadowY}px 60px -15px rgba(0,0,0,0.6)`,
-    });
+    setStyle({ rotateX: -y * 20, rotateY: x * 25 });
   }, []);
 
   const handleLeave = useCallback(() => {
-    setStyle({ rotateX: 0, rotateY: 0, shadow: "0 20px 60px -15px rgba(0,0,0,0.5)" });
+    setStyle({ rotateX: 0, rotateY: 0 });
   }, []);
 
   return (
@@ -66,10 +58,8 @@ const Tilt3D = ({ children }: { children: React.ReactNode }) => {
       <div
         style={{
           transform: `rotateX(${style.rotateX}deg) rotateY(${style.rotateY}deg)`,
-          boxShadow: style.shadow,
-          transition: "transform 0.15s ease-out, box-shadow 0.15s ease-out",
+          transition: "transform 0.15s ease-out",
           transformStyle: "preserve-3d",
-          borderRadius: "12px",
         }}
       >
         {children}
