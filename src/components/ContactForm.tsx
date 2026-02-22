@@ -31,10 +31,10 @@ const ContactForm = () => {
   return (
     <section className="py-20 bg-muted/50">
       <div className="container mx-auto px-4 max-w-lg">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-4 text-foreground">
+        <h2 className="text-3xl md:text-4xl text-center mb-4 text-foreground">
           Обратная связь
         </h2>
-        <p className="text-center text-muted-foreground mb-8">Оставьте заявку и мы свяжемся с вами</p>
+        <p className="text-center text-muted-foreground mb-8 font-light">Оставьте заявку и мы свяжемся с вами</p>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">

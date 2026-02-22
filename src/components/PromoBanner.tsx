@@ -9,10 +9,10 @@ const PromoBanner = () => {
             <span className="inline-block text-primary text-sm font-semibold uppercase tracking-wider mb-3">
               Специальное предложение
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4" style={{ fontFamily: "'Poppins', serif" }}>
+            <h2 className="text-3xl md:text-4xl text-white mb-4" style={{ fontFamily: "'Franklin Gothic Medium', sans-serif" }}>
               Скидка 15% на первый заказ
             </h2>
-            <p className="text-white/70 mb-6">
+            <p className="text-white/70 mb-6 font-light">
               Оформите заказ до конца месяца и получите скидку на любое изделие из каталога.
             </p>
             <Button size="lg" className="rounded-full px-8">

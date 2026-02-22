@@ -39,7 +39,7 @@ const AdvantagesSection = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-3xl md:text-4xl font-bold text-center mb-16 text-foreground"
+          className="text-3xl md:text-4xl text-center mb-16 text-foreground"
         >
           Почему выбирают нас
         </motion.h2>
@@ -63,10 +63,10 @@ const AdvantagesSection = () => {
                 </div>
               </div>
 
-              <h3 className="font-semibold text-foreground mb-3 text-lg">
+              <h3 className="text-foreground mb-3 text-lg">
                 {a.title}
               </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed font-light">
                 {a.desc}
               </p>
             </motion.div>
