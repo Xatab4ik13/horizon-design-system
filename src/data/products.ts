@@ -84,6 +84,7 @@ export const categories = [
   { slug: "storage", name: "Системы хранения" },
   { slug: "interior", name: "Предметы интерьера" },
   { slug: "crafts", name: "Заготовки для творчества" },
+  { slug: "doors", name: "Двери" },
 ];
 
 export const materials = ["Дуб", "Орех", "Бук", "Ясень"];
