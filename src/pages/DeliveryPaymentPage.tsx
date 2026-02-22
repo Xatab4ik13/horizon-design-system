@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import {
-  Truck, MapPin, Calculator, Clock, Package, CreditCard,
+  Truck, MapPin, Clock, Package, CreditCard,
   ShieldCheck, Receipt, Tag, ChevronRight, Phone, CheckCircle2,
 } from "lucide-react";
 import logoCdek from "@/assets/logo-cdek.png";
@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+
 
 // ─── Delivery companies ───
 const deliveryCompanies = [
@@ -89,78 +89,6 @@ const paymentMethods = [
     icon: Tag,
   },
 ];
-
-// ─── Delivery Calculator (placeholder) ───
-const DeliveryCalculator = () => {
-  const [city, setCity] = useState("");
-  const [calculated, setCalculated] = useState(false);
-
-  return (
-    <div className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-6 md:p-8">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-          <Calculator className="h-5 w-5 text-primary" />
-        </div>
-        <div>
-          <h3 className="text-lg font-bold text-foreground">Калькулятор доставки</h3>
-          <p className="text-sm text-muted-foreground">Рассчитайте стоимость и сроки</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div>
-          <label className="text-sm text-muted-foreground mb-1.5 block">Город</label>
-          <input
-            type="text"
-            value={city}
-            onChange={(e) => { setCity(e.target.value); setCalculated(false); }}
-            placeholder="Например, Москва"
-            className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors"
-          />
-        </div>
-        <div>
-          <label className="text-sm text-muted-foreground mb-1.5 block">Вес (кг)</label>
-          <input
-            type="number"
-            placeholder="5"
-            className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors"
-          />
-        </div>
-        <div className="flex items-end">
-          <Button
-            className="w-full rounded-xl"
-            size="lg"
-            onClick={() => city && setCalculated(true)}
-          >
-            Рассчитать
-          </Button>
-        </div>
-      </div>
-
-      {calculated && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-1 sm:grid-cols-3 gap-4"
-        >
-          {[
-            { company: "СДЭК", price: "от 450 ₽", days: "3–5 дней" },
-            { company: "Boxberry", price: "от 390 ₽", days: "4–7 дней" },
-            { company: "Яндекс Доставка", price: "от 350 ₽", days: "1–2 дня" },
-          ].map((r) => (
-            <div key={r.company} className="p-4 rounded-xl bg-background/40 border border-border/50">
-              <p className="text-sm font-semibold text-foreground mb-1">{r.company}</p>
-              <p className="text-primary font-bold text-lg">{r.price}</p>
-              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                <Clock className="h-3 w-3" /> {r.days}
-              </p>
-            </div>
-          ))}
-        </motion.div>
-      )}
-    </div>
-  );
-};
 
 // ─── Page ───
 const DeliveryPaymentPage = () => {
@@ -296,14 +224,6 @@ const DeliveryPaymentPage = () => {
               </div>
             </motion.div>
 
-            {/* Calculator */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
-              <DeliveryCalculator />
-            </motion.div>
           </section>
 
           {/* ═══════ PACKAGING ═══════ */}
