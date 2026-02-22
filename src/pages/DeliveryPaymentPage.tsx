@@ -74,11 +74,6 @@ const paymentMethods = [
     icon: ShieldCheck,
   },
   {
-    name: "CloudPayments",
-    description: "Мгновенная оплата с поддержкой рекуррентных платежей и Apple Pay / Google Pay.",
-    icon: ShieldCheck,
-  },
-  {
     name: "Онлайн-чеки (54-ФЗ)",
     description: "Все чеки формируются автоматически и отправляются в ФНС в соответствии с 54-ФЗ.",
     icon: Receipt,
