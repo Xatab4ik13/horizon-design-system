@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useCart } from "@/contexts/CartContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Heart, ShoppingCart, Menu, Home, LayoutGrid, Image, BookOpen, Building2, CreditCard, Wrench, PhoneCall } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -34,6 +35,7 @@ const navItems = [
 const Header = () => {
   const location = useLocation();
   const isMobile = useIsMobile();
+  const { totalItems } = useCart();
   const [activeTab, setActiveTab] = useState(
     navItems.find((item) => item.url === location.pathname)?.name || navItems[0].name
   );
@@ -169,12 +171,14 @@ const Header = () => {
               <button className="p-2.5 rounded-full text-foreground/80 hover:text-primary hover:bg-muted transition-colors" aria-label="Избранное">
                 <Heart className="h-5 w-5" />
               </button>
-              <button className="relative p-2.5 rounded-full text-foreground/80 hover:text-primary hover:bg-muted transition-colors" aria-label="Корзина">
+              <Link to="/cart" className="relative p-2.5 rounded-full text-foreground/80 hover:text-primary hover:bg-muted transition-colors" aria-label="Корзина">
                 <ShoppingCart className="h-5 w-5" />
-                <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold">
-                  0
-                </span>
-              </button>
+                {totalItems > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold">
+                    {totalItems}
+                  </span>
+                )}
+              </Link>
             </div>
           </div>
         ) : (
@@ -187,12 +191,14 @@ const Header = () => {
               <button className="p-2 rounded-full text-foreground/80 hover:text-primary transition-colors" aria-label="Избранное">
                 <Heart className="h-5 w-5" />
               </button>
-              <button className="relative p-2 rounded-full text-foreground/80 hover:text-primary transition-colors" aria-label="Корзина">
+              <Link to="/cart" className="relative p-2 rounded-full text-foreground/80 hover:text-primary transition-colors" aria-label="Корзина">
                 <ShoppingCart className="h-5 w-5" />
-                <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-semibold">
-                  0
-                </span>
-              </button>
+                {totalItems > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-semibold">
+                    {totalItems}
+                  </span>
+                )}
+              </Link>
             </div>
 
             <Sheet>

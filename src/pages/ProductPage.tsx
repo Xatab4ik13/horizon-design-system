@@ -12,6 +12,7 @@ import Footer from "@/components/Footer";
 import { useState, useMemo, useCallback } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useCart } from "@/contexts/CartContext";
 
 // ─── Stars ───
 const Stars = ({ rating, size = 16 }: { rating: number; size?: number }) => (
@@ -203,6 +204,7 @@ const MiniProductCard = ({ productId }: { productId: string }) => {
 const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
   const product = getProductById(id || "");
+  const { addItem } = useCart();
   const [showAR, setShowAR] = useState(false);
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<"reviews" | "qa">("reviews");
@@ -370,7 +372,16 @@ const ProductPage = () => {
 
               {/* ─── Actions ─── */}
               <div className="flex gap-3 mb-4 mt-auto">
-                <Button size="lg" className="flex-1 gap-2 rounded-full" onClick={() => toast.success("Товар добавлен в корзину")}>
+                <Button size="lg" className="flex-1 gap-2 rounded-full" onClick={() => {
+                  addItem({
+                    productId: product.id,
+                    name: product.name,
+                    price: computedPrice,
+                    image: product.images[0],
+                    variations: Object.keys(selectedVariations).length > 0 ? selectedVariations : undefined,
+                  });
+                  toast.success("Товар добавлен в корзину");
+                }}>
                   <ShoppingCart className="h-5 w-5" />
                   В корзину
                 </Button>
