@@ -34,6 +34,7 @@ export interface Variation {
 // --- Product ---
 export interface Product {
   id: string;
+  sku: string;
   name: string;
   price: number;
   oldPrice?: number;
@@ -95,6 +96,7 @@ const mockQA: Record<string, QA[]> = {
 export const products: Product[] = [
   {
     id: "pano-wave",
+    sku: "DW-INT-P001",
     name: "Панно «Волна»",
     price: 45000,
     oldPrice: 55000,
@@ -138,6 +140,7 @@ export const products: Product[] = [
   },
   {
     id: "pano-zebra",
+    sku: "DW-INT-P002",
     name: "Панно «Зебра»",
     price: 68000,
     category: "interior",
@@ -169,6 +172,7 @@ export const products: Product[] = [
   },
   {
     id: "pano-radiance",
+    sku: "DW-INT-P003",
     name: "Панно «Сияние»",
     price: 95000,
     category: "interior",
@@ -200,6 +204,7 @@ export const products: Product[] = [
   },
   {
     id: "mirror-wave",
+    sku: "DW-INT-M001",
     name: "Зеркало «Поток»",
     price: 38000,
     category: "interior",
@@ -254,6 +259,7 @@ export const products: Product[] = [
   },
   {
     id: "shelf-console",
+    sku: "DW-FUR-S001",
     name: "Полка-консоль «Трио»",
     price: 24000,
     category: "furniture",
@@ -274,6 +280,7 @@ export const products: Product[] = [
   },
   {
     id: "shelf-wave",
+    sku: "DW-FUR-S002",
     name: "Полка «Волна»",
     price: 19500,
     category: "furniture",

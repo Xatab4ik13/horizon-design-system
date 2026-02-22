@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, User, ShoppingCart, Menu, X, ChevronDown } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import LiveSearch from "@/components/LiveSearch";
 import categoryTable from "@/assets/category-table.png";
 import categoryChairs from "@/assets/category-chairs.png";
 import categoryDecor from "@/assets/category-decor.png";
@@ -42,6 +43,7 @@ const Header = () => {
   const catalogTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileCatalogOpen, setMobileCatalogOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     const match = navItems.find((item) => item.url === location.pathname);
@@ -166,7 +168,7 @@ const Header = () => {
 
             {/* Action icons */}
             <div className="flex items-center gap-1.5 border-l border-border/40 pl-3 ml-2">
-              <button className="p-2.5 rounded-full text-foreground/80 hover:text-primary hover:bg-muted transition-colors" aria-label="Поиск">
+              <button onClick={() => setSearchOpen(true)} className="p-2.5 rounded-full text-foreground/80 hover:text-primary hover:bg-muted transition-colors" aria-label="Поиск">
                 <Search className="h-5 w-5" />
               </button>
               <Link to="/account" className="p-2.5 rounded-full text-foreground/80 hover:text-primary hover:bg-muted transition-colors" aria-label="Личный кабинет">
@@ -186,7 +188,7 @@ const Header = () => {
           /* Mobile / Tablet navbar */
           <div className="flex items-center justify-between w-full bg-background/5 border border-border/40 backdrop-blur-lg py-2.5 px-4 rounded-full shadow-lg shadow-black/20">
             <div className="flex items-center gap-1">
-              <button className="p-2 rounded-full text-foreground/80 hover:text-primary transition-colors" aria-label="Поиск">
+              <button onClick={() => setSearchOpen(true)} className="p-2 rounded-full text-foreground/80 hover:text-primary transition-colors" aria-label="Поиск">
                 <Search className="h-5 w-5" />
               </button>
               <Link to="/account" className="p-2 rounded-full text-foreground/80 hover:text-primary transition-colors" aria-label="Личный кабинет">
@@ -364,6 +366,9 @@ const Header = () => {
           </>
         )}
       </AnimatePresence>
+
+      {/* Live Search */}
+      <LiveSearch isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </header>
   );
 };
