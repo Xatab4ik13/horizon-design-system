@@ -53,6 +53,8 @@ const ContactForm = () => {
       <div className="absolute inset-0 bg-black/75" />
       {/* Top fade from dark */}
       <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-t from-transparent to-[hsl(0_0%_2%)]" />
+      {/* Bottom fade */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-[hsl(0_0%_0%)]" />
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-2xl mx-auto">

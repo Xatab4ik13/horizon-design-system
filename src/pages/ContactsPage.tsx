@@ -137,9 +137,10 @@ const ContactsPage = () => {
             </div>
           </motion.div>
 
-          {/* Contact form */}
-          <ContactForm />
         </div>
+
+        {/* Contact form — full width like on main page */}
+        <ContactForm />
       </main>
       <Footer />
     </div>
