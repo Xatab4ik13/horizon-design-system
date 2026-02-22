@@ -32,6 +32,7 @@ const showcaseItems = [
     image: showcaseDoors,
     link: "/catalog?category=doors",
     transparent: true,
+    no3d: true,
     cta: "Открыть каталог",
   },
 ];
@@ -187,29 +188,33 @@ const PopularProducts = () => {
 
               {/* Image */}
               <div className="w-full md:w-7/12 flex justify-center">
+                {item.no3d ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.2, duration: 0.7, ease: "easeOut" }}
+                  >
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="w-[400px] h-[500px] md:w-[550px] md:h-[650px] lg:w-[650px] lg:h-[750px] object-contain drop-shadow-2xl"
+                    />
+                  </motion.div>
+                ) : (
                 <AutoTilt3D>
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.2, duration: 0.7, ease: "easeOut" }}
                   >
-                    {item.transparent ? (
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="w-[340px] h-[340px] md:w-[500px] md:h-[500px] lg:w-[580px] lg:h-[580px] object-contain drop-shadow-2xl"
-                      />
-                    ) : (
-                      <div className="w-[340px] h-[340px] md:w-[500px] md:h-[500px] lg:w-[580px] lg:h-[580px] rounded-3xl overflow-hidden">
-                        <img
-                          src={item.image}
-                          alt={item.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="w-[340px] h-[340px] md:w-[500px] md:h-[500px] lg:w-[580px] lg:h-[580px] object-contain drop-shadow-2xl"
+                    />
                   </motion.div>
                 </AutoTilt3D>
+                )}
               </div>
             </motion.div>
           </AnimatePresence>
