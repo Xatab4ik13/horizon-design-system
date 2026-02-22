@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import BokehBackground from "./BokehBackground";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -16,6 +15,7 @@ const showcaseItems = [
     link: "/catalog?category=interior&subcategory=pano",
     transparent: true,
     cta: "Смотреть коллекцию",
+    bg: "radial-gradient(ellipse at 30% 50%, hsl(25 40% 12%) 0%, hsl(20 20% 6%) 50%, hsl(0 0% 2%) 100%)",
   },
   {
     title: "Зеркала",
@@ -25,6 +25,7 @@ const showcaseItems = [
     link: "/catalog?category=interior&subcategory=mirrors",
     transparent: true,
     cta: "Выбрать зеркало",
+    bg: "radial-gradient(ellipse at 70% 40%, hsl(210 20% 14%) 0%, hsl(220 15% 7%) 50%, hsl(0 0% 2%) 100%)",
   },
   {
     title: "Двери",
@@ -35,6 +36,7 @@ const showcaseItems = [
     transparent: true,
     no3d: true,
     cta: "Открыть каталог",
+    bg: "radial-gradient(ellipse at 50% 60%, hsl(15 30% 14%) 0%, hsl(10 20% 7%) 50%, hsl(0 0% 2%) 100%)",
   },
 ];
 
@@ -122,15 +124,11 @@ const PopularProducts = () => {
 
   return (
     <section
-      className="relative overflow-hidden"
-      style={{
-        background:
-          "linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(25 15% 8%) 40%, hsl(30 12% 6%) 70%, hsl(0 0% 0%) 100%)",
-      }}
+      className="relative overflow-hidden transition-[background] duration-1000"
+      style={{ background: item.bg }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      <BokehBackground />
       <div className="min-h-[85vh] md:min-h-[90vh] flex items-center relative" style={{ perspective: "1400px" }}>
         <div className="container mx-auto px-4 py-16 md:py-24">
           <AnimatePresence mode="wait" custom={direction}>
