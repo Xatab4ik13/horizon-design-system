@@ -138,22 +138,26 @@ const CatalogFilters = ({
                     <div key={dim.key} className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground w-14">{dim.label}</span>
                       <input
-                        type="number"
+                        type="text"
+                        inputMode="numeric"
                         value={sizeRange[dim.key][0]}
                         onChange={(e) =>
-                          onSizeChange(dim.key, [Number(e.target.value), sizeRange[dim.key][1]])
+                          onSizeChange(dim.key, [Number(e.target.value) || 0, sizeRange[dim.key][1]])
                         }
                         className="w-20 bg-muted/60 border border-border rounded-lg px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
+                        style={{ fontFamily: "'Franklin Gothic Medium', 'Noto Sans', sans-serif", letterSpacing: '0.02em' }}
                         placeholder="от"
                       />
                       <span className="text-muted-foreground text-xs">—</span>
                       <input
-                        type="number"
+                        type="text"
+                        inputMode="numeric"
                         value={sizeRange[dim.key][1]}
                         onChange={(e) =>
-                          onSizeChange(dim.key, [sizeRange[dim.key][0], Number(e.target.value)])
+                          onSizeChange(dim.key, [sizeRange[dim.key][0], Number(e.target.value) || 0])
                         }
                         className="w-20 bg-muted/60 border border-border rounded-lg px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
+                        style={{ fontFamily: "'Franklin Gothic Medium', 'Noto Sans', sans-serif", letterSpacing: '0.02em' }}
                         placeholder="до"
                       />
                     </div>
@@ -167,18 +171,22 @@ const CatalogFilters = ({
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       value={priceRange[0]}
-                      onChange={(e) => onPriceChange([Number(e.target.value), priceRange[1]])}
+                      onChange={(e) => onPriceChange([Number(e.target.value) || 0, priceRange[1]])}
                       className="w-28 bg-muted/60 border border-border rounded-lg px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
+                      style={{ fontFamily: "'Franklin Gothic Medium', 'Noto Sans', sans-serif", letterSpacing: '0.02em' }}
                       placeholder="От"
                     />
                     <span className="text-muted-foreground text-xs">—</span>
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       value={priceRange[1]}
-                      onChange={(e) => onPriceChange([priceRange[0], Number(e.target.value)])}
+                      onChange={(e) => onPriceChange([priceRange[0], Number(e.target.value) || 0])}
                       className="w-28 bg-muted/60 border border-border rounded-lg px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
+                      style={{ fontFamily: "'Franklin Gothic Medium', 'Noto Sans', sans-serif", letterSpacing: '0.02em' }}
                       placeholder="До"
                     />
                     <span className="text-xs text-muted-foreground">₽</span>
