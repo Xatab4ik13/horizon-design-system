@@ -210,7 +210,7 @@ const PopularProducts = () => {
                     <img
                       src={item.image}
                       alt={item.title}
-                      className="w-[340px] h-[340px] md:w-[500px] md:h-[500px] lg:w-[580px] lg:h-[580px] object-contain drop-shadow-2xl"
+                      className="w-[306px] h-[306px] md:w-[450px] md:h-[450px] lg:w-[522px] lg:h-[522px] object-contain drop-shadow-2xl"
                     />
                   </motion.div>
                 </AutoTilt3D>
