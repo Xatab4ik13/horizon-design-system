@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import BokehBackground from "./BokehBackground";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -129,6 +130,7 @@ const PopularProducts = () => {
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
+      <BokehBackground />
       <div className="min-h-[85vh] md:min-h-[90vh] flex items-center relative" style={{ perspective: "1400px" }}>
         <div className="container mx-auto px-4 py-16 md:py-24">
           <AnimatePresence mode="wait" custom={direction}>
