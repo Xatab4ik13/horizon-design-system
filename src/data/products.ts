@@ -74,6 +74,9 @@ const mockReviews: Record<string, Review[]> = {
   "mirror-wave": [
     { id: "r7", author: "Ольга П.", rating: 5, date: "2026-01-10", text: "Зеркало изумительное! Рама вырезана с невероятной точностью. Рекомендую всем.", verified: true },
     { id: "r8", author: "Сергей Д.", rating: 4, date: "2025-11-15", text: "Отличное качество, но хотелось бы больше вариантов размеров.", verified: false },
+    { id: "r9", author: "Татьяна Р.", rating: 5, date: "2026-02-01", text: "Заказали в прихожую — смотрится роскошно. Рама идеально обработана, дерево приятное на ощупь. Упаковка надёжная.", verified: true },
+    { id: "r10", author: "Михаил Г.", rating: 5, date: "2026-01-25", text: "Покупал жене на день рождения. Она в восторге! Зеркало большое, качественное, ручная работа видна сразу.", verified: true },
+    { id: "r11", author: "Ирина К.", rating: 4, date: "2025-12-20", text: "Красивое зеркало, но доставка заняла 10 дней вместо обещанных 7. Само изделие — 5 из 5.", verified: true },
   ],
 };
 
@@ -84,6 +87,8 @@ const mockQA: Record<string, QA[]> = {
   ],
   "mirror-wave": [
     { id: "q3", question: "Какой тип крепления в комплекте?", questionAuthor: "Алексей", questionDate: "2025-12-10", answer: "В комплекте скрытые французские крепления. Зеркало вешается на два анкера, которые также входят в комплект.", answerDate: "2025-12-11" },
+    { id: "q4", question: "Можно ли использовать в ванной?", questionAuthor: "Марина", questionDate: "2026-01-05", answer: "Зеркала влагостойкие, но деревянную раму рекомендуем дополнительно обработать лаком для влажных помещений. Мы можем сделать это за дополнительную плату.", answerDate: "2026-01-06" },
+    { id: "q5", question: "Делаете ли вы овальные зеркала?", questionAuthor: "Павел", questionDate: "2026-01-15", answer: "Да, мы можем изготовить раму любой формы по индивидуальному заказу. Стоимость рассчитывается отдельно.", answerDate: "2026-01-16" },
   ],
 };
 
@@ -205,8 +210,10 @@ export const products: Product[] = [
     details: "Рама вырезана из цельного массива. Зеркала — влагостойкие. Крепление на стену в комплекте.",
     dimensions: "60 × 80 × 3 см",
     weight: "6 кг",
-    images: [productMirror1, productPano1],
+    images: [productMirror1, productPano1, productPano2, productPano3, productShelf2],
     inStock: true,
+    isNew: true,
+    arModel: { glb: "/models/pano-wave.glb", usdz: "/models/pano-wave.usdz" },
     variations: [
       {
         type: "size",
@@ -215,6 +222,7 @@ export const products: Product[] = [
           { value: "s", label: "40 × 60 см", priceModifier: -8000 },
           { value: "m", label: "60 × 80 см" },
           { value: "l", label: "80 × 100 см", priceModifier: 12000 },
+          { value: "xl", label: "100 × 120 см", priceModifier: 22000 },
         ],
       },
       {
@@ -223,13 +231,25 @@ export const products: Product[] = [
         options: [
           { value: "birch", label: "Берёза" },
           { value: "oak", label: "Дуб", priceModifier: 5000 },
+          { value: "walnut", label: "Орех", priceModifier: 12000 },
+          { value: "ash", label: "Ясень", priceModifier: 3000 },
+        ],
+      },
+      {
+        type: "coating",
+        label: "Покрытие",
+        options: [
+          { value: "oil", label: "Натуральное масло" },
+          { value: "wax", label: "Масло с воском", priceModifier: 3000 },
+          { value: "lacquer", label: "Лак матовый", priceModifier: 5000 },
+          { value: "dark-stain", label: "Морилка тёмная", priceModifier: 4000 },
         ],
       },
     ],
     reviews: mockReviews["mirror-wave"] || [],
     qa: mockQA["mirror-wave"] || [],
-    rating: 4.5,
-    relatedIds: ["pano-wave"],
+    rating: 4.7,
+    relatedIds: ["pano-wave", "pano-zebra"],
     crossSellIds: ["shelf-console", "shelf-wave"],
   },
   {
