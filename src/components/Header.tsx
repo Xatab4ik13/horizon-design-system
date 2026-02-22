@@ -9,13 +9,14 @@ import categoryTable from "@/assets/category-table.png";
 import categoryChairs from "@/assets/category-chairs.png";
 import categoryDecor from "@/assets/category-decor.png";
 import categoryShelves from "@/assets/category-shelves.png";
+import categoryCrafts from "@/assets/category-crafts.png";
 
 const categories = [
   { name: "Мебель", slug: "furniture", image: categoryTable },
   { name: "Кухонные принадлежности", slug: "kitchen", image: categoryChairs },
   { name: "Системы хранения", slug: "storage", image: categoryDecor },
   { name: "Предметы интерьера", slug: "interior", image: categoryShelves },
-  { name: "Заготовки для творчества", slug: "crafts", image: null },
+  { name: "Заготовки для творчества", slug: "crafts", image: categoryCrafts },
 ];
 
 const navItems = [
