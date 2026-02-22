@@ -204,11 +204,11 @@ const CatalogPage = () => {
 
           {/* Subcategory cards */}
           {activeCategoryData && activeCategoryData.subcategories.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-10">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 mb-10">
               <button
                 onClick={() => setSubcategory(null)}
                 className={cn(
-                  "relative h-28 rounded-2xl overflow-hidden border-2 transition-all duration-300 group",
+                  "relative h-[4.5rem] rounded-xl overflow-hidden border-2 transition-all duration-300 group",
                   !activeSubcategory
                     ? "border-primary shadow-[0_0_20px_hsl(var(--primary)/0.3)]"
                     : "border-border hover:border-primary/40"
@@ -232,7 +232,7 @@ const CatalogPage = () => {
                   transition={{ duration: 0.3, delay: i * 0.05 }}
                   onClick={() => setSubcategory(sub.slug)}
                   className={cn(
-                    "relative h-28 rounded-2xl overflow-hidden border-2 transition-all duration-300 group",
+                    "relative h-[4.5rem] rounded-xl overflow-hidden border-2 transition-all duration-300 group",
                     activeSubcategory === sub.slug
                       ? "border-primary shadow-[0_0_20px_hsl(var(--primary)/0.3)]"
                       : "border-border hover:border-primary/40"
