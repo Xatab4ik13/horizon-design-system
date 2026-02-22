@@ -81,12 +81,12 @@ const Header = () => {
                     {isActive && (
                       <motion.div
                         layoutId="tubelight"
-                        className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-10 h-1"
+                        className="absolute -top-0.5 inset-x-0 mx-auto w-10 h-1"
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
                       >
                         <div className="w-full h-full bg-primary rounded-full" />
-                        <div className="absolute w-full h-full bg-primary/50 rounded-full blur-md" />
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-6 bg-primary/20 rounded-full blur-xl" />
+                        <div className="absolute inset-0 bg-primary/50 rounded-full blur-md" />
+                        <div className="absolute top-0 inset-x-0 mx-auto w-6 h-6 bg-primary/20 rounded-full blur-xl" />
                       </motion.div>
                     )}
                   </Link>
