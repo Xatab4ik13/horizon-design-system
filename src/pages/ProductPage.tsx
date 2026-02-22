@@ -1,18 +1,251 @@
 import { useParams, Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Heart, ShoppingCart, ArrowLeft, Smartphone, Ruler, Weight, TreePine, Check } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Heart, ShoppingCart, ArrowLeft, Smartphone, Ruler, Weight,
+  TreePine, Check, Star, ChevronLeft, ChevronRight, ZoomIn,
+  X, Droplets, MessageCircle, ThumbsUp,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getProductById, categories } from "@/data/products";
+import { getProductById, products, categories } from "@/data/products";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
+// ─── Stars ───
+const Stars = ({ rating, size = 16 }: { rating: number; size?: number }) => (
+  <div className="flex gap-0.5">
+    {[1, 2, 3, 4, 5].map((s) => (
+      <Star
+        key={s}
+        className={cn("transition-colors", s <= Math.round(rating) ? "fill-primary text-primary" : "text-muted-foreground/30")}
+        style={{ width: size, height: size }}
+      />
+    ))}
+  </div>
+);
+
+// ─── Gallery ───
+const ProductGallery = ({
+  images,
+  name,
+  isNew,
+  oldPrice,
+  price,
+  onARClick,
+  hasAR,
+}: {
+  images: string[];
+  name: string;
+  isNew?: boolean;
+  oldPrice?: number;
+  price: number;
+  onARClick: () => void;
+  hasAR: boolean;
+}) => {
+  const [active, setActive] = useState(0);
+  const [lightbox, setLightbox] = useState(false);
+  const [zoomed, setZoomed] = useState(false);
+  const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
+
+  const navigate = useCallback(
+    (dir: number) => setActive((a) => (a + dir + images.length) % images.length),
+    [images.length]
+  );
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!zoomed) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setZoomPos({
+      x: ((e.clientX - rect.left) / rect.width) * 100,
+      y: ((e.clientY - rect.top) / rect.height) * 100,
+    });
+  };
+
+  return (
+    <>
+      <div>
+        {/* Main image */}
+        <div
+          className="relative aspect-square rounded-2xl overflow-hidden bg-card border border-border mb-3 cursor-zoom-in group"
+          onClick={() => setLightbox(true)}
+          onMouseEnter={() => setZoomed(true)}
+          onMouseLeave={() => setZoomed(false)}
+          onMouseMove={handleMouseMove}
+        >
+          <img
+            src={images[active]}
+            alt={name}
+            className="w-full h-full object-cover transition-transform duration-300"
+            style={
+              zoomed
+                ? {
+                    transform: "scale(2)",
+                    transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
+                  }
+                : undefined
+            }
+          />
+          {isNew && (
+            <span className="absolute top-4 left-4 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-full z-10">
+              Новинка
+            </span>
+          )}
+          {oldPrice && (
+            <span className="absolute top-4 left-24 bg-destructive text-destructive-foreground text-xs font-semibold px-2 py-1.5 rounded-full z-10">
+              -{Math.round((1 - price / oldPrice) * 100)}%
+            </span>
+          )}
+          <div className="absolute bottom-4 right-4 p-2 rounded-full bg-background/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <ZoomIn className="h-5 w-5 text-foreground" />
+          </div>
+          {/* Nav arrows */}
+          {images.length > 1 && (
+            <>
+              <button
+                onClick={(e) => { e.stopPropagation(); navigate(-1); }}
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/50 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+              >
+                <ChevronLeft className="h-5 w-5 text-foreground" />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); navigate(1); }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/50 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+              >
+                <ChevronRight className="h-5 w-5 text-foreground" />
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Thumbnails */}
+        <div className="flex gap-2">
+          {images.map((img, i) => (
+            <button
+              key={i}
+              onClick={() => setActive(i)}
+              className={cn(
+                "w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border-2 transition-all duration-300",
+                active === i ? "border-primary shadow-[0_0_12px_hsl(var(--primary)/0.3)]" : "border-border hover:border-primary/40"
+              )}
+            >
+              <img src={img} alt="" className="w-full h-full object-cover" />
+            </button>
+          ))}
+          {hasAR && (
+            <button
+              onClick={onARClick}
+              className="w-16 h-16 md:w-20 md:h-20 rounded-xl border-2 border-border hover:border-primary/40 flex flex-col items-center justify-center gap-1 transition-colors"
+            >
+              <Smartphone className="h-5 w-5 text-primary" />
+              <span className="text-[10px] text-muted-foreground">AR</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightbox && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+          >
+            <button
+              onClick={() => setLightbox(false)}
+              className="absolute top-6 right-6 z-50 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            >
+              <X className="h-6 w-6 text-white" />
+            </button>
+            {images.length > 1 && (
+              <>
+                <button
+                  onClick={() => navigate(-1)}
+                  className="absolute left-6 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors z-50"
+                >
+                  <ChevronLeft className="h-6 w-6 text-white" />
+                </button>
+                <button
+                  onClick={() => navigate(1)}
+                  className="absolute right-6 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors z-50"
+                >
+                  <ChevronRight className="h-6 w-6 text-white" />
+                </button>
+              </>
+            )}
+            <motion.img
+              key={active}
+              src={images[active]}
+              alt={name}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="max-w-[92vw] max-h-[88vh] object-contain rounded-xl"
+            />
+            <div className="absolute bottom-6 flex gap-2">
+              {images.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActive(i)}
+                  className={cn(
+                    "w-2 h-2 rounded-full transition-all",
+                    i === active ? "w-8 bg-primary" : "bg-white/30 hover:bg-white/60"
+                  )}
+                />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+};
+
+// ─── Product Card (for cross-sells) ───
+const MiniProductCard = ({ productId }: { productId: string }) => {
+  const p = getProductById(productId);
+  if (!p) return null;
+  return (
+    <Link
+      to={`/product/${p.id}`}
+      className="group block bg-card rounded-2xl border border-border overflow-hidden hover:border-primary/40 transition-all duration-300"
+    >
+      <div className="aspect-square overflow-hidden">
+        <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+      </div>
+      <div className="p-4">
+        <p className="text-xs text-muted-foreground mb-1">{p.material}</p>
+        <h4 className="text-sm text-foreground group-hover:text-primary transition-colors mb-2 line-clamp-1">{p.name}</h4>
+        <span className="text-primary font-bold">{p.price.toLocaleString("ru-RU")} ₽</span>
+      </div>
+    </Link>
+  );
+};
+
+// ─── Main page ───
 const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
   const product = getProductById(id || "");
-  const [activeImage, setActiveImage] = useState(0);
   const [showAR, setShowAR] = useState(false);
+  const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab] = useState<"reviews" | "qa">("reviews");
+
+  const categoryData = useMemo(() => categories.find((c) => c.slug === product?.category), [product]);
+
+  const computedPrice = useMemo(() => {
+    if (!product) return 0;
+    let p = product.price;
+    (product.variations || []).forEach((v) => {
+      const sel = selectedVariations[v.type];
+      if (sel) {
+        const opt = v.options.find((o) => o.value === sel);
+        if (opt?.priceModifier) p += opt.priceModifier;
+      }
+    });
+    return p;
+  }, [product, selectedVariations]);
 
   if (!product) {
     return (
@@ -21,9 +254,7 @@ const ProductPage = () => {
         <main className="pt-32 pb-20">
           <div className="container mx-auto px-4 text-center">
             <h1 className="text-3xl font-bold text-foreground mb-4">Товар не найден</h1>
-            <Button asChild variant="outline">
-              <Link to="/catalog">Вернуться в каталог</Link>
-            </Button>
+            <Button asChild variant="outline"><Link to="/catalog">Вернуться в каталог</Link></Button>
           </div>
         </main>
         <Footer />
@@ -31,8 +262,8 @@ const ProductPage = () => {
     );
   }
 
-  const categoryData = categories.find((c) => c.slug === product.category);
-  const categoryName = categoryData?.name;
+  const relatedProducts = (product.relatedIds || []).filter((rid) => getProductById(rid));
+  const crossSellProducts = (product.crossSellIds || []).filter((rid) => getProductById(rid));
 
   return (
     <div className="min-h-screen" style={{ background: "linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(25 15% 8%) 40%, hsl(30 12% 6%) 70%, hsl(0 0% 0%) 100%)" }}>
@@ -40,92 +271,64 @@ const ProductPage = () => {
       <main className="pt-32 pb-20">
         <div className="container mx-auto px-4">
           {/* Breadcrumbs */}
-          <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-8">
+          <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-8 flex-wrap">
             <Link to="/" className="hover:text-primary transition-colors">Главная</Link>
             <span>/</span>
             <Link to="/catalog" className="hover:text-primary transition-colors">Каталог</Link>
             <span>/</span>
-            <Link to={`/catalog?category=${product.category}`} className="hover:text-primary transition-colors">
-              {categoryName}
-            </Link>
+            <Link to={`/catalog?category=${product.category}`} className="hover:text-primary transition-colors">{categoryData?.name}</Link>
             <span>/</span>
             <span className="text-foreground">{product.name}</span>
           </nav>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          {/* ═══ Top: Gallery + Info ═══ */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20">
             {/* Gallery */}
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <div className="relative aspect-square rounded-2xl overflow-hidden bg-card border border-border mb-4">
-                {showAR ? (
-                  <div className="w-full h-full flex flex-col items-center justify-center bg-muted/30">
-                    <Smartphone className="h-16 w-16 text-primary mb-4 animate-pulse" />
-                    <p className="text-foreground font-semibold text-lg mb-2">AR-просмотр</p>
-                    <p className="text-muted-foreground text-sm text-center max-w-xs mb-4">
-                      Наведите камеру на ровную поверхность, чтобы разместить {product.name.toLowerCase()} в вашем интерьере
-                    </p>
-                    <Button variant="outline" size="sm" onClick={() => setShowAR(false)}>
-                      Закрыть AR
-                    </Button>
-                  </div>
-                ) : (
-                  <img
-                    src={product.images[activeImage]}
-                    alt={product.name}
-                    className="w-full h-full object-cover"
-                  />
-                )}
-                {product.isNew && !showAR && (
-                  <span className="absolute top-4 left-4 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-full">
-                    Новинка
-                  </span>
-                )}
-              </div>
-
-              {/* Thumbnails */}
-              {product.images.length > 1 && (
-                <div className="flex gap-3">
-                  {product.images.map((img, i) => (
-                    <button
-                      key={i}
-                      onClick={() => { setActiveImage(i); setShowAR(false); }}
-                      className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition-colors ${
-                        activeImage === i && !showAR ? "border-primary" : "border-border"
-                      }`}
-                    >
-                      <img src={img} alt="" className="w-full h-full object-cover" />
-                    </button>
-                  ))}
+            <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
+              {showAR ? (
+                <div className="aspect-square rounded-2xl bg-card border border-border flex flex-col items-center justify-center">
+                  <Smartphone className="h-16 w-16 text-primary mb-4 animate-pulse" />
+                  <p className="text-foreground font-semibold text-lg mb-2">AR-просмотр</p>
+                  <p className="text-muted-foreground text-sm text-center max-w-xs mb-4">
+                    Наведите камеру на ровную поверхность, чтобы разместить изделие в вашем интерьере
+                  </p>
+                  <Button variant="outline" size="sm" onClick={() => setShowAR(false)}>Закрыть AR</Button>
                 </div>
+              ) : (
+                <ProductGallery
+                  images={product.images}
+                  name={product.name}
+                  isNew={product.isNew}
+                  oldPrice={product.oldPrice}
+                  price={product.price}
+                  onARClick={() => setShowAR(true)}
+                  hasAR={!!product.arModel}
+                />
               )}
             </motion.div>
 
-            {/* Product info */}
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
+            {/* Info */}
+            <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="flex flex-col">
               <p className="text-xs text-muted-foreground uppercase tracking-widest mb-2">
-                {categoryName} · {product.material}
+                {categoryData?.name} · {product.material}
               </p>
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-                {product.name}
-              </h1>
+              <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">{product.name}</h1>
+
+              {/* Rating */}
+              {product.rating > 0 && (
+                <div className="flex items-center gap-2 mb-4">
+                  <Stars rating={product.rating} />
+                  <span className="text-sm text-muted-foreground">{product.rating.toFixed(1)}</span>
+                  <span className="text-sm text-muted-foreground">· {product.reviews.length} отзывов</span>
+                </div>
+              )}
 
               {/* Price */}
               <div className="flex items-center gap-3 mb-6">
-                <span className="text-3xl font-bold text-primary">
-                  {product.price.toLocaleString("ru-RU")} ₽
-                </span>
-                {product.oldPrice && (
+                <span className="text-3xl font-bold text-primary">{computedPrice.toLocaleString("ru-RU")} ₽</span>
+                {product.oldPrice && computedPrice <= product.price && (
                   <>
-                    <span className="text-lg text-muted-foreground line-through">
-                      {product.oldPrice.toLocaleString("ru-RU")} ₽
-                    </span>
+                    <span className="text-lg text-muted-foreground line-through">{product.oldPrice.toLocaleString("ru-RU")} ₽</span>
                     <span className="bg-destructive text-destructive-foreground text-xs font-semibold px-2 py-1 rounded-full">
                       -{Math.round((1 - product.price / product.oldPrice) * 100)}%
                     </span>
@@ -134,83 +337,224 @@ const ProductPage = () => {
               </div>
 
               {/* Description */}
-              <p className="text-foreground/80 leading-relaxed mb-6">
-                {product.description}
-              </p>
+              <p className="text-foreground/80 leading-relaxed mb-6">{product.description}</p>
 
-              {/* Specs */}
-              <div className="grid grid-cols-2 gap-4 mb-8">
-                <div className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border">
-                  <Ruler className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Размеры</p>
-                    <p className="text-sm font-medium text-foreground">{product.dimensions}</p>
-                  </div>
+              {/* ─── Variations ─── */}
+              {product.variations && product.variations.length > 0 && (
+                <div className="space-y-5 mb-8">
+                  {product.variations.map((v) => (
+                    <div key={v.type}>
+                      <p className="text-sm font-medium text-foreground mb-2">{v.label}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {v.options.map((opt) => {
+                          const isSelected = selectedVariations[v.type] === opt.value;
+                          return (
+                            <button
+                              key={opt.value}
+                              onClick={() =>
+                                setSelectedVariations((prev) => ({
+                                  ...prev,
+                                  [v.type]: isSelected ? "" : opt.value,
+                                }))
+                              }
+                              className={cn(
+                                "px-4 py-2 rounded-xl text-sm border transition-all duration-300",
+                                isSelected
+                                  ? "border-primary bg-primary/10 text-primary"
+                                  : "border-border text-foreground/70 hover:border-primary/40"
+                              )}
+                            >
+                              {opt.label}
+                              {opt.priceModifier ? (
+                                <span className="ml-1 text-xs text-muted-foreground">
+                                  {opt.priceModifier > 0 ? "+" : ""}{opt.priceModifier.toLocaleString("ru-RU")} ₽
+                                </span>
+                              ) : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border">
-                  <Weight className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Вес</p>
-                    <p className="text-sm font-medium text-foreground">{product.weight}</p>
+              )}
+
+              {/* ─── Specs grid ─── */}
+              <div className="grid grid-cols-2 gap-3 mb-8">
+                {[
+                  { icon: TreePine, label: "Порода", value: product.material },
+                  { icon: Ruler, label: "Размеры", value: product.dimensions },
+                  { icon: Droplets, label: "Покрытие", value: product.coating },
+                  { icon: Weight, label: "Вес", value: product.weight },
+                  { icon: Check, label: "Наличие", value: product.inStock ? "В наличии" : "Под заказ (2–3 нед.)" },
+                ].map((spec) => (
+                  <div key={spec.label} className="flex items-center gap-3 p-3 bg-card/50 rounded-xl border border-border/50">
+                    <spec.icon className="h-4 w-4 text-primary shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-[11px] text-muted-foreground">{spec.label}</p>
+                      <p className="text-sm font-medium text-foreground truncate">{spec.value}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border">
-                  <TreePine className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Материал</p>
-                    <p className="text-sm font-medium text-foreground">{product.material}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border">
-                  <Check className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Наличие</p>
-                    <p className="text-sm font-medium text-foreground">
-                      {product.inStock ? "В наличии" : "Под заказ"}
-                    </p>
-                  </div>
-                </div>
+                ))}
               </div>
 
-              {/* Actions */}
-              <div className="flex gap-3 mb-6">
-                <Button size="lg" className="flex-1 gap-2" onClick={() => toast.success("Товар добавлен в корзину")}>
+              {/* ─── Actions ─── */}
+              <div className="flex gap-3 mb-4 mt-auto">
+                <Button size="lg" className="flex-1 gap-2 rounded-full" onClick={() => toast.success("Товар добавлен в корзину")}>
                   <ShoppingCart className="h-5 w-5" />
                   В корзину
                 </Button>
-                <Button size="lg" variant="outline" className="gap-2" onClick={() => toast.success("Добавлено в избранное")}>
+                <Button size="lg" variant="outline" className="gap-2 rounded-full" onClick={() => toast.success("Добавлено в избранное")}>
                   <Heart className="h-5 w-5" />
                 </Button>
               </div>
 
-              {/* AR button */}
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/10"
-                onClick={() => setShowAR(true)}
-              >
-                <Smartphone className="h-5 w-5" />
-                Посмотреть в AR
-              </Button>
+              {product.arModel && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/10 rounded-full"
+                  onClick={() => setShowAR(true)}
+                >
+                  <Smartphone className="h-5 w-5" />
+                  Посмотреть в AR
+                </Button>
+              )}
 
               {/* Details */}
-              <div className="mt-10 pt-8 border-t border-border">
-                <h3 className="text-lg font-semibold text-foreground mb-3">Подробности</h3>
-                <p className="text-foreground/70 leading-relaxed">{product.details}</p>
+              <div className="mt-8 pt-6 border-t border-border/50">
+                <h3 className="text-sm font-semibold text-foreground mb-2 uppercase tracking-wider">Подробности</h3>
+                <p className="text-foreground/70 leading-relaxed text-sm">{product.details}</p>
               </div>
             </motion.div>
           </div>
 
-          {/* Back link */}
-          <div className="mt-16">
-            <Button variant="ghost" asChild className="gap-2 text-muted-foreground hover:text-primary">
-              <Link to="/catalog">
-                <ArrowLeft className="h-4 w-4" />
-                Назад в каталог
-              </Link>
-            </Button>
-          </div>
+          {/* ═══ Reviews & Q&A ═══ */}
+          <motion.section
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="mb-20"
+          >
+            {/* Tabs */}
+            <div className="flex gap-1 bg-card/50 rounded-xl p-1 border border-border/50 w-fit mb-8">
+              {[
+                { key: "reviews" as const, label: "Отзывы", count: product.reviews.length },
+                { key: "qa" as const, label: "Вопросы", count: product.qa.length },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={cn(
+                    "px-6 py-2.5 rounded-lg text-sm font-medium transition-all duration-300",
+                    activeTab === tab.key
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {tab.label} ({tab.count})
+                </button>
+              ))}
+            </div>
+
+            {activeTab === "reviews" && (
+              <div className="space-y-4">
+                {product.reviews.length === 0 ? (
+                  <p className="text-muted-foreground text-sm">Отзывов пока нет. Будьте первым!</p>
+                ) : (
+                  product.reviews.map((r) => (
+                    <div key={r.id} className="bg-card/50 backdrop-blur-sm rounded-2xl border border-border/50 p-6">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-foreground text-sm">{r.author}</span>
+                            {r.verified && (
+                              <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full">Покупатель</span>
+                            )}
+                          </div>
+                          <Stars rating={r.rating} size={14} />
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(r.date).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" })}
+                        </span>
+                      </div>
+                      <p className="text-foreground/80 text-sm leading-relaxed">{r.text}</p>
+                      <button className="flex items-center gap-1.5 mt-3 text-xs text-muted-foreground hover:text-primary transition-colors">
+                        <ThumbsUp className="h-3.5 w-3.5" />
+                        Полезно
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {activeTab === "qa" && (
+              <div className="space-y-4">
+                {product.qa.length === 0 ? (
+                  <p className="text-muted-foreground text-sm">Вопросов пока нет. Задайте первый!</p>
+                ) : (
+                  product.qa.map((q) => (
+                    <div key={q.id} className="bg-card/50 backdrop-blur-sm rounded-2xl border border-border/50 p-6">
+                      <div className="flex items-start gap-3 mb-4">
+                        <MessageCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-foreground text-sm font-medium mb-1">{q.question}</p>
+                          <span className="text-xs text-muted-foreground">{q.questionAuthor} · {new Date(q.questionDate).toLocaleDateString("ru-RU")}</span>
+                        </div>
+                      </div>
+                      <div className="ml-7 pl-4 border-l-2 border-primary/20">
+                        <p className="text-foreground/80 text-sm leading-relaxed mb-1">{q.answer}</p>
+                        <span className="text-xs text-muted-foreground">Ответ мастерской · {new Date(q.answerDate).toLocaleDateString("ru-RU")}</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </motion.section>
+
+          {/* ═══ Cross-sells ═══ */}
+          {crossSellProducts.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="mb-16"
+            >
+              <h2 className="text-2xl font-bold text-foreground mb-8">С этим покупают</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {crossSellProducts.map((pid) => (
+                  <MiniProductCard key={pid} productId={pid} />
+                ))}
+              </div>
+            </motion.section>
+          )}
+
+          {/* ═══ Related ═══ */}
+          {relatedProducts.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="mb-16"
+            >
+              <h2 className="text-2xl font-bold text-foreground mb-8">Похожие товары</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {relatedProducts.map((pid) => (
+                  <MiniProductCard key={pid} productId={pid} />
+                ))}
+              </div>
+            </motion.section>
+          )}
+
+          {/* Back */}
+          <Button variant="ghost" asChild className="gap-2 text-muted-foreground hover:text-primary">
+            <Link to="/catalog"><ArrowLeft className="h-4 w-4" />Назад в каталог</Link>
+          </Button>
         </div>
       </main>
       <Footer />
