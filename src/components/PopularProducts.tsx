@@ -4,7 +4,7 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import showcaseMirror from "@/assets/showcase-mirror.png";
 import showcasePano from "@/assets/showcase-pano.png";
-import subEntranceDoors from "@/assets/sub-entrance-doors.jpg";
+import showcaseDoors from "@/assets/showcase-doors.png";
 
 const showcaseItems = [
   {
@@ -29,9 +29,9 @@ const showcaseItems = [
     title: "Двери",
     tagline: "Массив натурального дерева",
     description: "Межкомнатные и входные двери — надёжность и эстетика на десятилетия",
-    image: subEntranceDoors,
+    image: showcaseDoors,
     link: "/catalog?category=doors",
-    transparent: false,
+    transparent: true,
     cta: "Открыть каталог",
   },
 ];
