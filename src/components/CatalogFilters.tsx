@@ -74,14 +74,21 @@ const CatalogFilters = ({
                       transition={{ duration: 0.2, delay: i * 0.03 }}
                       onClick={() => onToggleWood(wood.name)}
                       className={cn(
-                        "flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium transition-all duration-200",
+                        "relative overflow-hidden rounded-xl h-10 px-4 text-xs font-semibold transition-all duration-200",
                         selectedWoods.includes(wood.name)
-                          ? "bg-primary text-primary-foreground shadow-[0_0_12px_hsl(var(--primary)/0.3)]"
-                          : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                          ? "ring-2 ring-primary shadow-[0_0_16px_hsl(var(--primary)/0.4)]"
+                          : "ring-1 ring-border hover:ring-primary/40"
                       )}
                     >
-                      <span className="text-sm">{wood.emoji}</span>
-                      {wood.name}
+                      <img
+                        src={wood.image}
+                        alt={wood.name}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-background/40" />
+                      <span className="relative z-10 text-foreground drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                        {wood.name}
+                      </span>
                     </motion.button>
                   ))}
                 </div>

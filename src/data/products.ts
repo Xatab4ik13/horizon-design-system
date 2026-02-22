@@ -185,15 +185,24 @@ export const categories: Category[] = [
 
 export const materials = ["Дуб", "Орех", "Бук", "Ясень", "Берёза"];
 
+import woodOak from "@/assets/wood-oak.jpg";
+import woodWalnut from "@/assets/wood-walnut.jpg";
+import woodBeech from "@/assets/wood-beech.jpg";
+import woodAsh from "@/assets/wood-ash.jpg";
+import woodBirch from "@/assets/wood-birch.jpg";
+import woodPine from "@/assets/wood-pine.jpg";
+import woodLarch from "@/assets/wood-larch.jpg";
+import woodElm from "@/assets/wood-elm.jpg";
+
 export const woodTypes = [
-  { name: "Дуб", emoji: "🪵" },
-  { name: "Орех", emoji: "🌰" },
-  { name: "Бук", emoji: "🌳" },
-  { name: "Ясень", emoji: "🍃" },
-  { name: "Берёза", emoji: "🌲" },
-  { name: "Сосна", emoji: "🌿" },
-  { name: "Лиственница", emoji: "🍂" },
-  { name: "Карагач", emoji: "🪴" },
+  { name: "Дуб", image: woodOak },
+  { name: "Орех", image: woodWalnut },
+  { name: "Бук", image: woodBeech },
+  { name: "Ясень", image: woodAsh },
+  { name: "Берёза", image: woodBirch },
+  { name: "Сосна", image: woodPine },
+  { name: "Лиственница", image: woodLarch },
+  { name: "Карагач", image: woodElm },
 ];
 
 export const coatings = [
