@@ -148,13 +148,8 @@ const DeliveryPaymentPage = () => {
                   transition={{ delay: i * 0.08 }}
                   className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-6 hover:border-primary/30 transition-all duration-300 group"
                 >
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center shrink-0 p-2">
-                      <img src={company.logo} alt={company.name} className="w-full h-full object-contain" />
-                    </div>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Clock className="h-3 w-3" /> {company.timing}
-                    </p>
+                  <div className="mb-4">
+                    <img src={company.logo} alt={company.name} className="h-12 object-contain" />
                   </div>
 
                   <p className="text-foreground/70 text-sm mb-4 leading-relaxed">
