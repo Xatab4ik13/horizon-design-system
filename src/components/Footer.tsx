@@ -33,14 +33,14 @@ const Footer = () => {
             <h4 className="text-foreground mb-3">Контакты</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>+7 (999) 123-45-67</li>
-              <li>info@woodcraft.ru</li>
+              <li>info@faktura.ru</li>
               <li>г. Москва, ул. Мастеровая, 12</li>
             </ul>
           </div>
         </div>
 
         <div className="border-t border-border mt-8 pt-6 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} WoodCraft. Все права защищены.
+          © {new Date().getFullYear()} FAKTURA. Все права защищены.
         </div>
       </div>
     </footer>
