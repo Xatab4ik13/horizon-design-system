@@ -2,7 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart, ShoppingCart, ArrowLeft, Smartphone, Ruler, Weight,
-  TreePine, Check, Star, ChevronLeft, ChevronRight, ZoomIn,
+  TreePine, Check, Star, ChevronLeft, ChevronRight,
   X, Droplets, MessageCircle, ThumbsUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -46,46 +46,24 @@ const ProductGallery = ({
 }) => {
   const [active, setActive] = useState(0);
   const [lightbox, setLightbox] = useState(false);
-  const [zoomed, setZoomed] = useState(false);
-  const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
 
   const navigate = useCallback(
     (dir: number) => setActive((a) => (a + dir + images.length) % images.length),
     [images.length]
   );
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!zoomed) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    setZoomPos({
-      x: ((e.clientX - rect.left) / rect.width) * 100,
-      y: ((e.clientY - rect.top) / rect.height) * 100,
-    });
-  };
-
   return (
     <>
       <div>
         {/* Main image */}
         <div
-          className="relative aspect-square rounded-2xl overflow-hidden bg-card border border-border mb-3 cursor-zoom-in group"
+          className="relative aspect-square rounded-2xl overflow-hidden bg-card border border-border mb-3 cursor-pointer group"
           onClick={() => setLightbox(true)}
-          onMouseEnter={() => setZoomed(true)}
-          onMouseLeave={() => setZoomed(false)}
-          onMouseMove={handleMouseMove}
         >
           <img
             src={images[active]}
             alt={name}
-            className="w-full h-full object-cover transition-transform duration-300"
-            style={
-              zoomed
-                ? {
-                    transform: "scale(2)",
-                    transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
-                  }
-                : undefined
-            }
+            className="w-full h-full object-cover"
           />
           {isNew && (
             <span className="absolute top-4 left-4 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-full z-10">
@@ -97,9 +75,6 @@ const ProductGallery = ({
               -{Math.round((1 - price / oldPrice) * 100)}%
             </span>
           )}
-          <div className="absolute bottom-4 right-4 p-2 rounded-full bg-background/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity z-10">
-            <ZoomIn className="h-5 w-5 text-foreground" />
-          </div>
           {/* Nav arrows */}
           {images.length > 1 && (
             <>
