@@ -181,7 +181,7 @@ const CatalogPage = () => {
 
   // --- Products view with filters ---
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen" style={{ background: "linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(25 15% 8%) 40%, hsl(30 12% 6%) 70%, hsl(0 0% 0%) 100%)" }}>
       <Header />
       <main className="pt-32 pb-20">
         <div className="container mx-auto px-4">
