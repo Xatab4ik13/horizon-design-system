@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import showcaseMirror from "@/assets/showcase-mirror.png";
 import showcasePano from "@/assets/showcase-pano.png";
@@ -26,43 +26,21 @@ const showcaseItems = [
   },
 ];
 
-/** Autonomous 3D tilt — animates on its own, ignores mouse */
-const AutoTilt3D = ({ children }: { children: React.ReactNode }) => {
-  const [style, setStyle] = useState({ rotateX: 0, rotateY: 0 });
-  const raf = useRef<number>(0);
-  const t = useRef(Math.random() * 1000);
-
-  useEffect(() => {
-    let running = true;
-    const animate = () => {
-      if (!running) return;
-      t.current += 0.008;
-      const rx = Math.sin(t.current * 1.3) * 8 + Math.sin(t.current * 2.7) * 4;
-      const ry = Math.cos(t.current * 0.9) * 10 + Math.cos(t.current * 2.1) * 5;
-      setStyle({ rotateX: rx, rotateY: ry });
-      raf.current = requestAnimationFrame(animate);
-    };
-    raf.current = requestAnimationFrame(animate);
-    return () => {
-      running = false;
-      cancelAnimationFrame(raf.current);
-    };
-  }, []);
-
-  return (
-    <div style={{ perspective: "1200px" }}>
-      <div
-        style={{
-          transform: `rotateX(${style.rotateX}deg) rotateY(${style.rotateY}deg)`,
-          transformStyle: "preserve-3d",
-          willChange: "transform",
-        }}
-      >
-        {children}
-      </div>
+/** Autonomous 3D tilt using CSS animation for better performance */
+const AutoTilt3D = memo(({ children }: { children: React.ReactNode }) => (
+  <div style={{ perspective: "1200px" }}>
+    <div
+      className="auto-tilt-3d"
+      style={{
+        transformStyle: "preserve-3d",
+        willChange: "transform",
+      }}
+    >
+      {children}
     </div>
-  );
-};
+  </div>
+));
+AutoTilt3D.displayName = "AutoTilt3D";
 
 const slideVariants = {
   enter: (dir: number) => ({
@@ -115,7 +93,7 @@ const PopularProducts = () => {
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      {/* Top/bottom fades for seamless transitions */}
+      {/* Top/bottom fades */}
       <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-t from-transparent to-[hsl(0_0%_2%)] z-10 pointer-events-none" />
       <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-b from-transparent to-[hsl(0_0%_2%)] z-10 pointer-events-none" />
       <div className="min-h-[85vh] md:min-h-[90vh] flex items-center relative" style={{ perspective: "1400px" }}>
@@ -186,6 +164,8 @@ const PopularProducts = () => {
                     <img
                       src={item.image}
                       alt={item.title}
+                      loading="lazy"
+                      decoding="async"
                       className="w-[306px] h-[306px] md:w-[450px] md:h-[450px] lg:w-[522px] lg:h-[522px] object-contain drop-shadow-2xl"
                     />
                   </motion.div>
@@ -195,7 +175,7 @@ const PopularProducts = () => {
           </AnimatePresence>
         </div>
 
-        {/* Navigation arrows — visible only on self-hover */}
+        {/* Navigation arrows */}
         <button
           onClick={() => paginate(-1)}
           className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full border border-white/0 flex items-center justify-center text-transparent hover:text-white hover:border-white/40 hover:backdrop-blur-sm transition-all duration-300"

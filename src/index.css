@@ -77,3 +77,16 @@
     line-height: 1.7;
   }
 }
+
+/* 3D auto-tilt animation — GPU-accelerated, no JS setState */
+@keyframes auto-tilt-3d {
+  0% { transform: rotateX(0deg) rotateY(0deg); }
+  25% { transform: rotateX(8deg) rotateY(10deg); }
+  50% { transform: rotateX(-4deg) rotateY(-8deg); }
+  75% { transform: rotateX(6deg) rotateY(-5deg); }
+  100% { transform: rotateX(0deg) rotateY(0deg); }
+}
+
+.auto-tilt-3d {
+  animation: auto-tilt-3d 8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
