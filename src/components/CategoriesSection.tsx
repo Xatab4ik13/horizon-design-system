@@ -6,10 +6,11 @@ import categoryDecor from "@/assets/category-decor.png";
 import categoryShelves from "@/assets/category-shelves.png";
 
 const categories = [
-  { name: "Столы", slug: "tables", image: categoryTable },
-  { name: "Стулья", slug: "chairs", image: categoryChairs },
-  { name: "Декор", slug: "decor", image: categoryDecor },
-  { name: "Полки", slug: "shelves", image: categoryShelves },
+  { name: "Мебель", slug: "furniture", image: categoryTable },
+  { name: "Кухонные принадлежности", slug: "kitchen", image: categoryChairs },
+  { name: "Системы хранения", slug: "storage", image: categoryDecor },
+  { name: "Предметы интерьера", slug: "interior", image: categoryShelves },
+  { name: "Заготовки для творчества", slug: "crafts", image: null as string | null },
 ];
 
 const CategoriesSection = () => {
@@ -24,7 +25,7 @@ const CategoriesSection = () => {
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-foreground">
           Категории каталога
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
           {categories.map((cat, i) => (
             <Link
               key={cat.slug}
