@@ -203,6 +203,8 @@ const CatalogPage = () => {
                           <img
                             src={categoryImages[cat.slug]}
                             alt={cat.name}
+                            loading="lazy"
+                            decoding="async"
                             className="max-w-full max-h-full object-contain transition-transform duration-700 group-hover:scale-110"
                           />
                         ) : (
@@ -277,6 +279,8 @@ const CatalogPage = () => {
                     <img
                       src={subcategoryImages[sub.slug]}
                       alt={sub.name}
+                      loading="lazy"
+                      decoding="async"
                       className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                     />
                   )}
@@ -392,6 +396,8 @@ const CatalogPage = () => {
                     <img
                       src={product.images[0]}
                       alt={product.name}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                     />
                     {product.isNew && (

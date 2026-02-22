@@ -150,7 +150,7 @@ const Header = () => {
                                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-primary/10 transition-all duration-200 group"
                                   >
                                     <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
-                                      <img src={cat.image} alt={cat.name} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300" />
+                                      <img src={cat.image} alt={cat.name} loading="lazy" decoding="async" className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300" />
                                     </div>
                                     <span className="text-sm font-medium text-foreground/70 group-hover:text-primary transition-colors">
                                       {cat.name}
@@ -307,6 +307,8 @@ const Header = () => {
                                             <img
                                               src={cat.image}
                                               alt={cat.name}
+                                              loading="lazy"
+                                              decoding="async"
                                               className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
                                             />
                                           </div>
