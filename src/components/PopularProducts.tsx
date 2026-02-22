@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRef, useCallback, useState } from "react";
+import { useRef, useCallback, useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import showcaseMirror from "@/assets/showcase-mirror.png";
 import showcasePano from "@/assets/showcase-pano.png";
@@ -67,36 +67,72 @@ const Tilt3D = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+const slideVariants = {
+  enter: (dir: number) => ({
+    opacity: 0,
+    rotateY: dir > 0 ? 25 : -25,
+    scale: 0.92,
+    x: dir > 0 ? 120 : -120,
+  }),
+  center: {
+    opacity: 1,
+    rotateY: 0,
+    scale: 1,
+    x: 0,
+  },
+  exit: (dir: number) => ({
+    opacity: 0,
+    rotateY: dir > 0 ? -20 : 20,
+    scale: 0.94,
+    x: dir > 0 ? -100 : 100,
+  }),
+};
+
 const PopularProducts = () => {
   const [current, setCurrent] = useState(0);
+  const [direction, setDirection] = useState(1);
+  const [paused, setPaused] = useState(false);
 
-  const next = useCallback(() => {
-    setCurrent((c) => (c + 1) % showcaseItems.length);
+  const paginate = useCallback((dir: number) => {
+    setDirection(dir);
+    setCurrent((c) => (c + dir + showcaseItems.length) % showcaseItems.length);
   }, []);
 
-  const prev = useCallback(() => {
-    setCurrent((c) => (c - 1 + showcaseItems.length) % showcaseItems.length);
-  }, []);
+  const goTo = useCallback((i: number) => {
+    setDirection(i > current ? 1 : -1);
+    setCurrent(i);
+  }, [current]);
+
+  // Auto-advance every 7s
+  useEffect(() => {
+    if (paused) return;
+    const timer = setInterval(() => paginate(1), 7000);
+    return () => clearInterval(timer);
+  }, [paused, paginate, current]);
 
   const item = showcaseItems[current];
 
   return (
     <section
-      className="relative overflow-hidden"
+      className="relative overflow-hidden group/section"
       style={{
         background:
           "linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(25 15% 8%) 40%, hsl(30 12% 6%) 70%, hsl(0 0% 0%) 100%)",
       }}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
     >
-      <div className="min-h-[85vh] md:min-h-[90vh] flex items-center relative">
+      <div className="min-h-[85vh] md:min-h-[90vh] flex items-center relative" style={{ perspective: "1400px" }}>
         <div className="container mx-auto px-4 py-16 md:py-24">
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={current}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
+              custom={direction}
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
               className="flex flex-col-reverse md:flex-row items-center gap-10 md:gap-16 lg:gap-24"
             >
               {/* Text */}
@@ -173,17 +209,17 @@ const PopularProducts = () => {
           </AnimatePresence>
         </div>
 
-        {/* Navigation arrows */}
+        {/* Navigation arrows — hidden until hover */}
         <button
-          onClick={prev}
-          className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-all duration-300 backdrop-blur-sm"
+          onClick={() => paginate(-1)}
+          className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-all duration-500 backdrop-blur-sm opacity-0 group-hover/section:opacity-100"
           aria-label="Предыдущий"
         >
           <ChevronLeft className="w-6 h-6" />
         </button>
         <button
-          onClick={next}
-          className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-all duration-300 backdrop-blur-sm"
+          onClick={() => paginate(1)}
+          className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-white hover:border-white/40 transition-all duration-500 backdrop-blur-sm opacity-0 group-hover/section:opacity-100"
           aria-label="Следующий"
         >
           <ChevronRight className="w-6 h-6" />
@@ -194,7 +230,7 @@ const PopularProducts = () => {
           {showcaseItems.map((_, i) => (
             <button
               key={i}
-              onClick={() => setCurrent(i)}
+              onClick={() => goTo(i)}
               className={`h-2 rounded-full transition-all duration-500 ${
                 i === current
                   ? "w-10 bg-primary"
