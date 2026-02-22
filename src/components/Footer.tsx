@@ -7,17 +7,17 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Logo & description */}
           <div>
-            <h3 className="text-lg font-bold text-foreground mb-3" style={{ fontFamily: "'Poppins', serif" }}>
+            <h3 className="text-lg text-foreground mb-3" style={{ fontFamily: "'Franklin Gothic Medium', sans-serif" }}>
               WoodCraft
             </h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
+            <p className="text-sm text-muted-foreground leading-relaxed font-light">
               Мастерская уникальных изделий из натурального дерева. Качество, проверенное временем.
             </p>
           </div>
 
           {/* Navigation */}
           <div>
-            <h4 className="font-semibold text-foreground mb-3">Навигация</h4>
+            <h4 className="text-foreground mb-3">Навигация</h4>
             <ul className="space-y-2 text-sm">
               {["Каталог", "Галерея", "Блог", "О компании", "Доставка", "Контакты"].map((item) => (
                 <li key={item}>
@@ -31,7 +31,7 @@ const Footer = () => {
 
           {/* Contacts */}
           <div>
-            <h4 className="font-semibold text-foreground mb-3">Контакты</h4>
+            <h4 className="text-foreground mb-3">Контакты</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>+7 (999) 123-45-67</li>
               <li>info@woodcraft.ru</li>

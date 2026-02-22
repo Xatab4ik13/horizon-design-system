@@ -24,7 +24,7 @@ const PopularProducts = () => {
   return (
     <section className="py-20 bg-muted/50">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-foreground">
+        <h2 className="text-3xl md:text-4xl text-center mb-12 text-foreground">
           Популярные товары
         </h2>
 
@@ -45,7 +45,7 @@ const PopularProducts = () => {
                   </button>
                 </div>
                 <div className="p-4">
-                  <h3 className="font-semibold text-card-foreground mb-1">{p.name}</h3>
+                  <h3 className="text-card-foreground mb-1">{p.name}</h3>
                   <p className="text-primary font-bold text-lg mb-3">
                     {p.price.toLocaleString("ru-RU")} ₽
                   </p>
