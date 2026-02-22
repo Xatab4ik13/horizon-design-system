@@ -3,7 +3,7 @@ import { useSearchParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Heart, ShoppingCart, SlidersHorizontal, X, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { products, categories, materials } from "@/data/products";
+import { products, categories, materials, type Category } from "@/data/products";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { cn } from "@/lib/utils";
@@ -26,15 +26,21 @@ const categoryImages: Record<string, string> = {
 const CatalogPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeCategory = searchParams.get("category") || null;
+  const activeSubcategory = searchParams.get("sub") || null;
   const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 200000]);
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<"default" | "price-asc" | "price-desc">("default");
 
+  const activeCategoryData = categories.find((c) => c.slug === activeCategory);
+
   const filteredProducts = useMemo(() => {
     let result = products;
     if (activeCategory) {
       result = result.filter((p) => p.category === activeCategory);
+    }
+    if (activeSubcategory) {
+      result = result.filter((p) => p.subcategory === activeSubcategory);
     }
     if (selectedMaterials.length > 0) {
       result = result.filter((p) => selectedMaterials.includes(p.material));
@@ -43,7 +49,7 @@ const CatalogPage = () => {
     if (sortBy === "price-asc") result = [...result].sort((a, b) => a.price - b.price);
     if (sortBy === "price-desc") result = [...result].sort((a, b) => b.price - a.price);
     return result;
-  }, [activeCategory, selectedMaterials, priceRange, sortBy]);
+  }, [activeCategory, activeSubcategory, selectedMaterials, priceRange, sortBy]);
 
   const toggleMaterial = (mat: string) => {
     setSelectedMaterials((prev) =>
@@ -54,15 +60,24 @@ const CatalogPage = () => {
   const setCategory = (slug: string | null) => {
     if (!slug) {
       searchParams.delete("category");
+      searchParams.delete("sub");
     } else {
       searchParams.set("category", slug);
+      searchParams.delete("sub");
     }
     setSearchParams(searchParams);
     setSelectedMaterials([]);
     setShowFilters(false);
   };
 
-  const activeCategoryData = categories.find((c) => c.slug === activeCategory);
+  const setSubcategory = (slug: string | null) => {
+    if (!slug) {
+      searchParams.delete("sub");
+    } else {
+      searchParams.set("sub", slug);
+    }
+    setSearchParams(searchParams);
+  };
 
   // --- Category selection view ---
   if (!activeCategory) {
@@ -80,7 +95,7 @@ const CatalogPage = () => {
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-4xl md:text-5xl font-bold text-center text-foreground mb-16"
+                className="text-4xl md:text-5xl text-center text-foreground mb-16"
               >
                 Категории каталога
               </motion.h1>
@@ -108,7 +123,7 @@ const CatalogPage = () => {
                           <div className="w-32 h-32 rounded-full bg-muted/20 flex items-center justify-center text-muted-foreground text-4xl">✦</div>
                         )}
                       </div>
-                      <h3 className="text-lg md:text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
+                      <h3 className="text-lg md:text-xl text-foreground group-hover:text-primary transition-colors">
                         {cat.name}
                       </h3>
                     </button>
@@ -140,14 +155,14 @@ const CatalogPage = () => {
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-4xl md:text-5xl font-bold text-foreground"
+              className="text-4xl md:text-5xl text-foreground"
             >
               {activeCategoryData?.name || "Каталог"}
             </motion.h1>
           </div>
 
-          {/* Subcategory tabs (other categories as quick switch) */}
-          <div className="flex flex-wrap gap-2 mb-8">
+          {/* Category tabs */}
+          <div className="flex flex-wrap gap-2 mb-4">
             {categories.map((cat) => (
               <button
                 key={cat.slug}
@@ -163,6 +178,37 @@ const CatalogPage = () => {
               </button>
             ))}
           </div>
+
+          {/* Subcategory tabs */}
+          {activeCategoryData && activeCategoryData.subcategories.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-8">
+              <button
+                onClick={() => setSubcategory(null)}
+                className={cn(
+                  "px-4 py-2 rounded-full text-xs font-medium transition-all",
+                  !activeSubcategory
+                    ? "bg-primary/20 text-primary border border-primary/30"
+                    : "bg-card border border-border text-foreground/60 hover:text-primary hover:border-primary/40"
+                )}
+              >
+                Все
+              </button>
+              {activeCategoryData.subcategories.map((sub) => (
+                <button
+                  key={sub.slug}
+                  onClick={() => setSubcategory(sub.slug)}
+                  className={cn(
+                    "px-4 py-2 rounded-full text-xs font-medium transition-all",
+                    activeSubcategory === sub.slug
+                      ? "bg-primary/20 text-primary border border-primary/30"
+                      : "bg-card border border-border text-foreground/60 hover:text-primary hover:border-primary/40"
+                  )}
+                >
+                  {sub.name}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Toolbar */}
           <div className="flex items-center justify-between mb-8">
@@ -291,7 +337,7 @@ const CatalogPage = () => {
                     <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
                       {categories.find((c) => c.slug === product.category)?.name} · {product.material}
                     </p>
-                    <h3 className="font-semibold text-card-foreground mb-2 group-hover:text-primary transition-colors">
+                    <h3 className="text-card-foreground mb-2 group-hover:text-primary transition-colors">
                       {product.name}
                     </h3>
                     <div className="flex items-center gap-2 mb-4">
@@ -321,7 +367,7 @@ const CatalogPage = () => {
           {filteredProducts.length === 0 && (
             <div className="text-center py-20">
               <p className="text-muted-foreground text-lg">Товары не найдены</p>
-              <Button variant="outline" className="mt-4" onClick={() => { setCategory(activeCategory); setSelectedMaterials([]); }}>
+              <Button variant="outline" className="mt-4" onClick={() => { setSubcategory(null); setSelectedMaterials([]); }}>
                 Сбросить фильтры
               </Button>
             </div>

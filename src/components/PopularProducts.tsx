@@ -2,15 +2,7 @@ import { Heart, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useRef } from "react";
-
-const products = [
-  { id: 1, name: "Обеденный стол «Дуб»", price: 45000 },
-  { id: 2, name: "Стул «Скандинавия»", price: 12000 },
-  { id: 3, name: "Полка настенная", price: 8500 },
-  { id: 4, name: "Разделочная доска", price: 3200 },
-  { id: 5, name: "Ваза из ореха", price: 6800 },
-  { id: 6, name: "Подставка для книг", price: 4500 },
-];
+import { products } from "@/data/products";
 
 const PopularProducts = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -38,23 +30,43 @@ const PopularProducts = () => {
 
           <div ref={scrollRef} className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
             {products.map((p) => (
-              <div key={p.id} className="min-w-[260px] snap-start bg-card rounded-xl border border-border overflow-hidden group flex-shrink-0">
-                <div className="relative h-52 bg-gradient-to-br from-muted to-accent">
-                  <button className="absolute top-3 right-3 p-2 rounded-full bg-background/70 hover:bg-background transition-colors">
+              <Link
+                key={p.id}
+                to={`/product/${p.id}`}
+                className="min-w-[260px] snap-start bg-card rounded-xl border border-border overflow-hidden group flex-shrink-0"
+              >
+                <div className="relative h-52 overflow-hidden">
+                  <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <button
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    className="absolute top-3 right-3 p-2 rounded-full bg-background/70 hover:bg-background transition-colors"
+                  >
                     <Heart className="h-4 w-4 text-muted-foreground hover:text-primary" />
                   </button>
+                  {p.isNew && (
+                    <span className="absolute top-3 left-3 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full">
+                      Новинка
+                    </span>
+                  )}
                 </div>
                 <div className="p-4">
                   <h3 className="text-card-foreground mb-1">{p.name}</h3>
-                  <p className="text-primary font-bold text-lg mb-3">
-                    {p.price.toLocaleString("ru-RU")} ₽
-                  </p>
-                  <Button size="sm" className="w-full gap-2">
+                  <div className="flex items-center gap-2 mb-3">
+                    <p className="text-primary font-bold text-lg">
+                      {p.price.toLocaleString("ru-RU")} ₽
+                    </p>
+                    {p.oldPrice && (
+                      <p className="text-muted-foreground line-through text-sm">
+                        {p.oldPrice.toLocaleString("ru-RU")} ₽
+                      </p>
+                    )}
+                  </div>
+                  <Button size="sm" className="w-full gap-2" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
                     <ShoppingCart className="h-4 w-4" />
                     В корзину
                   </Button>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
