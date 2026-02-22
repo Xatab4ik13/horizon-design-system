@@ -67,10 +67,13 @@ const mockReviews: Record<string, Review[]> = {
   ],
   "pano-zebra": [
     { id: "r4", author: "Игорь Л.", rating: 5, date: "2025-12-01", text: "Четыре панели идеально стыкуются. Эффект волн потрясающий, особенно при боковом освещении.", verified: true },
+    { id: "r12", author: "Светлана Б.", rating: 5, date: "2026-01-08", text: "Заказали из ясеня — цвет и текстура великолепные. Монтаж простой, крепления в комплекте.", verified: true },
+    { id: "r13", author: "Андрей Н.", rating: 4, date: "2025-11-20", text: "Отличная композиция, но хотелось бы вариант из 6 панелей для большой стены.", verified: false },
   ],
   "pano-radiance": [
     { id: "r5", author: "Ресторан «Дубрава»", rating: 5, date: "2026-01-20", text: "Установили в зал ресторана — гости в восторге. Монументальная работа, стоит каждого рубля.", verified: true },
     { id: "r6", author: "Марина В.", rating: 5, date: "2025-12-05", text: "Заказывали индивидуальный размер 200×200. Мастера сделали идеально под наш проект.", verified: true },
+    { id: "r14", author: "Кирилл Р.", rating: 5, date: "2026-02-10", text: "Панно «Сияние» — настоящее произведение искусства. Девять модулей создают потрясающий эффект.", verified: true },
   ],
   "mirror-wave": [
     { id: "r7", author: "Ольга П.", rating: 5, date: "2026-01-10", text: "Зеркало изумительное! Рама вырезана с невероятной точностью. Рекомендую всем.", verified: true },
@@ -79,6 +82,16 @@ const mockReviews: Record<string, Review[]> = {
     { id: "r10", author: "Михаил Г.", rating: 5, date: "2026-01-25", text: "Покупал жене на день рождения. Она в восторге! Зеркало большое, качественное, ручная работа видна сразу.", verified: true },
     { id: "r11", author: "Ирина К.", rating: 4, date: "2025-12-20", text: "Красивое зеркало, но доставка заняла 10 дней вместо обещанных 7. Само изделие — 5 из 5.", verified: true },
   ],
+  "shelf-console": [
+    { id: "r15", author: "Виктория М.", rating: 5, date: "2026-01-18", text: "Полка-консоль отлично вписалась в прихожую. Три секции очень удобны для ключей, телефона и мелочей.", verified: true },
+    { id: "r16", author: "Олег Т.", rating: 5, date: "2025-12-28", text: "Качество дуба на высоте, масло с воском приятное на ощупь. Скрытые крепления — большой плюс.", verified: true },
+    { id: "r17", author: "Наталья Ф.", rating: 4, date: "2026-02-05", text: "Красивая полка, немного тяжеловата, но зато надёжная. Выдерживает вес без проблем.", verified: false },
+  ],
+  "shelf-wave": [
+    { id: "r18", author: "Алексей В.", rating: 5, date: "2026-02-12", text: "Потрясающая форма! Полки «Волна» создают ощущение движения на стене. Ясень смотрится благородно.", verified: true },
+    { id: "r19", author: "Екатерина С.", rating: 5, date: "2026-01-30", text: "Заказали комплект из двух полок — они идеально дополняют друг друга. Лак качественный, не липнет.", verified: true },
+    { id: "r20", author: "Павел Д.", rating: 4, date: "2025-12-15", text: "Изогнутая форма очень необычная. Единственное — хотелось бы больше цветовых вариантов.", verified: true },
+  ],
 };
 
 const mockQA: Record<string, QA[]> = {
@@ -86,10 +99,26 @@ const mockQA: Record<string, QA[]> = {
     { id: "q1", question: "Можно ли заказать другой размер?", questionAuthor: "Виктор", questionDate: "2025-11-05", answer: "Да, мы изготавливаем панно по индивидуальным размерам. Свяжитесь с нами для расчёта стоимости.", answerDate: "2025-11-06" },
     { id: "q2", question: "Подходит ли для влажных помещений?", questionAuthor: "Наталья", questionDate: "2025-10-20", answer: "Панно покрыто натуральным маслом, которое защищает от влаги, но для ванных комнат мы рекомендуем дополнительную обработку лаком.", answerDate: "2025-10-21" },
   ],
+  "pano-zebra": [
+    { id: "q6", question: "Можно ли заказать из ореха?", questionAuthor: "Денис", questionDate: "2025-12-10", answer: "Да, орех доступен за дополнительную плату. Выберите породу дерева при заказе.", answerDate: "2025-12-11" },
+    { id: "q7", question: "Как стыкуются панели между собой?", questionAuthor: "Анна", questionDate: "2026-01-02", answer: "Панели имеют скрытые крепления и монтируются с зазором 3–5 мм. Подробная инструкция в комплекте.", answerDate: "2026-01-03" },
+  ],
+  "pano-radiance": [
+    { id: "q8", question: "Какой максимальный размер вы делаете?", questionAuthor: "Ресторан «Берлога»", questionDate: "2026-01-15", answer: "Максимальный стандартный размер — 200×200 см. Для больших размеров свяжитесь с нами для индивидуального расчёта.", answerDate: "2026-01-16" },
+    { id: "q9", question: "Подходит ли для коммерческих помещений?", questionAuthor: "Олег", questionDate: "2025-12-20", answer: "Абсолютно! Панно «Сияние» идеально для лобби, ресторанов, отелей. Мы часто работаем с коммерческими заказчиками.", answerDate: "2025-12-21" },
+  ],
   "mirror-wave": [
     { id: "q3", question: "Какой тип крепления в комплекте?", questionAuthor: "Алексей", questionDate: "2025-12-10", answer: "В комплекте скрытые французские крепления. Зеркало вешается на два анкера, которые также входят в комплект.", answerDate: "2025-12-11" },
     { id: "q4", question: "Можно ли использовать в ванной?", questionAuthor: "Марина", questionDate: "2026-01-05", answer: "Зеркала влагостойкие, но деревянную раму рекомендуем дополнительно обработать лаком для влажных помещений. Мы можем сделать это за дополнительную плату.", answerDate: "2026-01-06" },
     { id: "q5", question: "Делаете ли вы овальные зеркала?", questionAuthor: "Павел", questionDate: "2026-01-15", answer: "Да, мы можем изготовить раму любой формы по индивидуальному заказу. Стоимость рассчитывается отдельно.", answerDate: "2026-01-16" },
+  ],
+  "shelf-console": [
+    { id: "q10", question: "Какой максимальный вес выдерживает каждая секция?", questionAuthor: "Игорь", questionDate: "2026-01-20", answer: "Каждая секция выдерживает до 10 кг при правильном монтаже на анкерные болты.", answerDate: "2026-01-21" },
+    { id: "q11", question: "Можно ли заказать из берёзы?", questionAuthor: "Мария", questionDate: "2026-02-01", answer: "Да, мы можем изготовить из берёзы, ясеня или ореха. Цена зависит от породы дерева.", answerDate: "2026-02-02" },
+  ],
+  "shelf-wave": [
+    { id: "q12", question: "Можно ли купить одну полку, а не комплект?", questionAuthor: "Светлана", questionDate: "2026-01-25", answer: "Да, каждая полка продаётся отдельно. Большая — 12 500 ₽, малая — 8 500 ₽.", answerDate: "2026-01-26" },
+    { id: "q13", question: "Подходит ли для книг?", questionAuthor: "Артём", questionDate: "2026-02-08", answer: "Да, полка выдерживает до 12 кг. Для тяжёлых книг рекомендуем большой размер.", answerDate: "2026-02-09" },
   ],
 };
 
@@ -151,8 +180,9 @@ export const products: Product[] = [
     details: "Комплект из 4 панелей. Ручная резьба. Обжиг и масло. Скрытое крепление.",
     dimensions: "100 × 100 × 4 см (4 панели)",
     weight: "14 кг",
-    images: [productPano2, productPano1],
+    images: [productPano2, productPano1, productPano3],
     inStock: true,
+    isNew: true,
     variations: [
       {
         type: "wood",
@@ -163,12 +193,21 @@ export const products: Product[] = [
           { value: "walnut", label: "Орех", priceModifier: 15000 },
         ],
       },
+      {
+        type: "coating",
+        label: "Покрытие",
+        options: [
+          { value: "charred", label: "Обжиг и масло" },
+          { value: "oil", label: "Натуральное масло", priceModifier: -3000 },
+          { value: "wax", label: "Масло с воском" },
+        ],
+      },
     ],
     reviews: mockReviews["pano-zebra"] || [],
     qa: mockQA["pano-zebra"] || [],
-    rating: 5.0,
+    rating: 4.8,
     relatedIds: ["pano-wave", "pano-radiance"],
-    crossSellIds: ["mirror-wave"],
+    crossSellIds: ["mirror-wave", "shelf-console"],
   },
   {
     id: "pano-radiance",
@@ -183,7 +222,7 @@ export const products: Product[] = [
     details: "9 панелей. Ручная резьба. Покрытие — масло с воском. Скрытое крепление. Возможен индивидуальный размер.",
     dimensions: "150 × 150 × 4 см (9 панелей)",
     weight: "22 кг",
-    images: [productPano3, productPano2, productPano1],
+    images: [productPano3, productPano2, productPano1, productShelf2],
     inStock: true,
     isNew: true,
     variations: [
@@ -195,12 +234,30 @@ export const products: Product[] = [
           { value: "l", label: "200 × 200 см", priceModifier: 35000 },
         ],
       },
+      {
+        type: "wood",
+        label: "Порода дерева",
+        options: [
+          { value: "beech", label: "Бук" },
+          { value: "oak", label: "Дуб", priceModifier: 10000 },
+          { value: "ash", label: "Ясень", priceModifier: -5000 },
+        ],
+      },
+      {
+        type: "coating",
+        label: "Покрытие",
+        options: [
+          { value: "wax", label: "Масло с воском" },
+          { value: "oil", label: "Натуральное масло", priceModifier: -2000 },
+          { value: "lacquer", label: "Лак матовый", priceModifier: 5000 },
+        ],
+      },
     ],
     reviews: mockReviews["pano-radiance"] || [],
     qa: mockQA["pano-radiance"] || [],
     rating: 5.0,
     relatedIds: ["pano-wave", "pano-zebra"],
-    crossSellIds: ["shelf-wave"],
+    crossSellIds: ["shelf-wave", "mirror-wave"],
   },
   {
     id: "mirror-wave",
@@ -270,11 +327,42 @@ export const products: Product[] = [
     details: "Три отделения для мелочей. Скрытое крепление. Покрытие — масло с воском. Выдерживает до 10 кг на секцию.",
     dimensions: "60 × 30 × 80 см",
     weight: "7 кг",
-    images: [productShelf2, productShelf3],
+    images: [productShelf2, productShelf3, productPano1],
     inStock: true,
-    reviews: [],
-    qa: [],
-    rating: 0,
+    isNew: true,
+    variations: [
+      {
+        type: "size",
+        label: "Размер",
+        options: [
+          { value: "s", label: "40 × 20 × 60 см", priceModifier: -6000 },
+          { value: "m", label: "60 × 30 × 80 см" },
+          { value: "l", label: "80 × 35 × 100 см", priceModifier: 8000 },
+        ],
+      },
+      {
+        type: "wood",
+        label: "Порода дерева",
+        options: [
+          { value: "oak", label: "Дуб" },
+          { value: "ash", label: "Ясень", priceModifier: -2000 },
+          { value: "walnut", label: "Орех", priceModifier: 10000 },
+          { value: "birch", label: "Берёза", priceModifier: -4000 },
+        ],
+      },
+      {
+        type: "coating",
+        label: "Покрытие",
+        options: [
+          { value: "wax", label: "Масло с воском" },
+          { value: "oil", label: "Натуральное масло", priceModifier: -1000 },
+          { value: "lacquer", label: "Лак матовый", priceModifier: 3000 },
+        ],
+      },
+    ],
+    reviews: mockReviews["shelf-console"] || [],
+    qa: mockQA["shelf-console"] || [],
+    rating: 4.7,
     relatedIds: ["shelf-wave"],
     crossSellIds: ["pano-wave", "mirror-wave"],
   },
@@ -291,14 +379,43 @@ export const products: Product[] = [
     details: "Гнутый массив. Покрытие — лак на водной основе. Скрытое крепление. До 12 кг на полку.",
     dimensions: "90 × 25 × 3 см / 60 × 20 × 3 см",
     weight: "5 кг",
-    images: [productShelf3, productShelf2],
+    images: [productShelf3, productShelf2, productPano2],
     inStock: true,
     isNew: true,
-    reviews: [],
-    qa: [],
-    rating: 0,
+    variations: [
+      {
+        type: "size",
+        label: "Комплектация",
+        options: [
+          { value: "single-l", label: "Одна большая (90 см)", priceModifier: -7000 },
+          { value: "single-s", label: "Одна малая (60 см)", priceModifier: -11000 },
+          { value: "set", label: "Комплект из двух" },
+        ],
+      },
+      {
+        type: "wood",
+        label: "Порода дерева",
+        options: [
+          { value: "ash", label: "Ясень" },
+          { value: "oak", label: "Дуб", priceModifier: 5000 },
+          { value: "birch", label: "Берёза", priceModifier: -3000 },
+        ],
+      },
+      {
+        type: "coating",
+        label: "Покрытие",
+        options: [
+          { value: "lacquer", label: "Лак на водной основе" },
+          { value: "oil", label: "Натуральное масло" },
+          { value: "wax", label: "Масло с воском", priceModifier: 2000 },
+        ],
+      },
+    ],
+    reviews: mockReviews["shelf-wave"] || [],
+    qa: mockQA["shelf-wave"] || [],
+    rating: 4.7,
     relatedIds: ["shelf-console"],
-    crossSellIds: ["pano-zebra"],
+    crossSellIds: ["pano-zebra", "pano-wave"],
   },
 ];
 
