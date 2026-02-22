@@ -32,6 +32,8 @@ const AdvantagesSection = () => {
       />
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/75" />
+      {/* Bottom fade to dark */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-[hsl(0_0%_2%)]" />
 
       <div className="container mx-auto px-4 relative z-10">
         <motion.h2

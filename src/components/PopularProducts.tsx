@@ -4,7 +4,6 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import showcaseMirror from "@/assets/showcase-mirror.png";
 import showcasePano from "@/assets/showcase-pano.png";
-import showcaseDoors from "@/assets/showcase-doors.png";
 
 const showcaseItems = [
   {
@@ -13,7 +12,6 @@ const showcaseItems = [
     description: "Резные декоративные панно из массива — центр притяжения любого интерьера",
     image: showcasePano,
     link: "/catalog?category=interior&subcategory=pano",
-    transparent: true,
     cta: "Смотреть коллекцию",
     bg: "radial-gradient(ellipse at 30% 50%, hsl(25 40% 12%) 0%, hsl(20 20% 6%) 50%, hsl(0 0% 2%) 100%)",
   },
@@ -23,20 +21,8 @@ const showcaseItems = [
     description: "Уникальные зеркала в резных деревянных рамах с авторским дизайном",
     image: showcaseMirror,
     link: "/catalog?category=interior&subcategory=mirrors",
-    transparent: true,
     cta: "Выбрать зеркало",
     bg: "radial-gradient(ellipse at 70% 40%, hsl(210 20% 14%) 0%, hsl(220 15% 7%) 50%, hsl(0 0% 2%) 100%)",
-  },
-  {
-    title: "Двери",
-    tagline: "Массив натурального дерева",
-    description: "Межкомнатные и входные двери — надёжность и эстетика на десятилетия",
-    image: showcaseDoors,
-    link: "/catalog?category=doors",
-    transparent: true,
-    no3d: true,
-    cta: "Открыть каталог",
-    bg: "radial-gradient(ellipse at 50% 60%, hsl(15 30% 14%) 0%, hsl(10 20% 7%) 50%, hsl(0 0% 2%) 100%)",
   },
 ];
 
@@ -129,6 +115,9 @@ const PopularProducts = () => {
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
+      {/* Top/bottom fades for seamless transitions */}
+      <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-t from-transparent to-[hsl(0_0%_2%)] z-10 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-b from-transparent to-[hsl(0_0%_2%)] z-10 pointer-events-none" />
       <div className="min-h-[85vh] md:min-h-[90vh] flex items-center relative" style={{ perspective: "1400px" }}>
         <div className="container mx-auto px-4 py-16 md:py-24">
           <AnimatePresence mode="wait" custom={direction}>
@@ -188,19 +177,6 @@ const PopularProducts = () => {
 
               {/* Image */}
               <div className="w-full md:w-7/12 flex justify-center">
-                {item.no3d ? (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.2, duration: 0.7, ease: "easeOut" }}
-                  >
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="w-[306px] h-[306px] md:w-[450px] md:h-[450px] lg:w-[522px] lg:h-[522px] object-contain drop-shadow-2xl"
-                    />
-                  </motion.div>
-                ) : (
                 <AutoTilt3D>
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -214,7 +190,6 @@ const PopularProducts = () => {
                     />
                   </motion.div>
                 </AutoTilt3D>
-                )}
               </div>
             </motion.div>
           </AnimatePresence>
