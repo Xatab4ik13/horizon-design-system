@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, User, ShoppingCart, Menu, X, Home, LayoutGrid, Image, BookOpen, CreditCard, Wrench, PhoneCall, ChevronDown } from "lucide-react";
+import { Search, User, ShoppingCart, Menu, X, ChevronDown } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import categoryTable from "@/assets/category-table.png";
@@ -22,13 +22,13 @@ const categories = [
 ];
 
 const navItems = [
-  { name: "Главная", url: "/", icon: Home },
-  { name: "Каталог", url: "/catalog", icon: LayoutGrid },
-  { name: "Услуги", url: "/services", icon: Wrench },
-  { name: "Галерея", url: "/gallery", icon: Image },
-  { name: "Блог", url: "/blog", icon: BookOpen },
-  { name: "Доставка и оплата", url: "/delivery", icon: CreditCard },
-  { name: "Контакты", url: "/contacts", icon: PhoneCall },
+  { name: "Главная", url: "/" },
+  { name: "Каталог", url: "/catalog" },
+  { name: "Услуги", url: "/services" },
+  { name: "Галерея", url: "/gallery" },
+  { name: "Блог", url: "/blog" },
+  { name: "Доставка и оплата", url: "/delivery" },
+  { name: "Контакты", url: "/contacts" },
 ];
 
 const Header = () => {
@@ -53,7 +53,6 @@ const Header = () => {
     setMobileCatalogOpen(false);
   }, [location.pathname]);
 
-  // Lock body scroll when mobile menu is open
   useEffect(() => {
     if (mobileMenuOpen) {
       document.body.style.overflow = "hidden";
@@ -75,7 +74,7 @@ const Header = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 pt-10">
       <div className="container mx-auto px-4 flex items-center justify-center">
-        {/* Desktop tubelight navbar */}
+        {/* Desktop navbar */}
         {!isMobile ? (
           <div className="flex items-center gap-4 bg-background/5 border border-border/40 backdrop-blur-lg py-3.5 px-3 rounded-full shadow-lg shadow-black/20 relative">
             <nav className="flex items-center gap-1.5">
@@ -208,48 +207,58 @@ const Header = () => {
               className="p-2 rounded-full text-foreground/80 hover:text-primary transition-colors"
               aria-label="Меню"
             >
-              <AnimatePresence mode="wait">
-                {mobileMenuOpen ? (
-                  <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.2 }}>
-                    <X className="h-5 w-5" />
-                  </motion.div>
-                ) : (
-                  <motion.div key="menu" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.2 }}>
-                    <Menu className="h-5 w-5" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <Menu className="h-5 w-5" />
             </button>
           </div>
         )}
       </div>
 
-      {/* ═══ Mobile Full-screen Menu ═══ */}
+      {/* ═══ Mobile Slide-in Panel ═══ */}
       <AnimatePresence>
         {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-40 bg-background/95 backdrop-blur-xl"
-          >
-            {/* Decorative glow */}
-            <div className="absolute top-20 left-1/2 -translate-x-1/2 w-40 h-40 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+              onClick={() => setMobileMenuOpen(false)}
+            />
 
-            <div className="pt-28 pb-8 px-6 h-full overflow-y-auto">
-              <nav className="max-w-md mx-auto">
+            {/* Slide-in panel from right */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="fixed top-0 right-0 bottom-0 z-50 w-80 max-w-[85vw] bg-card border-l border-border/40 shadow-2xl shadow-black/40 overflow-y-auto"
+            >
+              {/* Header with close */}
+              <div className="flex items-center justify-between px-6 py-5 border-b border-border/30">
+                <span className="text-foreground font-semibold text-lg">Меню</span>
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2 rounded-full text-foreground/60 hover:text-primary hover:bg-primary/10 transition-colors"
+                  aria-label="Закрыть меню"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Nav items */}
+              <nav className="px-4 py-4">
                 <motion.div
                   initial="closed"
                   animate="open"
                   variants={{
-                    open: { transition: { staggerChildren: 0.06, delayChildren: 0.1 } },
+                    open: { transition: { staggerChildren: 0.04, delayChildren: 0.1 } },
                     closed: {},
                   }}
-                  className="flex flex-col gap-1"
+                  className="flex flex-col gap-0.5"
                 >
                   {navItems.map((item) => {
-                    const Icon = item.icon;
                     const isActive = location.pathname === item.url;
                     const isCatalog = item.name === "Каталог";
 
@@ -257,68 +266,61 @@ const Header = () => {
                       <motion.div
                         key={item.name}
                         variants={{
-                          open: { opacity: 1, y: 0 },
-                          closed: { opacity: 0, y: 20 },
+                          open: { opacity: 1, x: 0 },
+                          closed: { opacity: 0, x: 20 },
                         }}
-                        transition={{ duration: 0.3, ease: "easeOut" }}
+                        transition={{ duration: 0.25, ease: "easeOut" }}
                       >
                         {isCatalog ? (
                           <>
                             <button
                               onClick={() => setMobileCatalogOpen(!mobileCatalogOpen)}
                               className={cn(
-                                "w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-lg font-medium transition-all duration-200",
+                                "w-full flex items-center justify-between px-4 py-3.5 rounded-xl text-base font-medium transition-all duration-200",
                                 isActive
                                   ? "bg-primary/10 text-primary"
                                   : "text-foreground/80 hover:bg-primary/5 hover:text-primary"
                               )}
                             >
-                              <div className={cn(
-                                "w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
-                                isActive ? "bg-primary/20" : "bg-muted/50"
-                              )}>
-                                <Icon className="h-5 w-5" />
-                              </div>
-                              <span className="flex-1 text-left">{item.name}</span>
+                              <span>{item.name}</span>
                               <motion.div
                                 animate={{ rotate: mobileCatalogOpen ? 180 : 0 }}
                                 transition={{ duration: 0.3 }}
                               >
-                                <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                                <ChevronDown className="h-4 w-4 text-muted-foreground" />
                               </motion.div>
                             </button>
 
-                            {/* Catalog dropdown */}
                             <AnimatePresence>
                               {mobileCatalogOpen && (
                                 <motion.div
                                   initial={{ height: 0, opacity: 0 }}
                                   animate={{ height: "auto", opacity: 1 }}
                                   exit={{ height: 0, opacity: 0 }}
-                                  transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+                                  transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
                                   className="overflow-hidden"
                                 >
-                                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 px-2 py-3">
+                                  <div className="grid grid-cols-2 gap-2 px-2 py-2">
                                     {categories.map((cat, i) => (
                                       <motion.div
                                         key={cat.slug}
                                         initial={{ opacity: 0, scale: 0.9 }}
                                         animate={{ opacity: 1, scale: 1 }}
-                                        transition={{ delay: i * 0.05, duration: 0.25 }}
+                                        transition={{ delay: i * 0.04, duration: 0.2 }}
                                       >
                                         <Link
                                           to={`/catalog?category=${cat.slug}`}
                                           onClick={() => setMobileMenuOpen(false)}
-                                          className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-card/60 border border-border/30 hover:border-primary/40 hover:bg-primary/5 transition-all duration-200 group"
+                                          className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-background/40 border border-border/20 hover:border-primary/30 hover:bg-primary/5 transition-all duration-200 group"
                                         >
-                                          <div className="w-14 h-14 flex items-center justify-center">
+                                          <div className="w-10 h-10 flex items-center justify-center">
                                             <img
                                               src={cat.image}
                                               alt={cat.name}
                                               className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
                                             />
                                           </div>
-                                          <span className="text-xs font-medium text-foreground/70 group-hover:text-primary transition-colors text-center leading-tight">
+                                          <span className="text-[11px] font-medium text-foreground/60 group-hover:text-primary transition-colors text-center leading-tight">
                                             {cat.name}
                                           </span>
                                         </Link>
@@ -334,25 +336,15 @@ const Header = () => {
                             to={item.url}
                             onClick={() => setMobileMenuOpen(false)}
                             className={cn(
-                              "flex items-center gap-4 px-5 py-4 rounded-2xl text-lg font-medium transition-all duration-200",
+                              "flex items-center justify-between px-4 py-3.5 rounded-xl text-base font-medium transition-all duration-200",
                               isActive
                                 ? "bg-primary/10 text-primary"
                                 : "text-foreground/80 hover:bg-primary/5 hover:text-primary"
                             )}
                           >
-                            <div className={cn(
-                              "w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
-                              isActive ? "bg-primary/20" : "bg-muted/50"
-                            )}>
-                              <Icon className="h-5 w-5" />
-                            </div>
                             <span>{item.name}</span>
                             {isActive && (
-                              <motion.div
-                                layoutId="mobile-active"
-                                className="ml-auto w-2 h-2 rounded-full bg-primary"
-                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                              />
+                              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                             )}
                           </Link>
                         )}
@@ -361,8 +353,15 @@ const Header = () => {
                   })}
                 </motion.div>
               </nav>
-            </div>
-          </motion.div>
+
+              {/* Bottom section */}
+              <div className="px-6 py-6 mt-auto border-t border-border/30">
+                <p className="text-xs text-muted-foreground/50 text-center">
+                  © 2026 WoodCraft
+                </p>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </header>
