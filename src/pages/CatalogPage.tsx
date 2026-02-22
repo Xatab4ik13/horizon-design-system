@@ -186,10 +186,10 @@ const CatalogPage = () => {
       <main className="pt-32 pb-20">
         <div className="container mx-auto px-4">
           {/* Back + Title */}
-          <div className="flex items-center gap-4 mb-10">
+          <div className="relative flex items-center justify-center mb-10">
             <button
               onClick={() => setCategory(null)}
-              className="p-2.5 rounded-full bg-card border border-border hover:border-primary/40 transition-colors"
+              className="absolute left-0 p-2.5 rounded-full bg-card border border-border hover:border-primary/40 transition-colors"
             >
               <ArrowLeft className="h-5 w-5 text-foreground/70" />
             </button>
@@ -246,25 +246,27 @@ const CatalogPage = () => {
               {filteredProducts.length}{" "}
               {filteredProducts.length === 1 ? "товар" : filteredProducts.length < 5 ? "товара" : "товаров"}
             </p>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                className="bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                className="bg-card/50 backdrop-blur border border-border rounded-xl px-3 py-2 text-xs text-foreground/70 focus:outline-none focus:ring-1 focus:ring-primary/30 appearance-none cursor-pointer hover:border-primary/30 transition-colors"
               >
                 <option value="default">По умолчанию</option>
                 <option value="price-asc">Сначала дешевле</option>
                 <option value="price-desc">Сначала дороже</option>
               </select>
-              <Button
-                variant="outline"
-                size="sm"
+              <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="gap-2"
+                className={cn(
+                  "p-2.5 rounded-xl border transition-all duration-300",
+                  showFilters
+                    ? "bg-primary/10 border-primary/30 text-primary"
+                    : "bg-card/50 backdrop-blur border-border text-foreground/50 hover:border-primary/30 hover:text-primary"
+                )}
               >
                 <SlidersHorizontal className="h-4 w-4" />
-                Фильтры
-              </Button>
+              </button>
             </div>
           </div>
 
