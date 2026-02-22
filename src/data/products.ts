@@ -205,17 +205,28 @@ export const woodTypes = [
   { name: "Карагач", image: woodElm },
 ];
 
+import coatNaturalOil from "@/assets/coat-natural-oil.jpg";
+import coatOilWax from "@/assets/coat-oil-wax.jpg";
+import coatMatteLacquer from "@/assets/coat-matte-lacquer.jpg";
+import coatGlossyLacquer from "@/assets/coat-glossy-lacquer.jpg";
+import coatDarkStain from "@/assets/coat-dark-stain.jpg";
+import coatLightStain from "@/assets/coat-light-stain.jpg";
+import coatCharred from "@/assets/coat-charred.jpg";
+import coatWhiteEnamel from "@/assets/coat-white-enamel.jpg";
+import coatBlackEnamel from "@/assets/coat-black-enamel.jpg";
+import coatUnfinished from "@/assets/coat-unfinished.jpg";
+
 export const coatings = [
-  { name: "Натуральное масло", color: "#C4A46C" },
-  { name: "Масло с воском", color: "#D4B77E" },
-  { name: "Лак матовый", color: "#E8D5B7" },
-  { name: "Лак глянцевый", color: "#F5E6CC" },
-  { name: "Морилка тёмная", color: "#5C3A1E" },
-  { name: "Морилка светлая", color: "#8B6914" },
-  { name: "Обжиг", color: "#2C1810" },
-  { name: "Белая эмаль", color: "#F0EDE8" },
-  { name: "Чёрная эмаль", color: "#1A1A1A" },
-  { name: "Без покрытия", color: "#BFA67A" },
+  { name: "Натуральное масло", image: coatNaturalOil },
+  { name: "Масло с воском", image: coatOilWax },
+  { name: "Лак матовый", image: coatMatteLacquer },
+  { name: "Лак глянцевый", image: coatGlossyLacquer },
+  { name: "Морилка тёмная", image: coatDarkStain },
+  { name: "Морилка светлая", image: coatLightStain },
+  { name: "Обжиг", image: coatCharred },
+  { name: "Белая эмаль", image: coatWhiteEnamel },
+  { name: "Чёрная эмаль", image: coatBlackEnamel },
+  { name: "Без покрытия", image: coatUnfinished },
 ];
 
 export const getProductById = (id: string) => products.find((p) => p.id === id);
