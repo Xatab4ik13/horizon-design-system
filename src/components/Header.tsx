@@ -79,7 +79,7 @@ const Header = () => {
       <div className="container mx-auto px-4 flex items-center justify-center">
         {/* Desktop navbar */}
         {!isMobile ? (
-          <div className="flex items-center gap-4 bg-background/5 border border-border/40 backdrop-blur-lg py-3.5 px-3 rounded-full shadow-lg shadow-black/20 relative">
+          <div className="flex items-center gap-4 bg-background/3 border border-border/30 backdrop-blur-lg py-3.5 px-3 rounded-full shadow-lg shadow-black/20 relative">
             <div className="pl-3 pr-2 border-r border-border/40 mr-1">
               <Logo size="sm" />
             </div>
