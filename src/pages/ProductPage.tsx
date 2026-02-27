@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { getProductById, products, categories } from "@/data/products";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/contexts/CartContext";
@@ -48,6 +48,7 @@ const ProductGallery = ({
 }) => {
   const [active, setActive] = useState(0);
   const [lightbox, setLightbox] = useState(false);
+  const thumbRef = useRef<HTMLDivElement>(null);
 
   const navigate = useCallback(
     (dir: number) => setActive((a) => (a + dir + images.length) % images.length),
@@ -77,7 +78,6 @@ const ProductGallery = ({
               -{Math.round((1 - price / oldPrice) * 100)}%
             </span>
           )}
-          {/* Nav arrows */}
           {images.length > 1 && (
             <>
               <button
@@ -94,16 +94,24 @@ const ProductGallery = ({
               </button>
             </>
           )}
+          {/* Dot indicators for mobile */}
+          {images.length > 1 && (
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 md:hidden">
+              {images.map((_, i) => (
+                <div key={i} className={cn("w-1.5 h-1.5 rounded-full transition-all", i === active ? "w-4 bg-primary" : "bg-white/40")} />
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Thumbnails */}
-        <div className="flex gap-2">
+        {/* Thumbnails — scrollable */}
+        <div ref={thumbRef} className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
           {images.map((img, i) => (
             <button
               key={i}
               onClick={() => setActive(i)}
               className={cn(
-                "w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border-2 transition-all duration-300",
+                "w-14 h-14 md:w-18 md:h-18 rounded-xl overflow-hidden border-2 transition-all duration-300 shrink-0",
                 active === i ? "border-primary shadow-[0_0_12px_hsl(var(--primary)/0.3)]" : "border-border hover:border-primary/40"
               )}
             >
@@ -113,7 +121,7 @@ const ProductGallery = ({
           {hasAR && (
             <button
               onClick={onARClick}
-              className="w-16 h-16 md:w-20 md:h-20 rounded-xl border-2 border-border hover:border-primary/40 flex flex-col items-center justify-center gap-1 transition-colors"
+              className="w-14 h-14 md:w-18 md:h-18 rounded-xl border-2 border-border hover:border-primary/40 flex flex-col items-center justify-center gap-1 transition-colors shrink-0"
             >
               <Smartphone className="h-5 w-5 text-primary" />
               <span className="text-[10px] text-muted-foreground">AR</span>
@@ -209,6 +217,7 @@ const ProductPage = () => {
   const [showAR, setShowAR] = useState(false);
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<"reviews" | "qa">("reviews");
+  const [isFavorite, setIsFavorite] = useState(false);
 
   const categoryData = useMemo(() => categories.find((c) => c.slug === product?.category), [product]);
 
@@ -223,6 +232,54 @@ const ProductPage = () => {
       }
     });
     return p;
+  }, [product, selectedVariations]);
+
+  // Compute dynamic specs based on variations
+  const currentMaterial = useMemo(() => {
+    if (!product) return "";
+    const woodVar = product.variations?.find(v => v.type === "wood");
+    const sel = selectedVariations["wood"];
+    if (woodVar && sel) {
+      const opt = woodVar.options.find(o => o.value === sel);
+      return opt?.label || product.material;
+    }
+    return product.material;
+  }, [product, selectedVariations]);
+
+  const currentCoating = useMemo(() => {
+    if (!product) return "";
+    const coatVar = product.variations?.find(v => v.type === "coating");
+    const sel = selectedVariations["coating"];
+    if (coatVar && sel) {
+      const opt = coatVar.options.find(o => o.value === sel);
+      return opt?.label || product.coating;
+    }
+    return product.coating;
+  }, [product, selectedVariations]);
+
+  const currentDimensions = useMemo(() => {
+    if (!product) return "";
+    const sizeVar = product.variations?.find(v => v.type === "size");
+    const sel = selectedVariations["size"];
+    if (sizeVar && sel) {
+      const opt = sizeVar.options.find(o => o.value === sel);
+      return opt?.label || product.dimensions;
+    }
+    return product.dimensions;
+  }, [product, selectedVariations]);
+
+  // Build variation labels for cart
+  const variationLabels = useMemo(() => {
+    if (!product) return {};
+    const labels: Record<string, string> = {};
+    (product.variations || []).forEach(v => {
+      const sel = selectedVariations[v.type];
+      if (sel) {
+        const opt = v.options.find(o => o.value === sel);
+        if (opt) labels[v.label] = opt.label;
+      }
+    });
+    return labels;
   }, [product, selectedVariations]);
 
   if (!product) {
@@ -306,7 +363,7 @@ const ProductPage = () => {
             {/* Info */}
             <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="flex flex-col">
               <p className="text-xs text-muted-foreground uppercase tracking-widest mb-2">
-                {categoryData?.name} · {product.material}
+                {categoryData?.name} · {currentMaterial}
               </p>
               <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">{product.name}</h1>
 
@@ -370,12 +427,12 @@ const ProductPage = () => {
                 </div>
               )}
 
-              {/* ─── Specs grid ─── */}
+              {/* ─── Specs grid (dynamic) ─── */}
               <div className="grid grid-cols-2 gap-3 mb-8">
                 {[
-                  { icon: TreePine, label: "Порода", value: product.material },
-                  { icon: Ruler, label: "Размеры", value: product.dimensions },
-                  { icon: Droplets, label: "Покрытие", value: product.coating },
+                  { icon: TreePine, label: "Порода", value: currentMaterial },
+                  { icon: Ruler, label: "Размеры", value: currentDimensions },
+                  { icon: Droplets, label: "Покрытие", value: currentCoating },
                   { icon: Weight, label: "Вес", value: product.weight },
                   { icon: Check, label: "Наличие", value: product.inStock ? "В наличии" : "Под заказ (2–3 нед.)" },
                 ].map((spec) => (
@@ -398,14 +455,25 @@ const ProductPage = () => {
                     price: computedPrice,
                     image: product.images[0],
                     variations: Object.keys(selectedVariations).length > 0 ? selectedVariations : undefined,
+                    variationLabels: Object.keys(variationLabels).length > 0 ? variationLabels : undefined,
+                    dimensions: currentDimensions,
+                    weight: product.weight,
                   });
                   toast.success("Товар добавлен в корзину");
                 }}>
                   <ShoppingCart className="h-5 w-5" />
                   В корзину
                 </Button>
-                <Button size="lg" variant="outline" className="gap-2 rounded-full" onClick={() => toast.success("Добавлено в избранное")}>
-                  <Heart className="h-5 w-5" />
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className={cn("gap-2 rounded-full", isFavorite && "border-primary")}
+                  onClick={() => {
+                    setIsFavorite(!isFavorite);
+                    toast.success(isFavorite ? "Удалено из избранного" : "Добавлено в избранное");
+                  }}
+                >
+                  <Heart className={cn("h-5 w-5 transition-colors", isFavorite ? "fill-white text-white" : "")} />
                 </Button>
               </div>
 
@@ -437,7 +505,6 @@ const ProductPage = () => {
             transition={{ duration: 0.5 }}
             className="mb-20"
           >
-            {/* Tabs */}
             <div className="flex gap-1 bg-card/50 rounded-xl p-1 border border-border/50 w-fit mb-8">
               {[
                 { key: "reviews" as const, label: "Отзывы", count: product.reviews.length },

@@ -251,7 +251,13 @@ const CheckoutPage = () => {
                         <img src={item.image} alt={item.name} className="w-14 h-14 object-cover rounded-lg shrink-0" />
                         <div className="min-w-0">
                           <p className="text-foreground text-sm font-medium line-clamp-1">{item.name}</p>
+                          {item.variationLabels && Object.keys(item.variationLabels).length > 0 && (
+                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                              {Object.entries(item.variationLabels).map(([k, v]) => `${k}: ${v}`).join(" · ")}
+                            </p>
+                          )}
                           <p className="text-xs text-muted-foreground">{item.quantity} × {formatPrice(item.price)}</p>
+                          {item.dimensions && <p className="text-[10px] text-muted-foreground/70">{item.dimensions} · {item.weight}</p>}
                         </div>
                       </div>
                     ))}

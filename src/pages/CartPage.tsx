@@ -80,11 +80,18 @@ const CartPage = () => {
                       <Link to={`/product/${item.productId}`} className="text-foreground font-semibold hover:text-primary transition-colors line-clamp-2">
                         {item.name}
                       </Link>
-                      {item.variations && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {Object.values(item.variations).join(" · ")}
-                        </p>
+
+                      {/* Variation labels */}
+                      {item.variationLabels && Object.keys(item.variationLabels).length > 0 && (
+                        <div className="mt-1.5 space-y-0.5">
+                          {Object.entries(item.variationLabels).map(([key, val]) => (
+                            <p key={key} className="text-xs text-muted-foreground">
+                              {key}: <span className="text-foreground/70">{val}</span>
+                            </p>
+                          ))}
+                        </div>
                       )}
+
                       <p className="text-primary font-bold text-lg mt-2">
                         {formatPrice(item.price)}
                       </p>
@@ -129,6 +136,18 @@ const CartPage = () => {
                       <span className="text-muted-foreground">Товары ({totalItems})</span>
                       <span className="text-foreground">{formatPrice(totalPrice)}</span>
                     </div>
+
+                    {/* Dimensions & Weight per item */}
+                    {items.map((item) => (
+                      (item.dimensions || item.weight) && (
+                        <div key={item.productId} className="text-xs text-muted-foreground border-t border-border/30 pt-2">
+                          <p className="text-foreground/70 font-medium text-[11px] mb-1 truncate">{item.name}</p>
+                          {item.dimensions && <p>Размеры: {item.dimensions}</p>}
+                          {item.weight && <p>Вес: {item.weight}</p>}
+                        </div>
+                      )
+                    ))}
+
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Доставка</span>
                       <span className="text-foreground/60">Рассчитывается при оформлении</span>
