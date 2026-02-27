@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { Heart, ShoppingCart, SlidersHorizontal, ArrowLeft, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { products, categories, type Category } from "@/data/products";
+import { useCart } from "@/contexts/CartContext";
+import { toast } from "sonner";
 import CatalogFilters from "@/components/CatalogFilters";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -68,8 +70,10 @@ const categoryImages: Record<string, string> = {
 
 const CatalogPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { addItem } = useCart();
   const activeCategory = searchParams.get("category") || null;
   const activeSubcategory = searchParams.get("sub") || null;
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [selectedWoods, setSelectedWoods] = useState<string[]>([]);
   const [selectedCoatings, setSelectedCoatings] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 200000]);
@@ -412,10 +416,20 @@ const CatalogPage = () => {
                       </span>
                     )}
                     <button
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setFavorites(prev => {
+                          const next = new Set(prev);
+                          if (next.has(product.id)) next.delete(product.id);
+                          else next.add(product.id);
+                          return next;
+                        });
+                        toast.success(favorites.has(product.id) ? "Удалено из избранного" : "Добавлено в избранное");
+                      }}
                       className="absolute top-3 right-3 p-2 rounded-full bg-background/70 hover:bg-background transition-colors"
                     >
-                      <Heart className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                      <Heart className={cn("h-4 w-4", favorites.has(product.id) ? "fill-white text-white" : "text-muted-foreground hover:text-primary")} />
                     </button>
                   </div>
                   <div className="p-5">
@@ -438,7 +452,19 @@ const CatalogPage = () => {
                     <Button
                       size="sm"
                       className="w-full gap-2"
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        addItem({
+                          productId: product.id,
+                          name: product.name,
+                          price: product.price,
+                          image: product.images[0],
+                          dimensions: product.dimensions,
+                          weight: product.weight,
+                        });
+                        toast.success("Товар добавлен в корзину");
+                      }}
                     >
                       <ShoppingCart className="h-4 w-4" />
                       В корзину

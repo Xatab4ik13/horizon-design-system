@@ -7,6 +7,9 @@ export interface CartItem {
   image: string;
   quantity: number;
   variations?: Record<string, string>;
+  variationLabels?: Record<string, string>;
+  dimensions?: string;
+  weight?: string;
 }
 
 interface CartContextType {
