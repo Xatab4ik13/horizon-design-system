@@ -2,7 +2,8 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
-  ChevronRight, User, Truck, CreditCard, CheckCircle2, MapPin, Phone,
+  ChevronRight, User, Truck, CreditCard, CheckCircle2, MapPin,
+  ExternalLink, AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
@@ -15,11 +16,11 @@ import logoPochta from "@/assets/logo-pochta.png";
 import logoYandex from "@/assets/logo-yandex-delivery.png";
 
 const deliveryOptions = [
-  { id: "cdek", name: "СДЭК", logo: logoCdek, price: 450, days: "3–5 дней" },
-  { id: "boxberry", name: "Boxberry", logo: logoBoxberry, price: 390, days: "4–7 дней" },
-  { id: "pochta", name: "Почта России", logo: logoPochta, price: 350, days: "5–14 дней" },
-  { id: "yandex", name: "Яндекс Доставка", logo: logoYandex, price: 500, days: "1–2 дня" },
-  { id: "pickup", name: "Самовывоз", logo: null, price: 0, days: "По готовности" },
+  { id: "cdek", name: "СДЭК", logo: logoCdek, days: "3–5 дней", calcUrl: "https://www.cdek.ru/ru/calculate" },
+  { id: "boxberry", name: "Boxberry", logo: logoBoxberry, days: "4–7 дней", calcUrl: "https://boxberry.ru/tracking" },
+  { id: "pochta", name: "Почта России", logo: logoPochta, days: "5–14 дней", calcUrl: "https://www.pochta.ru/parcels" },
+  { id: "yandex", name: "Яндекс Доставка", logo: logoYandex, days: "1–2 дня", calcUrl: "https://delivery.yandex.ru" },
+  { id: "pickup", name: "Самовывоз", logo: null as string | null, days: "По готовности", calcUrl: null as string | null },
 ];
 
 const paymentOptions = [
@@ -35,16 +36,25 @@ const CheckoutPage = () => {
   const [step, setStep] = useState(0);
   const [delivery, setDelivery] = useState("cdek");
   const [payment, setPayment] = useState("card");
+  const [deliveryConfirmed, setDeliveryConfirmed] = useState(false);
+  const [address, setAddress] = useState("");
 
   const formatPrice = (n: number) => n.toLocaleString("ru-RU") + " ₽";
 
-  const selectedDelivery = deliveryOptions.find((d) => d.id === delivery)!;
-  const finalTotal = totalPrice + selectedDelivery.price;
+  const isPickup = delivery === "pickup";
+  const canProceedToPayment = isPickup || (deliveryConfirmed && address.trim().length > 0);
+
+  const handleDeliveryChange = (id: string) => {
+    setDelivery(id);
+    setDeliveryConfirmed(false);
+  };
 
   const handleComplete = () => {
     setStep(3);
     clearCart();
   };
+
+  const selectedDelivery = deliveryOptions.find((d) => d.id === delivery)!;
 
   if (items.length === 0 && step !== 3) {
     return (
@@ -99,7 +109,9 @@ const CheckoutPage = () => {
               <h2 className="text-3xl font-bold text-foreground mb-3">Заказ оформлен!</h2>
               <p className="text-muted-foreground mb-2">Номер заказа: <span className="text-foreground font-semibold">#DW-{Math.floor(Math.random() * 90000 + 10000)}</span></p>
               <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-                Мы отправим подтверждение на вашу почту. Менеджер свяжется с вами для уточнения деталей.
+                {isPickup
+                  ? "Мы свяжемся с вами, когда заказ будет готов к выдаче."
+                  : "Менеджер свяжется с вами для уточнения стоимости доставки и подтверждения заказа."}
               </p>
               <div className="flex gap-4 justify-center">
                 <Link to="/catalog"><Button size="lg" className="rounded-full">Продолжить покупки</Button></Link>
@@ -154,14 +166,7 @@ const CheckoutPage = () => {
                             delivery === opt.id ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"
                           }`}
                         >
-                          <input
-                            type="radio"
-                            name="delivery"
-                            value={opt.id}
-                            checked={delivery === opt.id}
-                            onChange={() => setDelivery(opt.id)}
-                            className="sr-only"
-                          />
+                          <input type="radio" name="delivery" value={opt.id} checked={delivery === opt.id} onChange={() => handleDeliveryChange(opt.id)} className="sr-only" />
                           <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
                             delivery === opt.id ? "border-primary" : "border-muted-foreground/30"
                           }`}>
@@ -176,23 +181,71 @@ const CheckoutPage = () => {
                             <p className="text-foreground font-medium text-sm">{opt.name}</p>
                             <p className="text-xs text-muted-foreground">{opt.days}</p>
                           </div>
-                          <span className="text-foreground font-semibold text-sm">
-                            {opt.price === 0 ? "Бесплатно" : formatPrice(opt.price)}
-                          </span>
+                          {opt.calcUrl && (
+                            <a
+                              href={opt.calcUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-primary hover:text-primary/80 transition-colors flex items-center gap-1 text-xs shrink-0"
+                            >
+                              Рассчитать <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
+                          {!opt.calcUrl && opt.id === "pickup" && (
+                            <span className="text-primary font-semibold text-sm">Бесплатно</span>
+                          )}
                         </label>
                       ))}
                     </div>
 
-                    {delivery !== "pickup" && (
-                      <div className="mb-6">
-                        <label className="text-sm text-muted-foreground mb-1.5 block">Адрес доставки</label>
-                        <input className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors" placeholder="Город, улица, дом, квартира" />
+                    {/* Address & confirmation for delivery */}
+                    {!isPickup && (
+                      <div className="space-y-4 mb-6">
+                        <div>
+                          <label className="text-sm text-muted-foreground mb-1.5 block">Адрес доставки *</label>
+                          <input
+                            value={address}
+                            onChange={(e) => setAddress(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors"
+                            placeholder="Город, улица, дом, квартира"
+                          />
+                        </div>
+
+                        <label className="flex items-start gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={deliveryConfirmed}
+                            onChange={(e) => setDeliveryConfirmed(e.target.checked)}
+                            className="mt-0.5 accent-primary"
+                          />
+                          <div>
+                            <p className="text-foreground text-sm font-medium">Я рассчитал стоимость доставки</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Воспользуйтесь калькулятором транспортной компании выше. Менеджер уточнит итоговую стоимость после оформления.
+                            </p>
+                          </div>
+                        </label>
+
+                        {!canProceedToPayment && (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <AlertCircle className="h-3.5 w-3.5 text-primary/60" />
+                            <span>Укажите адрес и подтвердите расчёт доставки для продолжения</span>
+                          </div>
+                        )}
                       </div>
                     )}
 
                     <div className="flex gap-3">
                       <Button variant="outline" onClick={() => setStep(0)} className="rounded-xl">Назад</Button>
-                      <Button onClick={() => setStep(2)} size="lg" className="rounded-xl">Далее: Оплата</Button>
+                      <Button
+                        onClick={() => setStep(2)}
+                        size="lg"
+                        className="rounded-xl"
+                        disabled={!canProceedToPayment}
+                      >
+                        Далее: Оплата
+                      </Button>
                     </div>
                   </motion.div>
                 )}
@@ -269,11 +322,16 @@ const CheckoutPage = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Доставка</span>
-                      <span className="text-foreground">{selectedDelivery.price === 0 ? "Бесплатно" : formatPrice(selectedDelivery.price)}</span>
+                      <span className="text-foreground">
+                        {isPickup ? "Бесплатно (самовывоз)" : "Уточняется менеджером"}
+                      </span>
                     </div>
                     <div className="flex justify-between pt-3 border-t border-border/50">
                       <span className="text-foreground font-semibold">Итого</span>
-                      <span className="text-primary font-bold text-xl">{formatPrice(finalTotal)}</span>
+                      <div className="text-right">
+                        <span className="text-primary font-bold text-xl">{formatPrice(totalPrice)}</span>
+                        {!isPickup && <p className="text-[10px] text-muted-foreground">+ стоимость доставки</p>}
+                      </div>
                     </div>
                   </div>
                 </div>

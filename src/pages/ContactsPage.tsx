@@ -144,6 +144,43 @@ const ContactsPage = () => {
 
         </div>
 
+        {/* Careers section */}
+        <div className="container mx-auto px-4 mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-6 md:p-10"
+          >
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Работа в компании</h2>
+            <p className="text-muted-foreground mb-8 max-w-2xl">
+              Мы расширяем команду и ищем увлечённых людей, готовых создавать уникальные изделия из дерева.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+              {[
+                { title: "Столяр-краснодеревщик", type: "Полная занятость", desc: "Опыт работы с массивом от 2 лет. Изготовление мебели и декора по чертежам." },
+                { title: "Маляр-лакировщик", type: "Полная занятость", desc: "Покраска и лакировка изделий. Работа с эмалями, маслами, морилками." },
+                { title: "Менеджер по продажам", type: "Удалённо", desc: "Обработка заявок, консультирование клиентов, ведение CRM." },
+              ].map((job) => (
+                <div key={job.title} className="p-5 rounded-xl border border-border hover:border-primary/30 transition-colors">
+                  <h3 className="text-foreground font-semibold mb-1">{job.title}</h3>
+                  <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">{job.type}</span>
+                  <p className="text-sm text-muted-foreground mt-3">{job.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="p-5 rounded-xl bg-primary/5 border border-primary/10">
+              <p className="text-foreground text-sm mb-1 font-medium">Хотите присоединиться?</p>
+              <p className="text-muted-foreground text-sm">
+                Отправьте резюме на <a href="mailto:hr@derevo-master.ru" className="text-primary hover:underline">hr@derevo-master.ru</a> или позвоните по телефону{" "}
+                <a href="tel:+79001234567" className="text-primary hover:underline">+7 (900) 123-45-67</a>
+              </p>
+            </div>
+          </motion.div>
+        </div>
+
         {/* Contact form — full width like on main page */}
         <ContactForm />
       </main>
