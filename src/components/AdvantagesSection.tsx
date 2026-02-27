@@ -32,7 +32,9 @@ const AdvantagesSection = () => {
       />
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/75" />
-      {/* Bottom fade to dark */}
+      {/* Top fade */}
+      <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-t from-transparent to-[hsl(0_0%_2%)]" />
+      {/* Bottom fade */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-[hsl(0_0%_2%)]" />
 
       <div className="container mx-auto px-4 relative z-10">
@@ -57,7 +59,6 @@ const AdvantagesSection = () => {
               variants={cardVariants}
               className="group relative rounded-2xl p-8 text-center backdrop-blur-md bg-background/10 border border-primary/10 hover:border-primary/30 transition-all duration-500 hover:bg-background/20"
             >
-              {/* Icon with glow */}
               <div className="relative w-16 h-16 mx-auto mb-6">
                 <div className="absolute inset-0 rounded-full bg-primary/0 group-hover:bg-primary/20 blur-xl transition-all duration-500" />
                 <div className="relative w-full h-full rounded-full border border-primary/30 flex items-center justify-center group-hover:border-primary/60 transition-colors duration-500">
@@ -65,12 +66,8 @@ const AdvantagesSection = () => {
                 </div>
               </div>
 
-              <h3 className="text-foreground mb-3 text-lg">
-                {a.title}
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed font-light">
-                {a.desc}
-              </p>
+              <h3 className="text-foreground mb-3 text-lg">{a.title}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed font-light">{a.desc}</p>
             </motion.div>
           ))}
         </div>

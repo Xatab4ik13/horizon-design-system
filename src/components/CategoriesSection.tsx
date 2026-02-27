@@ -19,21 +19,26 @@ const categories = [
 const CategoriesSection = () => {
   return (
     <section
-      className="py-20 relative"
+      className="py-16 relative"
       style={{
-        background: "linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(25 15% 8%) 40%, hsl(30 12% 6%) 70%, hsl(0 0% 0%) 100%)"
+        background: "radial-gradient(ellipse at 50% 50%, hsl(25 30% 10%) 0%, hsl(20 15% 6%) 50%, hsl(0 0% 2%) 100%)"
       }}
     >
-      <div className="container mx-auto px-4">
-        <h2 className="text-3xl md:text-4xl text-center mb-12 text-foreground">
+      {/* Top fade */}
+      <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-t from-transparent to-[hsl(0_0%_2%)] pointer-events-none" />
+      {/* Bottom fade */}
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-b from-transparent to-[hsl(0_0%_2%)] pointer-events-none" />
+
+      <div className="container mx-auto px-4 relative z-10">
+        <h2 className="text-3xl md:text-4xl text-center mb-10 text-foreground">
           Категории каталога
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {categories.map((cat, i) => (
             <Link
               key={cat.slug}
               to={`/catalog?category=${cat.slug}`}
-              className="group relative h-96 overflow-visible"
+              className="group relative h-52 md:h-80 lg:h-96 overflow-visible"
             >
               {cat.image ? (
                 <motion.div
@@ -55,7 +60,7 @@ const CategoriesSection = () => {
                 <div className="absolute inset-0 bg-muted/30" />
               )}
               <div className="absolute inset-x-0 bottom-0 z-10 flex justify-center pb-2">
-                <h3 className="text-xl text-foreground group-hover:text-primary transition-colors">
+                <h3 className="text-base md:text-xl text-foreground group-hover:text-primary transition-colors">
                   {cat.name}
                 </h3>
               </div>

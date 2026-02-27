@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { useState, useEffect, useCallback, memo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import showcaseMirror from "@/assets/showcase-mirror.png";
@@ -12,7 +12,7 @@ const showcaseItems = [
     description: "Резные декоративные панно из массива — центр притяжения любого интерьера",
     image: showcasePano,
     link: "/catalog?category=interior&sub=pano",
-    cta: "Смотреть коллекцию",
+    cta: "Выбрать",
     bg: "radial-gradient(ellipse at 30% 50%, hsl(25 40% 12%) 0%, hsl(20 20% 6%) 50%, hsl(0 0% 2%) 100%)",
   },
   {
@@ -21,20 +21,16 @@ const showcaseItems = [
     description: "Уникальные зеркала в резных деревянных рамах с авторским дизайном",
     image: showcaseMirror,
     link: "/catalog?category=interior&sub=mirrors",
-    cta: "Выбрать зеркало",
+    cta: "Выбрать",
     bg: "radial-gradient(ellipse at 70% 40%, hsl(210 20% 14%) 0%, hsl(220 15% 7%) 50%, hsl(0 0% 2%) 100%)",
   },
 ];
 
-/** Autonomous 3D tilt using CSS animation for better performance */
 const AutoTilt3D = memo(({ children }: { children: React.ReactNode }) => (
   <div style={{ perspective: "1200px" }}>
     <div
       className="auto-tilt-3d"
-      style={{
-        transformStyle: "preserve-3d",
-        willChange: "transform",
-      }}
+      style={{ transformStyle: "preserve-3d", willChange: "transform" }}
     >
       {children}
     </div>
@@ -49,12 +45,7 @@ const slideVariants = {
     scale: 0.92,
     x: dir > 0 ? 120 : -120,
   }),
-  center: {
-    opacity: 1,
-    rotateY: 0,
-    scale: 1,
-    x: 0,
-  },
+  center: { opacity: 1, rotateY: 0, scale: 1, x: 0 },
   exit: (dir: number) => ({
     opacity: 0,
     rotateY: dir > 0 ? -20 : 20,
@@ -84,6 +75,12 @@ const PopularProducts = () => {
     return () => clearInterval(timer);
   }, [paused, paginate, current]);
 
+  const handleDragEnd = (_: any, info: PanInfo) => {
+    const threshold = 50;
+    if (info.offset.x < -threshold) paginate(1);
+    else if (info.offset.x > threshold) paginate(-1);
+  };
+
   const item = showcaseItems[current];
 
   return (
@@ -93,11 +90,10 @@ const PopularProducts = () => {
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      {/* Top/bottom fades */}
       <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-t from-transparent to-[hsl(0_0%_2%)] z-10 pointer-events-none" />
       <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-b from-transparent to-[hsl(0_0%_2%)] z-10 pointer-events-none" />
-      <div className="min-h-[85vh] md:min-h-[90vh] flex items-center relative" style={{ perspective: "1400px" }}>
-        <div className="container mx-auto px-4 py-16 md:py-24">
+      <div className="min-h-[80vh] md:min-h-[90vh] flex items-center relative" style={{ perspective: "1400px" }}>
+        <div className="container mx-auto px-4 py-12 md:py-24">
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={current}
@@ -107,7 +103,11 @@ const PopularProducts = () => {
               animate="center"
               exit="exit"
               transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
-              className="flex flex-col-reverse md:flex-row items-center gap-10 md:gap-16 lg:gap-24"
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.15}
+              onDragEnd={handleDragEnd}
+              className="flex flex-col-reverse md:flex-row items-center gap-6 md:gap-16 lg:gap-24 cursor-grab active:cursor-grabbing touch-pan-y"
             >
               {/* Text */}
               <div className="w-full md:w-5/12 text-center md:text-left">
@@ -115,7 +115,7 @@ const PopularProducts = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2, duration: 0.5 }}
-                  className="inline-block text-primary text-sm uppercase tracking-[0.25em] font-medium mb-4"
+                  className="inline-block text-primary text-sm uppercase tracking-[0.25em] font-medium mb-3"
                 >
                   {item.tagline}
                 </motion.span>
@@ -124,7 +124,7 @@ const PopularProducts = () => {
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3, duration: 0.6 }}
-                  className="text-5xl md:text-7xl lg:text-8xl font-bold text-foreground tracking-tight leading-none mb-6"
+                  className="text-5xl md:text-7xl lg:text-8xl font-bold text-foreground tracking-tight leading-none mb-4"
                 >
                   {item.title}
                 </motion.h2>
@@ -133,7 +133,7 @@ const PopularProducts = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4, duration: 0.5 }}
-                  className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-8 max-w-md mx-auto md:mx-0"
+                  className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-6 max-w-md mx-auto md:mx-0"
                 >
                   {item.description}
                 </motion.p>
@@ -166,7 +166,7 @@ const PopularProducts = () => {
                       alt={item.title}
                       loading="lazy"
                       decoding="async"
-                      className="w-[306px] h-[306px] md:w-[450px] md:h-[450px] lg:w-[522px] lg:h-[522px] object-contain drop-shadow-2xl"
+                      className="w-[280px] h-[280px] md:w-[450px] md:h-[450px] lg:w-[522px] lg:h-[522px] object-contain drop-shadow-2xl pointer-events-none"
                     />
                   </motion.div>
                 </AutoTilt3D>
