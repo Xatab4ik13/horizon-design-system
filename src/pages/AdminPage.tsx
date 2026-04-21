@@ -384,13 +384,24 @@ const ProductEditor = ({
       <h2 className={`${ui.h2} mb-6`}>{form.id ? "Изменить товар" : "Новый товар"}</h2>
 
       <div className="grid gap-5">
-        <div>
-          <label className={ui.label}>Название *</label>
-          <input
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className={ui.input}
-          />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-2">
+            <label className={ui.label}>Название *</label>
+            <input
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className={ui.input}
+            />
+          </div>
+          <div>
+            <label className={ui.label}>Артикул (SKU)</label>
+            <input
+              value={form.sku ?? ""}
+              onChange={(e) => setForm({ ...form, sku: e.target.value })}
+              className={ui.input}
+              placeholder="напр. П0002"
+            />
+          </div>
         </div>
 
         <div>
