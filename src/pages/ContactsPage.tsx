@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   ChevronRight, Phone, Mail, MapPin, Clock, Send,
@@ -8,6 +9,15 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import ContactForm from "@/components/ContactForm";
+import { supabase } from "@/integrations/supabase/client";
+
+interface Vacancy {
+  id: string;
+  title: string;
+  description: string;
+  requirements: string | null;
+  salary: string | null;
+}
 
 const contactInfo = [
   {
@@ -41,6 +51,27 @@ const contactInfo = [
 ];
 
 const ContactsPage = () => {
+  const [vacancies, setVacancies] = useState<Vacancy[]>([]);
+  const [vacanciesLoading, setVacanciesLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    supabase
+      .from("vacancies")
+      .select("id, title, description, requirements, salary")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (cancelled) return;
+        setVacancies((data as Vacancy[]) ?? []);
+        setVacanciesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <div
       className="min-h-screen"
@@ -157,19 +188,35 @@ const ContactsPage = () => {
               Мы расширяем команду и ищем увлечённых людей, готовых создавать уникальные изделия из дерева.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-              {[
-                { title: "Столяр-краснодеревщик", type: "Полная занятость", desc: "Опыт работы с массивом от 2 лет. Изготовление мебели и декора по чертежам." },
-                { title: "Маляр-лакировщик", type: "Полная занятость", desc: "Покраска и лакировка изделий. Работа с эмалями, маслами, морилками." },
-                { title: "Менеджер по продажам", type: "Удалённо", desc: "Обработка заявок, консультирование клиентов, ведение CRM." },
-              ].map((job) => (
-                <div key={job.title} className="p-5 rounded-xl border border-border hover:border-primary/30 transition-colors">
-                  <h3 className="text-foreground font-semibold mb-1">{job.title}</h3>
-                  <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">{job.type}</span>
-                  <p className="text-sm text-muted-foreground mt-3">{job.desc}</p>
-                </div>
-              ))}
-            </div>
+            {vacanciesLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : vacancies.length === 0 ? (
+              <div className="p-6 rounded-xl border border-dashed border-border text-center text-muted-foreground text-sm mb-8">
+                Открытых вакансий пока нет — но мы всегда рады талантливым кандидатам.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                {vacancies.map((job) => (
+                  <div key={job.id} className="p-5 rounded-xl border border-border hover:border-primary/30 transition-colors flex flex-col">
+                    <h3 className="text-foreground font-semibold mb-2">{job.title}</h3>
+                    {job.salary && (
+                      <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full self-start mb-3">
+                        {job.salary}
+                      </span>
+                    )}
+                    <p className="text-sm text-muted-foreground whitespace-pre-line">{job.description}</p>
+                    {job.requirements && (
+                      <div className="mt-3 pt-3 border-t border-border/50">
+                        <p className="text-xs text-muted-foreground/80 font-medium mb-1">Требования:</p>
+                        <p className="text-xs text-muted-foreground whitespace-pre-line">{job.requirements}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div className="p-5 rounded-xl bg-primary/5 border border-primary/10">
               <p className="text-foreground text-sm mb-1 font-medium">Хотите присоединиться?</p>
