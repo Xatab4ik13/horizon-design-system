@@ -488,15 +488,8 @@ const CatalogPage = () => {
               </motion.div>
             ))}
           </div>
-
-          {filteredProducts.length === 0 && (
-            <div className="text-center py-20">
-              <p className="text-muted-foreground text-lg">Товары не найдены</p>
-              <Button variant="outline" className="mt-4" onClick={() => { setSubcategory(null); setSelectedWoods([]); }}>
-                Сбросить фильтры
-              </Button>
-            </div>
           )}
+
         </div>
       </main>
       <Footer />
