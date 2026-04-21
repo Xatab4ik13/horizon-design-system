@@ -288,6 +288,7 @@ const ProductsPanel = () => {
               <div className="flex-1 min-w-0">
                 <div className="font-bold text-[18px] truncate">{p.name}</div>
                 <div className="text-[14px] text-[#888]">
+                  {p.sku && <span className="text-[#aaa] font-mono mr-2">{p.sku}</span>}
                   {categoryOptions.find((c) => c.value === p.category)?.label ?? p.category} •{" "}
                   {Number(p.price).toLocaleString("ru-RU")} ₽
                   {!p.is_active && " • СКРЫТ"}
