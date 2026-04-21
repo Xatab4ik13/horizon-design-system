@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value?: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           content: string
@@ -91,7 +109,14 @@ export type Database = {
           customer_name: string
           customer_phone: string
           delivery_address: string | null
+          delivery_city: string | null
+          delivery_cost: number | null
+          delivery_days: string | null
+          delivery_external_id: string | null
           delivery_method: string
+          delivery_payload: Json | null
+          delivery_provider: string | null
+          delivery_tracking: string | null
           id: string
           items: Json
           payment_method: string
@@ -107,7 +132,14 @@ export type Database = {
           customer_name: string
           customer_phone: string
           delivery_address?: string | null
+          delivery_city?: string | null
+          delivery_cost?: number | null
+          delivery_days?: string | null
+          delivery_external_id?: string | null
           delivery_method: string
+          delivery_payload?: Json | null
+          delivery_provider?: string | null
+          delivery_tracking?: string | null
           id?: string
           items?: Json
           payment_method: string
@@ -123,7 +155,14 @@ export type Database = {
           customer_name?: string
           customer_phone?: string
           delivery_address?: string | null
+          delivery_city?: string | null
+          delivery_cost?: number | null
+          delivery_days?: string | null
+          delivery_external_id?: string | null
           delivery_method?: string
+          delivery_payload?: Json | null
+          delivery_provider?: string | null
+          delivery_tracking?: string | null
           id?: string
           items?: Json
           payment_method?: string
