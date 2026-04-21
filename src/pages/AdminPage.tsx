@@ -16,7 +16,10 @@ import {
   X,
   Upload,
   FileSpreadsheet,
+  QrCode,
+  Download,
 } from "lucide-react";
+import { QRCodeCanvas } from "qrcode.react";
 
 // ===== ОБЩИЕ КЛАССЫ ТЁМНО-СЕРОЙ ТЕМЫ =====
 const ui = {
@@ -388,9 +391,42 @@ const Import1CBlock = ({
   );
 };
 
+// QR-код на страницу товара (для печати/визиток/AR-перехода)
+const QrModal = ({ product, onClose }: { product: any; onClose: () => void }) => {
+  const url = `${window.location.origin}/product/${product.id}`;
+  const download = () => {
+    const canvas = document.querySelector("#admin-qr-canvas") as HTMLCanvasElement | null;
+    if (!canvas) return;
+    const link = document.createElement("a");
+    link.download = `qr-${product.sku ?? product.id}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  };
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={onClose}>
+      <div className={`${ui.card} max-w-md w-full`} onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className={ui.h3}>QR-код товара</h3>
+          <button onClick={onClose} className="text-[#888] hover:text-white"><X size={22} /></button>
+        </div>
+        <p className="text-[14px] text-[#aaa] mb-2 truncate">{product.name}</p>
+        <p className="text-[12px] text-[#777] font-mono break-all mb-4">{url}</p>
+        <div className="bg-white p-4 rounded-lg flex justify-center mb-4">
+          <QRCodeCanvas id="admin-qr-canvas" value={url} size={256} level="H" includeMargin />
+        </div>
+        <button onClick={download} className={`${ui.btn} ${ui.btnPrimary} w-full`}>
+          <Download size={18} />
+          Скачать PNG
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const ProductsPanel = () => {
   const [items, setItems] = useState<any[]>([]);
   const [editing, setEditing] = useState<any | null>(null);
+  const [qrFor, setQrFor] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
@@ -466,6 +502,13 @@ const ProductsPanel = () => {
                   {!p.is_active && " • СКРЫТ"}
                 </div>
               </div>
+              <button
+                onClick={() => setQrFor(p)}
+                className={`${ui.btn} ${ui.btnSecondary}`}
+                title="QR-код на товар"
+              >
+                <QrCode size={16} />
+              </button>
               <button onClick={() => setEditing(p)} className={`${ui.btn} ${ui.btnSecondary}`}>
                 <Pencil size={16} />
                 Изменить
@@ -477,6 +520,8 @@ const ProductsPanel = () => {
           ))}
         </div>
       )}
+
+      {qrFor && <QrModal product={qrFor} onClose={() => setQrFor(null)} />}
     </div>
   );
 };
@@ -648,6 +693,28 @@ const ProductEditor = ({
                 }}
               />
             </label>
+          </div>
+        </div>
+
+        {/* AR-модели */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className={ui.label}>AR — Android (.glb URL)</label>
+            <input
+              value={form.ar_glb_url ?? ""}
+              onChange={(e) => setForm({ ...form, ar_glb_url: e.target.value || null })}
+              className={ui.input}
+              placeholder="https://.../model.glb"
+            />
+          </div>
+          <div>
+            <label className={ui.label}>AR — iOS (.usdz URL)</label>
+            <input
+              value={form.ar_usdz_url ?? ""}
+              onChange={(e) => setForm({ ...form, ar_usdz_url: e.target.value || null })}
+              className={ui.input}
+              placeholder="https://.../model.usdz"
+            />
           </div>
         </div>
 

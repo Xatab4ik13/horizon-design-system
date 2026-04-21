@@ -335,14 +335,28 @@ const ProductPage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20">
             {/* Gallery */}
             <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
-              {showAR ? (
-                <div className="aspect-square rounded-2xl bg-card border border-border flex flex-col items-center justify-center">
-                  <Smartphone className="h-16 w-16 text-primary mb-4 animate-pulse" />
-                  <p className="text-foreground font-semibold text-lg mb-2">AR-просмотр</p>
-                  <p className="text-muted-foreground text-sm text-center max-w-xs mb-4">
-                    Наведите камеру на ровную поверхность, чтобы разместить изделие в вашем интерьере
-                  </p>
-                  <Button variant="outline" size="sm" onClick={() => setShowAR(false)}>Закрыть AR</Button>
+              {showAR && product.arModel ? (
+                <div className="aspect-square rounded-2xl bg-card border border-border overflow-hidden relative">
+                  <model-viewer
+                    src={product.arModel.glb}
+                    ios-src={product.arModel.usdz}
+                    alt={product.name}
+                    ar
+                    ar-modes="webxr scene-viewer quick-look"
+                    camera-controls
+                    auto-rotate
+                    shadow-intensity="1"
+                    style={{ width: "100%", height: "100%", background: "transparent" }}
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAR(false)}
+                    className="absolute top-3 right-3 z-10"
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Закрыть
+                  </Button>
                 </div>
               ) : (
                 <ProductGallery
