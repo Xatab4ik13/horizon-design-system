@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
@@ -11,6 +11,7 @@ import Footer from "@/components/Footer";
 import { useCart } from "@/contexts/CartContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 import logoCdek from "@/assets/logo-cdek.png";
 import logoBoxberry from "@/assets/logo-boxberry.png";
@@ -36,6 +37,7 @@ const steps = ["Контактные данные", "Доставка", "Опл�
 const CheckoutPage = () => {
   const { items, totalPrice, clearCart } = useCart();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [step, setStep] = useState(0);
   const [delivery, setDelivery] = useState("cdek");
   const [payment, setPayment] = useState("card");
@@ -49,6 +51,26 @@ const CheckoutPage = () => {
     phone: "",
     email: "",
   });
+
+  // Prefill from profile when logged in
+  useEffect(() => {
+    if (!user) return;
+    setContact((c) => ({ ...c, email: c.email || user.email || "" }));
+    supabase
+      .from("profiles")
+      .select("first_name, last_name, phone")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!data) return;
+        setContact((c) => ({
+          firstName: c.firstName || (data.first_name ?? ""),
+          lastName: c.lastName || (data.last_name ?? ""),
+          phone: c.phone || (data.phone ?? ""),
+          email: c.email || user.email || "",
+        }));
+      });
+  }, [user]);
 
   const formatPrice = (n: number) => n.toLocaleString("ru-RU") + " ₽";
 
@@ -74,6 +96,7 @@ const CheckoutPage = () => {
     const { data, error } = await supabase
       .from("orders")
       .insert({
+        user_id: user?.id ?? null,
         customer_name: customerName,
         customer_phone: contact.phone.trim(),
         customer_email: contact.email.trim() || null,

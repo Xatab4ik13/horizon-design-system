@@ -98,6 +98,7 @@ export type Database = {
           status: string
           total_amount: number
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           comment?: string | null
@@ -113,6 +114,7 @@ export type Database = {
           status?: string
           total_amount?: number
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           comment?: string | null
@@ -128,6 +130,7 @@ export type Database = {
           status?: string
           total_amount?: number
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -182,6 +185,36 @@ export type Database = {
           updated_at?: string
           weight_kg?: number | null
           width_cm?: number | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
