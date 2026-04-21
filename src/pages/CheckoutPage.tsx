@@ -230,7 +230,7 @@ const CheckoutPage = () => {
               <p className="text-muted-foreground mb-8 max-w-md mx-auto">
                 {isPickup
                   ? "Мы свяжемся с вами, когда заказ будет готов к выдаче."
-                  : "Менеджер свяжется с вами для уточнения стоимости доставки и подтверждения заказа."}
+                  : "Мы передадим заказ перевозчику и пришлём трек-номер на email."}
               </p>
               <div className="flex gap-4 justify-center">
                 <Link to="/catalog"><Button size="lg" className="rounded-full">Продолжить покупки</Button></Link>
