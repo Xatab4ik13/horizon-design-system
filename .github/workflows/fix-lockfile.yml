@@ -1,0 +1,57 @@
+name: Sync package-lock.json
+
+# Ручной запуск из вкладки Actions → "Sync package-lock.json" → Run workflow.
+# Workflow пересобирает package-lock.json под текущий package.json и
+# коммитит результат обратно в ветку. Это нужно, когда хостинг (Tilda и др.)
+# падает на `npm ci` из-за рассинхрона lockfile.
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Ветка, в которую закоммитить обновлённый lockfile"
+        required: true
+        default: "main"
+
+permissions:
+  contents: write
+
+jobs:
+  sync-lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Remove old lockfile and node_modules
+        run: |
+          rm -f package-lock.json
+          rm -rf node_modules
+
+      - name: Reinstall to regenerate lockfile
+        run: npm install --no-audit --no-fund
+
+      - name: Verify npm ci works with new lockfile
+        run: |
+          rm -rf node_modules
+          npm ci --no-audit --no-fund
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- package-lock.json; then
+            echo "package-lock.json уже актуален — коммитить нечего."
+            exit 0
+          fi
+          git add package-lock.json
+          git commit -m "chore: sync package-lock.json with package.json"
+          git push origin HEAD:${{ github.event.inputs.branch }}
