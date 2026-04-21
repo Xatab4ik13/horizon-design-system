@@ -222,7 +222,7 @@ Deno.serve(async (req) => {
       return json({ error: "Unauthorized" }, 401);
     }
     const { provider, orderId } = await req.json();
-    if (!["yandex", "pek"].includes(provider)) {
+    if (!["yandex", "pek", "cdek"].includes(provider)) {
       return json({ error: "Unknown provider" }, 400);
     }
     const { data: order, error: oErr } = await admin
@@ -236,7 +236,9 @@ Deno.serve(async (req) => {
     const result =
       provider === "yandex"
         ? await createYandexClaim(order, sender)
-        : await createPekOrder(order, sender);
+        : provider === "pek"
+        ? await createPekOrder(order, sender)
+        : await createCdekOrder(order, sender);
 
     await admin
       .from("orders")
