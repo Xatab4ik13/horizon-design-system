@@ -387,6 +387,18 @@ const CatalogPage = () => {
           />
 
           {/* Products grid */}
+          {productsLoading ? (
+            <div className="flex justify-center py-20">
+              <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="text-center py-20 px-4">
+              <p className="text-2xl text-foreground/80 mb-3">Товары скоро появятся</p>
+              <p className="text-muted-foreground">
+                Мы обновляем каталог. Свяжитесь с нами, чтобы обсудить индивидуальный заказ.
+              </p>
+            </div>
+          ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProducts.map((product, i) => (
               <motion.div
