@@ -337,7 +337,6 @@ const ProductPage = () => {
             <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
               {showAR && product.arModel ? (
                 <div className="aspect-square rounded-2xl bg-card border border-border overflow-hidden relative">
-                  {/* @ts-expect-error model-viewer is a custom element */}
                   <model-viewer
                     src={product.arModel.glb}
                     ios-src={product.arModel.usdz}
