@@ -16,7 +16,10 @@ import {
   X,
   Upload,
   FileSpreadsheet,
+  QrCode,
+  Download,
 } from "lucide-react";
+import { QRCodeCanvas } from "qrcode.react";
 
 // ===== ОБЩИЕ КЛАССЫ ТЁМНО-СЕРОЙ ТЕМЫ =====
 const ui = {
