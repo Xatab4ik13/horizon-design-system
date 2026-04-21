@@ -718,6 +718,7 @@ const ProductEditor = ({
           </div>
         </div>
 
+        <div className="flex items-center gap-3">
           <input
             type="checkbox"
             id="active"
