@@ -136,6 +136,8 @@ export type Database = {
       }
       products: {
         Row: {
+          ar_glb_url: string | null
+          ar_usdz_url: string | null
           category: string
           created_at: string
           depth_cm: number | null
@@ -154,6 +156,8 @@ export type Database = {
           width_cm: number | null
         }
         Insert: {
+          ar_glb_url?: string | null
+          ar_usdz_url?: string | null
           category: string
           created_at?: string
           depth_cm?: number | null
@@ -172,6 +176,8 @@ export type Database = {
           width_cm?: number | null
         }
         Update: {
+          ar_glb_url?: string | null
+          ar_usdz_url?: string | null
           category?: string
           created_at?: string
           depth_cm?: number | null
