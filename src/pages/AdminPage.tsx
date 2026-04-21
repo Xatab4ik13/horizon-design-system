@@ -1,5 +1,6 @@
 import { useEffect, useState, FormEvent } from "react";
 import { adminAuth, adminCall, adminLogin } from "@/lib/adminApi";
+import { parse1CFile } from "@/lib/import1c";
 import { toast } from "sonner";
 import {
   Package,
@@ -14,6 +15,7 @@ import {
   Check,
   X,
   Upload,
+  FileSpreadsheet,
 } from "lucide-react";
 
 // ===== ОБЩИЕ КЛАССЫ ТЁМНО-СЕРОЙ ТЕМЫ =====
