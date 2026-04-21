@@ -147,6 +147,7 @@ export type Database = {
           name: string
           options: Json
           price: number
+          sku: string | null
           sort_order: number
           updated_at: string
           weight_kg: number | null
@@ -164,6 +165,7 @@ export type Database = {
           name: string
           options?: Json
           price?: number
+          sku?: string | null
           sort_order?: number
           updated_at?: string
           weight_kg?: number | null
@@ -181,6 +183,7 @@ export type Database = {
           name?: string
           options?: Json
           price?: number
+          sku?: string | null
           sort_order?: number
           updated_at?: string
           weight_kg?: number | null

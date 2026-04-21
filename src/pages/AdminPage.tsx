@@ -1,5 +1,6 @@
 import { useEffect, useState, FormEvent } from "react";
 import { adminAuth, adminCall, adminLogin } from "@/lib/adminApi";
+import { parse1CFile } from "@/lib/import1c";
 import { toast } from "sonner";
 import {
   Package,
@@ -14,6 +15,7 @@ import {
   Check,
   X,
   Upload,
+  FileSpreadsheet,
 } from "lucide-react";
 
 // ===== ОБЩИЕ КЛАССЫ ТЁМНО-СЕРОЙ ТЕМЫ =====
@@ -189,14 +191,16 @@ const Dashboard = ({ onNavigate }: { onNavigate: (t: Tab) => void }) => {
 // ===================================================================
 const emptyProduct = {
   name: "",
+  sku: "",
   description: "",
-  category: "furniture",
+  category: "interior",
   price: 0,
   width_cm: null as number | null,
   height_cm: null as number | null,
   depth_cm: null as number | null,
   weight_kg: null as number | null,
   images: [] as string[],
+  options: {} as Record<string, string>,
   is_active: true,
   sort_order: 0,
 };
@@ -211,6 +215,178 @@ const categoryOptions = [
   { value: "interior", label: "Предметы интерьера" },
   { value: "crafts", label: "Заготовки для творчества" },
 ];
+
+// ===== Импорт из 1С (XLSX) =====
+const Import1CBlock = ({
+  onDone,
+  defaultCategory,
+}: {
+  onDone: () => void;
+  defaultCategory: string;
+}) => {
+  const [parsed, setParsed] = useState<any[] | null>(null);
+  const [category, setCategory] = useState(defaultCategory);
+  const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  const handleFile = async (file: File) => {
+    setBusy(true);
+    try {
+      const items = await parse1CFile(file);
+      if (items.length === 0) {
+        toast.error("В файле не найдено ни одного товара");
+        setParsed(null);
+      } else {
+        setParsed(items);
+        toast.success(`Найдено товаров: ${items.length}`);
+      }
+    } catch (e: any) {
+      toast.error("Ошибка чтения файла: " + e.message);
+    }
+    setBusy(false);
+  };
+
+  const doImport = async () => {
+    if (!parsed) return;
+    setBusy(true);
+    try {
+      const payload = {
+        items: parsed.map((p) => ({
+          ...p,
+          sku: p.sku || null,
+          category,
+          is_active: true,
+          images: [],
+          sort_order: 0,
+        })),
+      };
+      const r = await adminCall<{ data: { created: number; updated: number; errors: string[] } }>(
+        "products.bulkUpsert",
+        payload,
+      );
+      const { created, updated, errors } = r.data;
+      toast.success(`Импорт: создано ${created}, обновлено ${updated}`);
+      if (errors.length) toast.error(`Ошибок: ${errors.length}. См. консоль.`);
+      if (errors.length) console.warn("Import errors:", errors);
+      setParsed(null);
+      setOpen(false);
+      onDone();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+    setBusy(false);
+  };
+
+  if (!open) {
+    return (
+      <button onClick={() => setOpen(true)} className={`${ui.btn} ${ui.btnSecondary}`}>
+        <FileSpreadsheet size={18} />
+        Импорт из 1С (XLSX)
+      </button>
+    );
+  }
+
+  return (
+    <div className={`${ui.card} mb-2`}>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className={ui.h3}>Импорт товаров из 1С</h3>
+        <button
+          onClick={() => {
+            setOpen(false);
+            setParsed(null);
+          }}
+          className={`${ui.btn} ${ui.btnSecondary}`}
+        >
+          <X size={16} /> Закрыть
+        </button>
+      </div>
+
+      <div className="grid gap-4">
+        <div>
+          <label className={ui.label}>Категория для импортируемых товаров</label>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className={ui.input}
+          >
+            {categoryOptions.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className={ui.label}>Файл выгрузки (.xlsx)</label>
+          <input
+            type="file"
+            accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            disabled={busy}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleFile(f);
+              e.target.value = "";
+            }}
+            className={ui.input}
+          />
+          <p className="text-[13px] text-[#888] mt-2">
+            Поддерживается формат «карточка товара» из 1С. Один файл может содержать несколько
+            товаров. Сопоставление с существующими — по артикулу. Скидка из 1С игнорируется. Фото
+            добавьте отдельно после импорта.
+          </p>
+        </div>
+
+        {parsed && (
+          <div className="border border-[#3a3a3a] rounded-lg overflow-hidden">
+            <div className="bg-[#1a1a1a] px-4 py-2 text-[14px] text-[#aaa]">
+              Предпросмотр ({parsed.length})
+            </div>
+            <div className="max-h-72 overflow-auto">
+              <table className="w-full text-[14px]">
+                <thead className="text-[#888] text-left">
+                  <tr>
+                    <th className="px-3 py-2">Артикул</th>
+                    <th className="px-3 py-2">Название</th>
+                    <th className="px-3 py-2">Цена</th>
+                    <th className="px-3 py-2">Размеры (Ш×В×Г)</th>
+                    <th className="px-3 py-2">Вес</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {parsed.map((p, i) => (
+                    <tr key={i} className="border-t border-[#3a3a3a]">
+                      <td className="px-3 py-2 font-mono">{p.sku ?? "—"}</td>
+                      <td className="px-3 py-2">{p.name}</td>
+                      <td className="px-3 py-2">{Number(p.price).toLocaleString("ru-RU")} ₽</td>
+                      <td className="px-3 py-2">
+                        {[p.width_cm, p.height_cm, p.depth_cm]
+                          .map((v) => (v ?? "—"))
+                          .join(" × ")}
+                      </td>
+                      <td className="px-3 py-2">{p.weight_kg ?? "—"} кг</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        <div className="flex gap-3">
+          <button
+            onClick={doImport}
+            disabled={!parsed || busy}
+            className={`${ui.btn} ${ui.btnPrimary} ${!parsed || busy ? "opacity-50" : ""}`}
+          >
+            <Check size={18} />
+            {busy ? "Импорт…" : `Импортировать${parsed ? ` (${parsed.length})` : ""}`}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const ProductsPanel = () => {
   const [items, setItems] = useState<any[]>([]);
@@ -253,7 +429,9 @@ const ProductsPanel = () => {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <Import1CBlock onDone={load} defaultCategory="interior" />
+
+      <div className="flex justify-between items-center mb-6 mt-6">
         <h2 className={ui.h2}>Товары ({items.length})</h2>
         <button
           onClick={() => setEditing({ ...emptyProduct })}
@@ -282,6 +460,7 @@ const ProductsPanel = () => {
               <div className="flex-1 min-w-0">
                 <div className="font-bold text-[18px] truncate">{p.name}</div>
                 <div className="text-[14px] text-[#888]">
+                  {p.sku && <span className="text-[#aaa] font-mono mr-2">{p.sku}</span>}
                   {categoryOptions.find((c) => c.value === p.category)?.label ?? p.category} •{" "}
                   {Number(p.price).toLocaleString("ru-RU")} ₽
                   {!p.is_active && " • СКРЫТ"}
@@ -377,13 +556,24 @@ const ProductEditor = ({
       <h2 className={`${ui.h2} mb-6`}>{form.id ? "Изменить товар" : "Новый товар"}</h2>
 
       <div className="grid gap-5">
-        <div>
-          <label className={ui.label}>Название *</label>
-          <input
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className={ui.input}
-          />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-2">
+            <label className={ui.label}>Название *</label>
+            <input
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className={ui.input}
+            />
+          </div>
+          <div>
+            <label className={ui.label}>Артикул (SKU)</label>
+            <input
+              value={form.sku ?? ""}
+              onChange={(e) => setForm({ ...form, sku: e.target.value })}
+              className={ui.input}
+              placeholder="напр. П0002"
+            />
+          </div>
         </div>
 
         <div>
