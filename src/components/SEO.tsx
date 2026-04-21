@@ -226,7 +226,7 @@ export const buildArticleJsonLd = (article: {
   description: string;
   author: string;
   datePublished: string;
-  id: number;
+  id: number | string;
 }) => ({
   "@context": "https://schema.org",
   "@type": "Article",
