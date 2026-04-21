@@ -394,6 +394,7 @@ const Import1CBlock = ({
 const ProductsPanel = () => {
   const [items, setItems] = useState<any[]>([]);
   const [editing, setEditing] = useState<any | null>(null);
+  const [qrFor, setQrFor] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
@@ -469,6 +470,13 @@ const ProductsPanel = () => {
                   {!p.is_active && " • СКРЫТ"}
                 </div>
               </div>
+              <button
+                onClick={() => setQrFor(p)}
+                className={`${ui.btn} ${ui.btnSecondary}`}
+                title="QR-код на товар"
+              >
+                <QrCode size={16} />
+              </button>
               <button onClick={() => setEditing(p)} className={`${ui.btn} ${ui.btnSecondary}`}>
                 <Pencil size={16} />
                 Изменить
@@ -480,6 +488,8 @@ const ProductsPanel = () => {
           ))}
         </div>
       )}
+
+      {qrFor && <QrModal product={qrFor} onClose={() => setQrFor(null)} />}
     </div>
   );
 };
