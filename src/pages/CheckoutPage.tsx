@@ -35,28 +35,78 @@ const steps = ["Контактные данные", "Доставка", "Опл�
 
 const CheckoutPage = () => {
   const { items, totalPrice, clearCart } = useCart();
+  const { toast } = useToast();
   const [step, setStep] = useState(0);
   const [delivery, setDelivery] = useState("cdek");
   const [payment, setPayment] = useState("card");
   const [deliveryConfirmed, setDeliveryConfirmed] = useState(false);
   const [address, setAddress] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [orderNumber, setOrderNumber] = useState<string>("");
+  const [contact, setContact] = useState({
+    firstName: "",
+    lastName: "",
+    phone: "",
+    email: "",
+  });
 
   const formatPrice = (n: number) => n.toLocaleString("ru-RU") + " ₽";
 
   const isPickup = delivery === "pickup";
   const canProceedToPayment = isPickup || (deliveryConfirmed && address.trim().length > 0);
+  const canProceedFromContact =
+    contact.firstName.trim().length >= 2 &&
+    contact.lastName.trim().length >= 2 &&
+    contact.phone.trim().length >= 5 &&
+    contact.email.trim().length >= 3;
 
   const handleDeliveryChange = (id: string) => {
     setDelivery(id);
     setDeliveryConfirmed(false);
   };
 
-  const handleComplete = () => {
+  const selectedDelivery = deliveryOptions.find((d) => d.id === delivery)!;
+
+  const handleComplete = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    const customerName = `${contact.firstName.trim()} ${contact.lastName.trim()}`.trim();
+    const { data, error } = await supabase
+      .from("orders")
+      .insert({
+        customer_name: customerName,
+        customer_phone: contact.phone.trim(),
+        customer_email: contact.email.trim() || null,
+        delivery_method: selectedDelivery.name,
+        delivery_address: isPickup ? null : address.trim(),
+        payment_method: paymentOptions.find((p) => p.id === payment)?.label ?? payment,
+        items: items.map((i) => ({
+          productId: i.productId,
+          name: i.name,
+          price: i.price,
+          quantity: i.quantity,
+          image: i.image,
+          variations: i.variationLabels ?? null,
+          dimensions: i.dimensions ?? null,
+          weight: i.weight ?? null,
+        })),
+        total_amount: totalPrice,
+      })
+      .select("id")
+      .single();
+    setSubmitting(false);
+    if (error) {
+      toast({
+        title: "Не удалось оформить заказ",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+    setOrderNumber(data?.id ? `DW-${data.id.slice(0, 6).toUpperCase()}` : "");
     setStep(3);
     clearCart();
   };
-
-  const selectedDelivery = deliveryOptions.find((d) => d.id === delivery)!;
 
   if (items.length === 0 && step !== 3) {
     return (
