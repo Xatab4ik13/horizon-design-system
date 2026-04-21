@@ -1,97 +1,97 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://faktura.ru/</loc>
+    <loc>https://faktura-wood.com/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://faktura.ru/catalog</loc>
+    <loc>https://faktura-wood.com/catalog</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://faktura.ru/catalog?category=furniture</loc>
+    <loc>https://faktura-wood.com/catalog?category=furniture</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://faktura.ru/catalog?category=kitchen</loc>
+    <loc>https://faktura-wood.com/catalog?category=kitchen</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://faktura.ru/catalog?category=storage</loc>
+    <loc>https://faktura-wood.com/catalog?category=storage</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://faktura.ru/catalog?category=interior</loc>
+    <loc>https://faktura-wood.com/catalog?category=interior</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://faktura.ru/catalog?category=crafts</loc>
+    <loc>https://faktura-wood.com/catalog?category=crafts</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://faktura.ru/catalog?category=doors</loc>
+    <loc>https://faktura-wood.com/catalog?category=doors</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://faktura.ru/product/pano-wave</loc>
+    <loc>https://faktura-wood.com/product/pano-wave</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://faktura.ru/product/pano-zebra</loc>
+    <loc>https://faktura-wood.com/product/pano-zebra</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://faktura.ru/product/pano-radiance</loc>
+    <loc>https://faktura-wood.com/product/pano-radiance</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://faktura.ru/product/mirror-wave</loc>
+    <loc>https://faktura-wood.com/product/mirror-wave</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://faktura.ru/product/shelf-console</loc>
+    <loc>https://faktura-wood.com/product/shelf-console</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://faktura.ru/product/shelf-wave</loc>
+    <loc>https://faktura-wood.com/product/shelf-wave</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://faktura.ru/gallery</loc>
+    <loc>https://faktura-wood.com/gallery</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://faktura.ru/blog</loc>
+    <loc>https://faktura-wood.com/blog</loc>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://faktura.ru/services</loc>
+    <loc>https://faktura-wood.com/services</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://faktura.ru/delivery</loc>
+    <loc>https://faktura-wood.com/delivery</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://faktura.ru/contacts</loc>
+    <loc>https://faktura-wood.com/contacts</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>

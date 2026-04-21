@@ -9,7 +9,7 @@ Crawl-delay: 2
 User-agent: Yandex
 Allow: /
 Crawl-delay: 2
-Host: https://faktura.ru
+Host: https://faktura-wood.com
 
 User-agent: Twitterbot
 Allow: /
@@ -23,4 +23,4 @@ Disallow: /account
 Disallow: /cart
 Disallow: /checkout
 
-Sitemap: https://faktura.ru/sitemap.xml
+Sitemap: https://faktura-wood.com/sitemap.xml

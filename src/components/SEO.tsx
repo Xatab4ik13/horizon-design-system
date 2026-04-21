@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
-const SITE_URL = "https://faktura.ru";
+const SITE_URL = "https://faktura-wood.com";
 const SITE_NAME = "FAKTURA";
 const DEFAULT_TITLE = "FAKTURA — Мастерская изделий из натурального дерева";
 const DEFAULT_DESCRIPTION = "Уникальные изделия ручной работы из массива дерева: панно, зеркала, мебель, кухонные аксессуары. Индивидуальные заказы, доставка по России.";
