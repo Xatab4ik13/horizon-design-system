@@ -480,15 +480,16 @@ const CheckoutPage = () => {
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Доставка</span>
                       <span className="text-foreground">
-                        {isPickup ? "Бесплатно (самовывоз)" : "Уточняется менеджером"}
+                        {isPickup
+                          ? "Бесплатно (самовывоз)"
+                          : selectedQuote?.ok
+                            ? formatPrice(selectedQuote.cost!)
+                            : "Не рассчитана"}
                       </span>
                     </div>
                     <div className="flex justify-between pt-3 border-t border-border/50">
                       <span className="text-foreground font-semibold">Итого</span>
-                      <div className="text-right">
-                        <span className="text-primary font-bold text-xl">{formatPrice(totalPrice)}</span>
-                        {!isPickup && <p className="text-[10px] text-muted-foreground">+ стоимость доставки</p>}
-                      </div>
+                      <span className="text-primary font-bold text-xl">{formatPrice(grandTotal)}</span>
                     </div>
                   </div>
                 </div>
