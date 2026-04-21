@@ -283,81 +283,113 @@ const CheckoutPage = () => {
                       <h2 className="text-xl font-bold text-foreground">Способ доставки</h2>
                     </div>
 
-                    <div className="space-y-3 mb-6">
-                      {deliveryOptions.map((opt) => (
-                        <label
-                          key={opt.id}
-                          className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${
-                            delivery === opt.id ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"
-                          }`}
-                        >
-                          <input type="radio" name="delivery" value={opt.id} checked={delivery === opt.id} onChange={() => handleDeliveryChange(opt.id)} className="sr-only" />
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                            delivery === opt.id ? "border-primary" : "border-muted-foreground/30"
-                          }`}>
-                            {delivery === opt.id && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
-                          </div>
-                          {opt.logo ? (
-                            <img src={opt.logo} alt={opt.name} className="h-8 object-contain" />
-                          ) : (
-                            <MapPin className="h-5 w-5 text-primary" />
-                          )}
-                          <div className="flex-1">
-                            <p className="text-foreground font-medium text-sm">{opt.name}</p>
-                            <p className="text-xs text-muted-foreground">{opt.days}</p>
-                          </div>
-                          {opt.calcUrl && (
-                            <a
-                              href={opt.calcUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-primary hover:text-primary/80 transition-colors flex items-center gap-1 text-xs shrink-0"
-                            >
-                              Рассчитать <ExternalLink className="h-3 w-3" />
-                            </a>
-                          )}
-                          {!opt.calcUrl && opt.id === "pickup" && (
-                            <span className="text-primary font-semibold text-sm">Бесплатно</span>
-                          )}
-                        </label>
-                      ))}
-                    </div>
-
-                    {/* Address & confirmation for delivery */}
-                    {!isPickup && (
-                      <div className="space-y-4 mb-6">
-                        <div>
-                          <label className="text-sm text-muted-foreground mb-1.5 block">Адрес доставки *</label>
+                    <div className="space-y-4 mb-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="sm:col-span-1">
+                          <label className="text-sm text-muted-foreground mb-1.5 block">Город *</label>
                           <input
-                            value={address}
-                            onChange={(e) => setAddress(e.target.value)}
+                            value={city}
+                            onChange={(e) => { setCity(e.target.value); setQuotes(null); }}
                             className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors"
-                            placeholder="Город, улица, дом, квартира"
+                            placeholder="Москва"
+                            disabled={isPickup}
                           />
                         </div>
-
-                        <label className="flex items-start gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20 cursor-pointer">
+                        <div className="sm:col-span-2">
+                          <label className="text-sm text-muted-foreground mb-1.5 block">Адрес *</label>
                           <input
-                            type="checkbox"
-                            checked={deliveryConfirmed}
-                            onChange={(e) => setDeliveryConfirmed(e.target.checked)}
-                            className="mt-0.5 accent-primary"
+                            value={address}
+                            onChange={(e) => { setAddress(e.target.value); setQuotes(null); }}
+                            className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors"
+                            placeholder="ул. Примерная, 1, кв. 2"
+                            disabled={isPickup}
                           />
-                          <div>
-                            <p className="text-foreground text-sm font-medium">Я рассчитал стоимость доставки</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              Воспользуйтесь калькулятором транспортной компании выше. Менеджер уточнит итоговую стоимость после оформления.
-                            </p>
-                          </div>
-                        </label>
+                        </div>
+                      </div>
 
-                        {!canProceedToPayment && (
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <AlertCircle className="h-3.5 w-3.5 text-primary/60" />
-                            <span>Укажите адрес и подтвердите расчёт доставки для продолжения</span>
-                          </div>
+                      {!isPickup && (
+                        <Button
+                          onClick={requestQuote}
+                          disabled={quoting || !city.trim() || !address.trim()}
+                          variant="outline"
+                          className="rounded-xl"
+                        >
+                          {quoting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Считаем...</> : "Рассчитать стоимость"}
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* Варианты доставки */}
+                    <div className="space-y-3 mb-6">
+                      {/* Самовывоз */}
+                      <label className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${
+                        delivery === "pickup" ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"
+                      }`}>
+                        <input type="radio" checked={delivery === "pickup"} onChange={() => setDelivery("pickup")} className="sr-only" />
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                          delivery === "pickup" ? "border-primary" : "border-muted-foreground/30"
+                        }`}>
+                          {delivery === "pickup" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                        </div>
+                        <MapPin className="h-5 w-5 text-primary" />
+                        <div className="flex-1">
+                          <p className="text-foreground font-medium text-sm">Самовывоз</p>
+                          <p className="text-xs text-muted-foreground">По готовности</p>
+                        </div>
+                        <span className="text-primary font-semibold text-sm">Бесплатно</span>
+                      </label>
+
+                      {/* Яндекс */}
+                      <label className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
+                        !quotes?.yandex?.ok ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                      } ${delivery === "yandex" ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"}`}>
+                        <input type="radio" checked={delivery === "yandex"} disabled={!quotes?.yandex?.ok}
+                          onChange={() => setDelivery("yandex")} className="sr-only" />
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                          delivery === "yandex" ? "border-primary" : "border-muted-foreground/30"
+                        }`}>
+                          {delivery === "yandex" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                        </div>
+                        <img src={logoYandex} alt="Яндекс" className="h-8 object-contain" />
+                        <div className="flex-1">
+                          <p className="text-foreground font-medium text-sm">Яндекс Доставка</p>
+                          <p className="text-xs text-muted-foreground">
+                            {quotes?.yandex?.ok ? quotes.yandex.days : (quotes?.yandex?.error ?? "Введите адрес и нажмите «Рассчитать»")}
+                          </p>
+                        </div>
+                        {quotes?.yandex?.ok && (
+                          <span className="text-primary font-semibold text-sm whitespace-nowrap">{formatPrice(quotes.yandex.cost!)}</span>
                         )}
+                      </label>
+
+                      {/* ПЭК */}
+                      <label className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
+                        !quotes?.pek?.ok ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                      } ${delivery === "pek" ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"}`}>
+                        <input type="radio" checked={delivery === "pek"} disabled={!quotes?.pek?.ok}
+                          onChange={() => setDelivery("pek")} className="sr-only" />
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                          delivery === "pek" ? "border-primary" : "border-muted-foreground/30"
+                        }`}>
+                          {delivery === "pek" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                        </div>
+                        <Truck className="h-5 w-5 text-primary" />
+                        <div className="flex-1">
+                          <p className="text-foreground font-medium text-sm">ПЭК</p>
+                          <p className="text-xs text-muted-foreground">
+                            {quotes?.pek?.ok ? quotes.pek.days : (quotes?.pek?.error ?? "Введите адрес и нажмите «Рассчитать»")}
+                          </p>
+                        </div>
+                        {quotes?.pek?.ok && (
+                          <span className="text-primary font-semibold text-sm whitespace-nowrap">{formatPrice(quotes.pek.cost!)}</span>
+                        )}
+                      </label>
+                    </div>
+
+                    {!canProceedToPayment && !isPickup && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
+                        <AlertCircle className="h-3.5 w-3.5 text-primary/60" />
+                        <span>Укажите адрес, рассчитайте и выберите способ доставки</span>
                       </div>
                     )}
 
