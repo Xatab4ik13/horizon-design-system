@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   ChevronRight, User, Truck, CreditCard, CheckCircle2, MapPin,
-  ExternalLink, AlertCircle,
+  Loader2, AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
@@ -13,18 +13,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
-import logoCdek from "@/assets/logo-cdek.png";
-import logoBoxberry from "@/assets/logo-boxberry.png";
-import logoPochta from "@/assets/logo-pochta.png";
 import logoYandex from "@/assets/logo-yandex-delivery.png";
 
-const deliveryOptions = [
-  { id: "cdek", name: "СДЭК", logo: logoCdek, days: "3–5 дней", calcUrl: "https://www.cdek.ru/ru/calculate" },
-  { id: "boxberry", name: "Boxberry", logo: logoBoxberry, days: "4–7 дней", calcUrl: "https://boxberry.ru/tracking" },
-  { id: "pochta", name: "Почта России", logo: logoPochta, days: "5–14 дней", calcUrl: "https://www.pochta.ru/parcels" },
-  { id: "yandex", name: "Яндекс Доставка", logo: logoYandex, days: "1–2 дня", calcUrl: "https://delivery.yandex.ru" },
-  { id: "pickup", name: "Самовывоз", logo: null as string | null, days: "По готовности", calcUrl: null as string | null },
-];
+const parseDims = (s?: string) => {
+  if (!s) return { w: 30, h: 30, d: 30 };
+  const nums = s.match(/\d+(?:[.,]\d+)?/g)?.map((n) => Number(n.replace(",", "."))) ?? [];
+  return { w: nums[0] ?? 30, h: nums[1] ?? 30, d: nums[2] ?? 30 };
+};
+const parseWeight = (s?: string) => {
+  if (!s) return 1;
+  const n = Number((s.match(/\d+(?:[.,]\d+)?/)?.[0] ?? "1").replace(",", "."));
+  return n || 1;
+};
+
+interface QuoteResult {
+  ok: boolean;
+  cost?: number;
+  days?: string;
+  error?: string;
+}
 
 const paymentOptions = [
   { id: "card", label: "Банковская карта", desc: "Visa, Mastercard, МИР" },
@@ -39,10 +46,14 @@ const CheckoutPage = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [step, setStep] = useState(0);
-  const [delivery, setDelivery] = useState("cdek");
-  const [payment, setPayment] = useState("card");
-  const [deliveryConfirmed, setDeliveryConfirmed] = useState(false);
+
+  const [delivery, setDelivery] = useState<"yandex" | "pek" | "pickup">("yandex");
+  const [city, setCity] = useState("");
   const [address, setAddress] = useState("");
+  const [quotes, setQuotes] = useState<{ yandex?: QuoteResult; pek?: QuoteResult } | null>(null);
+  const [quoting, setQuoting] = useState(false);
+
+  const [payment, setPayment] = useState("card");
   const [submitting, setSubmitting] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string>("");
   const [contact, setContact] = useState({
@@ -52,7 +63,6 @@ const CheckoutPage = () => {
     email: "",
   });
 
-  // Prefill from profile when logged in
   useEffect(() => {
     if (!user) return;
     setContact((c) => ({ ...c, email: c.email || user.email || "" }));
@@ -75,19 +85,47 @@ const CheckoutPage = () => {
   const formatPrice = (n: number) => n.toLocaleString("ru-RU") + " ₽";
 
   const isPickup = delivery === "pickup";
-  const canProceedToPayment = isPickup || (deliveryConfirmed && address.trim().length > 0);
+  const selectedQuote = isPickup ? null : quotes?.[delivery];
+  const canProceedToPayment =
+    isPickup || (city.trim().length > 1 && address.trim().length > 0 && !!selectedQuote?.ok);
   const canProceedFromContact =
     contact.firstName.trim().length >= 2 &&
     contact.lastName.trim().length >= 2 &&
     contact.phone.trim().length >= 5 &&
     contact.email.trim().length >= 3;
 
-  const handleDeliveryChange = (id: string) => {
-    setDelivery(id);
-    setDeliveryConfirmed(false);
+  const requestQuote = async () => {
+    if (!city.trim() || !address.trim()) {
+      toast({ title: "Укажите город и адрес", variant: "destructive" });
+      return;
+    }
+    setQuoting(true);
+    setQuotes(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("delivery-quote", {
+        body: {
+          city: city.trim(),
+          address: address.trim(),
+          items: items.map((i) => {
+            const d = parseDims(i.dimensions);
+            return {
+              width_cm: d.w, height_cm: d.h, depth_cm: d.d,
+              weight_kg: parseWeight(i.weight),
+              price: i.price, quantity: i.quantity,
+            };
+          }),
+        },
+      });
+      if (error) throw error;
+      setQuotes(data);
+    } catch (e: any) {
+      toast({ title: "Ошибка расчёта", description: e?.message ?? String(e), variant: "destructive" });
+    }
+    setQuoting(false);
   };
 
-  const selectedDelivery = deliveryOptions.find((d) => d.id === delivery)!;
+  const deliveryShipping = isPickup ? 0 : (selectedQuote?.cost ?? 0);
+  const grandTotal = totalPrice + deliveryShipping;
 
   const handleComplete = async () => {
     if (submitting) return;
