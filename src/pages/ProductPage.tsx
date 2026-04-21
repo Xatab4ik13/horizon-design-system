@@ -294,8 +294,8 @@ const ProductPage = () => {
     );
   }
 
-  const relatedProducts: typeof product[] = [];
-  const crossSellProducts: typeof product[] = [];
+  const relatedProducts: string[] = [];
+  const crossSellProducts: string[] = [];
 
   const productJsonLd = buildProductJsonLd(product);
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([
