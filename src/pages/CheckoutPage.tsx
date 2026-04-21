@@ -131,6 +131,8 @@ const CheckoutPage = () => {
     if (submitting) return;
     setSubmitting(true);
     const customerName = `${contact.firstName.trim()} ${contact.lastName.trim()}`.trim();
+    const providerName =
+      delivery === "yandex" ? "Яндекс Доставка" : delivery === "pek" ? "ПЭК" : "Самовывоз";
     const { data, error } = await supabase
       .from("orders")
       .insert({
@@ -138,8 +140,12 @@ const CheckoutPage = () => {
         customer_name: customerName,
         customer_phone: contact.phone.trim(),
         customer_email: contact.email.trim() || null,
-        delivery_method: selectedDelivery.name,
-        delivery_address: isPickup ? null : address.trim(),
+        delivery_method: providerName,
+        delivery_address: isPickup ? null : `${city.trim()}, ${address.trim()}`,
+        delivery_provider: delivery,
+        delivery_city: isPickup ? null : city.trim(),
+        delivery_cost: deliveryShipping || null,
+        delivery_days: selectedQuote?.days ?? null,
         payment_method: paymentOptions.find((p) => p.id === payment)?.label ?? payment,
         items: items.map((i) => ({
           productId: i.productId,
@@ -151,7 +157,7 @@ const CheckoutPage = () => {
           dimensions: i.dimensions ?? null,
           weight: i.weight ?? null,
         })),
-        total_amount: totalPrice,
+        total_amount: grandTotal,
       })
       .select("id")
       .single();
