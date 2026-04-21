@@ -18,6 +18,7 @@ import {
   FileSpreadsheet,
   QrCode,
   Download,
+  Settings,
 } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 
@@ -41,7 +42,7 @@ const ui = {
   tabIdle: "bg-[#2a2a2a] text-[#bbb] hover:bg-[#333]",
 };
 
-type Tab = "dashboard" | "products" | "orders" | "requests" | "vacancies" | "blog";
+type Tab = "dashboard" | "products" | "orders" | "requests" | "vacancies" | "blog" | "settings";
 
 const AdminPage = () => {
   const [authed, setAuthed] = useState(adminAuth.isLoggedIn());
@@ -56,6 +57,7 @@ const AdminPage = () => {
     { id: "requests", label: "Заявки", icon: MessageSquare },
     { id: "vacancies", label: "Вакансии", icon: Briefcase },
     { id: "blog", label: "Блог", icon: FileText },
+    { id: "settings", label: "Настройки", icon: Settings },
   ];
 
   return (
@@ -98,6 +100,7 @@ const AdminPage = () => {
         {tab === "requests" && <RequestsPanel />}
         {tab === "vacancies" && <VacanciesPanel />}
         {tab === "blog" && <BlogPanel />}
+        {tab === "settings" && <SettingsPanel />}
       </div>
     </div>
   );
@@ -1361,6 +1364,92 @@ const BlogPanel = () => {
             </button>
           </div>
         ))}
+      </div>
+    </div>
+  );
+};
+
+// ===================================================================
+// НАСТРОЙКИ — отправитель (для расчёта/создания доставки)
+// ===================================================================
+const emptySender = {
+  city: "",
+  address: "",
+  contact_name: "",
+  contact_phone: "",
+  pek_city_id: "",
+};
+
+const SettingsPanel = () => {
+  const [sender, setSender] = useState(emptySender);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    adminCall("settings.get", { key: "sender" })
+      .then((r) => {
+        setSender({ ...emptySender, ...(r.data ?? {}) });
+        setLoading(false);
+      })
+      .catch((e) => {
+        toast.error(e.message);
+        setLoading(false);
+      });
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await adminCall("settings.set", { key: "sender", value: sender });
+      toast.success("Настройки сохранены");
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+    setSaving(false);
+  };
+
+  if (loading) return <p className="text-[#888]">Загрузка…</p>;
+
+  const field = (k: keyof typeof sender, label: string, placeholder = "") => (
+    <div>
+      <label className={ui.label}>{label}</label>
+      <input
+        value={sender[k] ?? ""}
+        onChange={(e) => setSender({ ...sender, [k]: e.target.value })}
+        className={ui.input}
+        placeholder={placeholder}
+      />
+    </div>
+  );
+
+  return (
+    <div className="grid gap-6">
+      <div className={ui.card}>
+        <h2 className={`${ui.h2} mb-2`}>Отправитель</h2>
+        <p className="text-[14px] text-[#888] mb-6">
+          Эти данные используются для расчёта доставки в Яндекс.Доставке и ПЭК и для
+          создания заявок у перевозчиков.
+        </p>
+        <div className="grid md:grid-cols-2 gap-4">
+          {field("city", "Город", "Москва")}
+          {field("address", "Адрес склада / пункта отправки", "ул. Мастеровая, 12")}
+          {field("contact_name", "Контактное лицо", "Иван Иванов")}
+          {field("contact_phone", "Телефон", "+79991234567")}
+          {field(
+            "pek_city_id",
+            "ID города-отправителя в ПЭК",
+            "из ЛК ПЭК (например, 50001)",
+          )}
+        </div>
+        <div className="flex gap-3 mt-6 pt-6 border-t border-[#3a3a3a]">
+          <button
+            onClick={save}
+            disabled={saving}
+            className={`${ui.btn} ${ui.btnPrimary} ${saving ? "opacity-50" : ""}`}
+          >
+            <Check size={18} /> {saving ? "Сохранение…" : "Сохранить"}
+          </button>
+        </div>
       </div>
     </div>
   );
