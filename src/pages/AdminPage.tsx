@@ -583,6 +583,33 @@ const ProductEditor = ({
     setForm({ ...form, images: form.images.filter((_: any, i: number) => i !== idx) });
   };
 
+  const [arUploading, setArUploading] = useState<"glb" | "usdz" | null>(null);
+  const handleArUpload = async (file: File, kind: "glb" | "usdz") => {
+    setArUploading(kind);
+    try {
+      const reader = new FileReader();
+      const dataUrl = await new Promise<string>((res, rej) => {
+        reader.onload = () => res(reader.result as string);
+        reader.onerror = rej;
+        reader.readAsDataURL(file);
+      });
+      const path = `${Date.now()}-${file.name.replace(/[^\w.\-]/g, "_")}`;
+      const contentType = kind === "glb" ? "model/gltf-binary" : "model/vnd.usdz+zip";
+      const r = await adminCall("storage.upload", {
+        bucket: "product-models",
+        path,
+        dataUrl,
+        contentType: file.type || contentType,
+      });
+      const field = kind === "glb" ? "ar_glb_url" : "ar_usdz_url";
+      setForm({ ...form, [field]: r.data.url });
+      toast.success(`${kind.toUpperCase()} загружен`);
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+    setArUploading(null);
+  };
+
   const NumField = ({ k, label }: { k: string; label: string }) => (
     <div>
       <label className={ui.label}>{label}</label>
@@ -699,22 +726,74 @@ const ProductEditor = ({
         {/* AR-модели */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className={ui.label}>AR — Android (.glb URL)</label>
-            <input
-              value={form.ar_glb_url ?? ""}
-              onChange={(e) => setForm({ ...form, ar_glb_url: e.target.value || null })}
-              className={ui.input}
-              placeholder="https://.../model.glb"
-            />
+            <label className={ui.label}>AR — Android (.glb)</label>
+            <div className="flex gap-2">
+              <input
+                value={form.ar_glb_url ?? ""}
+                onChange={(e) => setForm({ ...form, ar_glb_url: e.target.value || null })}
+                className={ui.input}
+                placeholder="URL или загрузите файл"
+              />
+              <label
+                className={`px-3 flex items-center gap-2 border border-[#444] rounded-lg cursor-pointer hover:border-[#666] text-[13px] whitespace-nowrap ${arUploading === "glb" ? "opacity-50" : ""}`}
+              >
+                <Upload size={16} />
+                {arUploading === "glb" ? "..." : "Файл"}
+                <input
+                  type="file"
+                  accept=".glb,model/gltf-binary"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleArUpload(f, "glb");
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+            </div>
+            {form.ar_glb_url && (
+              <button
+                onClick={() => setForm({ ...form, ar_glb_url: null })}
+                className="text-[12px] text-[#888] hover:text-white mt-1"
+              >
+                Удалить
+              </button>
+            )}
           </div>
           <div>
-            <label className={ui.label}>AR — iOS (.usdz URL)</label>
-            <input
-              value={form.ar_usdz_url ?? ""}
-              onChange={(e) => setForm({ ...form, ar_usdz_url: e.target.value || null })}
-              className={ui.input}
-              placeholder="https://.../model.usdz"
-            />
+            <label className={ui.label}>AR — iOS (.usdz)</label>
+            <div className="flex gap-2">
+              <input
+                value={form.ar_usdz_url ?? ""}
+                onChange={(e) => setForm({ ...form, ar_usdz_url: e.target.value || null })}
+                className={ui.input}
+                placeholder="URL или загрузите файл"
+              />
+              <label
+                className={`px-3 flex items-center gap-2 border border-[#444] rounded-lg cursor-pointer hover:border-[#666] text-[13px] whitespace-nowrap ${arUploading === "usdz" ? "opacity-50" : ""}`}
+              >
+                <Upload size={16} />
+                {arUploading === "usdz" ? "..." : "Файл"}
+                <input
+                  type="file"
+                  accept=".usdz,model/vnd.usdz+zip"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleArUpload(f, "usdz");
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+            </div>
+            {form.ar_usdz_url && (
+              <button
+                onClick={() => setForm({ ...form, ar_usdz_url: null })}
+                className="text-[12px] text-[#888] hover:text-white mt-1"
+              >
+                Удалить
+              </button>
+            )}
           </div>
         </div>
 
