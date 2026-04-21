@@ -6,7 +6,8 @@ import {
   X, Droplets, MessageCircle, ThumbsUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getProductById, products, categories } from "@/data/products";
+import { categories } from "@/data/products";
+import { useDbProduct } from "@/lib/dbProducts";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useState, useMemo, useCallback, useRef } from "react";
@@ -212,7 +213,7 @@ const MiniProductCard = ({ productId }: { productId: string }) => {
 // ─── Main page ───
 const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
-  const product = getProductById(id || "");
+  const { product, loading: productLoading } = useDbProduct(id);
   const { addItem } = useCart();
   const [showAR, setShowAR] = useState(false);
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
@@ -282,6 +283,17 @@ const ProductPage = () => {
     return labels;
   }, [product, selectedVariations]);
 
+  if (productLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="pt-32 flex justify-center">
+          <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
   if (!product) {
     return (
       <div className="min-h-screen" style={{ background: "linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(25 15% 8%) 40%, hsl(30 12% 6%) 70%, hsl(0 0% 0%) 100%)" }}>
@@ -297,8 +309,8 @@ const ProductPage = () => {
     );
   }
 
-  const relatedProducts = (product.relatedIds || []).filter((rid) => getProductById(rid));
-  const crossSellProducts = (product.crossSellIds || []).filter((rid) => getProductById(rid));
+  const relatedProducts: typeof product[] = [];
+  const crossSellProducts: typeof product[] = [];
 
   const productJsonLd = buildProductJsonLd(product);
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([
