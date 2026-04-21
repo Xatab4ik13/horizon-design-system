@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   ChevronRight, User, Truck, CreditCard, CheckCircle2, MapPin,
-  ExternalLink, AlertCircle,
+  Loader2, AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
@@ -13,18 +13,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
-import logoCdek from "@/assets/logo-cdek.png";
-import logoBoxberry from "@/assets/logo-boxberry.png";
-import logoPochta from "@/assets/logo-pochta.png";
 import logoYandex from "@/assets/logo-yandex-delivery.png";
 
-const deliveryOptions = [
-  { id: "cdek", name: "СДЭК", logo: logoCdek, days: "3–5 дней", calcUrl: "https://www.cdek.ru/ru/calculate" },
-  { id: "boxberry", name: "Boxberry", logo: logoBoxberry, days: "4–7 дней", calcUrl: "https://boxberry.ru/tracking" },
-  { id: "pochta", name: "Почта России", logo: logoPochta, days: "5–14 дней", calcUrl: "https://www.pochta.ru/parcels" },
-  { id: "yandex", name: "Яндекс Доставка", logo: logoYandex, days: "1–2 дня", calcUrl: "https://delivery.yandex.ru" },
-  { id: "pickup", name: "Самовывоз", logo: null as string | null, days: "По готовности", calcUrl: null as string | null },
-];
+const parseDims = (s?: string) => {
+  if (!s) return { w: 30, h: 30, d: 30 };
+  const nums = s.match(/\d+(?:[.,]\d+)?/g)?.map((n) => Number(n.replace(",", "."))) ?? [];
+  return { w: nums[0] ?? 30, h: nums[1] ?? 30, d: nums[2] ?? 30 };
+};
+const parseWeight = (s?: string) => {
+  if (!s) return 1;
+  const n = Number((s.match(/\d+(?:[.,]\d+)?/)?.[0] ?? "1").replace(",", "."));
+  return n || 1;
+};
+
+interface QuoteResult {
+  ok: boolean;
+  cost?: number;
+  days?: string;
+  error?: string;
+}
 
 const paymentOptions = [
   { id: "card", label: "Банковская карта", desc: "Visa, Mastercard, МИР" },
@@ -39,10 +46,14 @@ const CheckoutPage = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [step, setStep] = useState(0);
-  const [delivery, setDelivery] = useState("cdek");
-  const [payment, setPayment] = useState("card");
-  const [deliveryConfirmed, setDeliveryConfirmed] = useState(false);
+
+  const [delivery, setDelivery] = useState<"yandex" | "pek" | "pickup">("yandex");
+  const [city, setCity] = useState("");
   const [address, setAddress] = useState("");
+  const [quotes, setQuotes] = useState<{ yandex?: QuoteResult; pek?: QuoteResult } | null>(null);
+  const [quoting, setQuoting] = useState(false);
+
+  const [payment, setPayment] = useState("card");
   const [submitting, setSubmitting] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string>("");
   const [contact, setContact] = useState({
@@ -52,7 +63,6 @@ const CheckoutPage = () => {
     email: "",
   });
 
-  // Prefill from profile when logged in
   useEffect(() => {
     if (!user) return;
     setContact((c) => ({ ...c, email: c.email || user.email || "" }));
@@ -75,24 +85,54 @@ const CheckoutPage = () => {
   const formatPrice = (n: number) => n.toLocaleString("ru-RU") + " ₽";
 
   const isPickup = delivery === "pickup";
-  const canProceedToPayment = isPickup || (deliveryConfirmed && address.trim().length > 0);
+  const selectedQuote = isPickup ? null : quotes?.[delivery];
+  const canProceedToPayment =
+    isPickup || (city.trim().length > 1 && address.trim().length > 0 && !!selectedQuote?.ok);
   const canProceedFromContact =
     contact.firstName.trim().length >= 2 &&
     contact.lastName.trim().length >= 2 &&
     contact.phone.trim().length >= 5 &&
     contact.email.trim().length >= 3;
 
-  const handleDeliveryChange = (id: string) => {
-    setDelivery(id);
-    setDeliveryConfirmed(false);
+  const requestQuote = async () => {
+    if (!city.trim() || !address.trim()) {
+      toast({ title: "Укажите город и адрес", variant: "destructive" });
+      return;
+    }
+    setQuoting(true);
+    setQuotes(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("delivery-quote", {
+        body: {
+          city: city.trim(),
+          address: address.trim(),
+          items: items.map((i) => {
+            const d = parseDims(i.dimensions);
+            return {
+              width_cm: d.w, height_cm: d.h, depth_cm: d.d,
+              weight_kg: parseWeight(i.weight),
+              price: i.price, quantity: i.quantity,
+            };
+          }),
+        },
+      });
+      if (error) throw error;
+      setQuotes(data);
+    } catch (e: any) {
+      toast({ title: "Ошибка расчёта", description: e?.message ?? String(e), variant: "destructive" });
+    }
+    setQuoting(false);
   };
 
-  const selectedDelivery = deliveryOptions.find((d) => d.id === delivery)!;
+  const deliveryShipping = isPickup ? 0 : (selectedQuote?.cost ?? 0);
+  const grandTotal = totalPrice + deliveryShipping;
 
   const handleComplete = async () => {
     if (submitting) return;
     setSubmitting(true);
     const customerName = `${contact.firstName.trim()} ${contact.lastName.trim()}`.trim();
+    const providerName =
+      delivery === "yandex" ? "Яндекс Доставка" : delivery === "pek" ? "ПЭК" : "Самовывоз";
     const { data, error } = await supabase
       .from("orders")
       .insert({
@@ -100,8 +140,12 @@ const CheckoutPage = () => {
         customer_name: customerName,
         customer_phone: contact.phone.trim(),
         customer_email: contact.email.trim() || null,
-        delivery_method: selectedDelivery.name,
-        delivery_address: isPickup ? null : address.trim(),
+        delivery_method: providerName,
+        delivery_address: isPickup ? null : `${city.trim()}, ${address.trim()}`,
+        delivery_provider: delivery,
+        delivery_city: isPickup ? null : city.trim(),
+        delivery_cost: deliveryShipping || null,
+        delivery_days: selectedQuote?.days ?? null,
         payment_method: paymentOptions.find((p) => p.id === payment)?.label ?? payment,
         items: items.map((i) => ({
           productId: i.productId,
@@ -113,7 +157,7 @@ const CheckoutPage = () => {
           dimensions: i.dimensions ?? null,
           weight: i.weight ?? null,
         })),
-        total_amount: totalPrice,
+        total_amount: grandTotal,
       })
       .select("id")
       .single();
@@ -186,7 +230,7 @@ const CheckoutPage = () => {
               <p className="text-muted-foreground mb-8 max-w-md mx-auto">
                 {isPickup
                   ? "Мы свяжемся с вами, когда заказ будет готов к выдаче."
-                  : "Менеджер свяжется с вами для уточнения стоимости доставки и подтверждения заказа."}
+                  : "Мы передадим заказ перевозчику и пришлём трек-номер на email."}
               </p>
               <div className="flex gap-4 justify-center">
                 <Link to="/catalog"><Button size="lg" className="rounded-full">Продолжить покупки</Button></Link>
@@ -239,81 +283,113 @@ const CheckoutPage = () => {
                       <h2 className="text-xl font-bold text-foreground">Способ доставки</h2>
                     </div>
 
-                    <div className="space-y-3 mb-6">
-                      {deliveryOptions.map((opt) => (
-                        <label
-                          key={opt.id}
-                          className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${
-                            delivery === opt.id ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"
-                          }`}
-                        >
-                          <input type="radio" name="delivery" value={opt.id} checked={delivery === opt.id} onChange={() => handleDeliveryChange(opt.id)} className="sr-only" />
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                            delivery === opt.id ? "border-primary" : "border-muted-foreground/30"
-                          }`}>
-                            {delivery === opt.id && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
-                          </div>
-                          {opt.logo ? (
-                            <img src={opt.logo} alt={opt.name} className="h-8 object-contain" />
-                          ) : (
-                            <MapPin className="h-5 w-5 text-primary" />
-                          )}
-                          <div className="flex-1">
-                            <p className="text-foreground font-medium text-sm">{opt.name}</p>
-                            <p className="text-xs text-muted-foreground">{opt.days}</p>
-                          </div>
-                          {opt.calcUrl && (
-                            <a
-                              href={opt.calcUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-primary hover:text-primary/80 transition-colors flex items-center gap-1 text-xs shrink-0"
-                            >
-                              Рассчитать <ExternalLink className="h-3 w-3" />
-                            </a>
-                          )}
-                          {!opt.calcUrl && opt.id === "pickup" && (
-                            <span className="text-primary font-semibold text-sm">Бесплатно</span>
-                          )}
-                        </label>
-                      ))}
-                    </div>
-
-                    {/* Address & confirmation for delivery */}
-                    {!isPickup && (
-                      <div className="space-y-4 mb-6">
-                        <div>
-                          <label className="text-sm text-muted-foreground mb-1.5 block">Адрес доставки *</label>
+                    <div className="space-y-4 mb-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="sm:col-span-1">
+                          <label className="text-sm text-muted-foreground mb-1.5 block">Город *</label>
                           <input
-                            value={address}
-                            onChange={(e) => setAddress(e.target.value)}
+                            value={city}
+                            onChange={(e) => { setCity(e.target.value); setQuotes(null); }}
                             className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors"
-                            placeholder="Город, улица, дом, квартира"
+                            placeholder="Москва"
+                            disabled={isPickup}
                           />
                         </div>
-
-                        <label className="flex items-start gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20 cursor-pointer">
+                        <div className="sm:col-span-2">
+                          <label className="text-sm text-muted-foreground mb-1.5 block">Адрес *</label>
                           <input
-                            type="checkbox"
-                            checked={deliveryConfirmed}
-                            onChange={(e) => setDeliveryConfirmed(e.target.checked)}
-                            className="mt-0.5 accent-primary"
+                            value={address}
+                            onChange={(e) => { setAddress(e.target.value); setQuotes(null); }}
+                            className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors"
+                            placeholder="ул. Примерная, 1, кв. 2"
+                            disabled={isPickup}
                           />
-                          <div>
-                            <p className="text-foreground text-sm font-medium">Я рассчитал стоимость доставки</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              Воспользуйтесь калькулятором транспортной компании выше. Менеджер уточнит итоговую стоимость после оформления.
-                            </p>
-                          </div>
-                        </label>
+                        </div>
+                      </div>
 
-                        {!canProceedToPayment && (
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <AlertCircle className="h-3.5 w-3.5 text-primary/60" />
-                            <span>Укажите адрес и подтвердите расчёт доставки для продолжения</span>
-                          </div>
+                      {!isPickup && (
+                        <Button
+                          onClick={requestQuote}
+                          disabled={quoting || !city.trim() || !address.trim()}
+                          variant="outline"
+                          className="rounded-xl"
+                        >
+                          {quoting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Считаем...</> : "Рассчитать стоимость"}
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* Варианты доставки */}
+                    <div className="space-y-3 mb-6">
+                      {/* Самовывоз */}
+                      <label className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${
+                        delivery === "pickup" ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"
+                      }`}>
+                        <input type="radio" checked={delivery === "pickup"} onChange={() => setDelivery("pickup")} className="sr-only" />
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                          delivery === "pickup" ? "border-primary" : "border-muted-foreground/30"
+                        }`}>
+                          {delivery === "pickup" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                        </div>
+                        <MapPin className="h-5 w-5 text-primary" />
+                        <div className="flex-1">
+                          <p className="text-foreground font-medium text-sm">Самовывоз</p>
+                          <p className="text-xs text-muted-foreground">По готовности</p>
+                        </div>
+                        <span className="text-primary font-semibold text-sm">Бесплатно</span>
+                      </label>
+
+                      {/* Яндекс */}
+                      <label className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
+                        !quotes?.yandex?.ok ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                      } ${delivery === "yandex" ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"}`}>
+                        <input type="radio" checked={delivery === "yandex"} disabled={!quotes?.yandex?.ok}
+                          onChange={() => setDelivery("yandex")} className="sr-only" />
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                          delivery === "yandex" ? "border-primary" : "border-muted-foreground/30"
+                        }`}>
+                          {delivery === "yandex" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                        </div>
+                        <img src={logoYandex} alt="Яндекс" className="h-8 object-contain" />
+                        <div className="flex-1">
+                          <p className="text-foreground font-medium text-sm">Яндекс Доставка</p>
+                          <p className="text-xs text-muted-foreground">
+                            {quotes?.yandex?.ok ? quotes.yandex.days : (quotes?.yandex?.error ?? "Введите адрес и нажмите «Рассчитать»")}
+                          </p>
+                        </div>
+                        {quotes?.yandex?.ok && (
+                          <span className="text-primary font-semibold text-sm whitespace-nowrap">{formatPrice(quotes.yandex.cost!)}</span>
                         )}
+                      </label>
+
+                      {/* ПЭК */}
+                      <label className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
+                        !quotes?.pek?.ok ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                      } ${delivery === "pek" ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"}`}>
+                        <input type="radio" checked={delivery === "pek"} disabled={!quotes?.pek?.ok}
+                          onChange={() => setDelivery("pek")} className="sr-only" />
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                          delivery === "pek" ? "border-primary" : "border-muted-foreground/30"
+                        }`}>
+                          {delivery === "pek" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                        </div>
+                        <Truck className="h-5 w-5 text-primary" />
+                        <div className="flex-1">
+                          <p className="text-foreground font-medium text-sm">ПЭК</p>
+                          <p className="text-xs text-muted-foreground">
+                            {quotes?.pek?.ok ? quotes.pek.days : (quotes?.pek?.error ?? "Введите адрес и нажмите «Рассчитать»")}
+                          </p>
+                        </div>
+                        {quotes?.pek?.ok && (
+                          <span className="text-primary font-semibold text-sm whitespace-nowrap">{formatPrice(quotes.pek.cost!)}</span>
+                        )}
+                      </label>
+                    </div>
+
+                    {!canProceedToPayment && !isPickup && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
+                        <AlertCircle className="h-3.5 w-3.5 text-primary/60" />
+                        <span>Укажите адрес, рассчитайте и выберите способ доставки</span>
                       </div>
                     )}
 
@@ -404,15 +480,16 @@ const CheckoutPage = () => {
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Доставка</span>
                       <span className="text-foreground">
-                        {isPickup ? "Бесплатно (самовывоз)" : "Уточняется менеджером"}
+                        {isPickup
+                          ? "Бесплатно (самовывоз)"
+                          : selectedQuote?.ok
+                            ? formatPrice(selectedQuote.cost!)
+                            : "Не рассчитана"}
                       </span>
                     </div>
                     <div className="flex justify-between pt-3 border-t border-border/50">
                       <span className="text-foreground font-semibold">Итого</span>
-                      <div className="text-right">
-                        <span className="text-primary font-bold text-xl">{formatPrice(totalPrice)}</span>
-                        {!isPickup && <p className="text-[10px] text-muted-foreground">+ стоимость доставки</p>}
-                      </div>
+                      <span className="text-primary font-bold text-xl">{formatPrice(grandTotal)}</span>
                     </div>
                   </div>
                 </div>
