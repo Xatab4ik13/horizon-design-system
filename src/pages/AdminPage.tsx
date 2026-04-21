@@ -257,7 +257,9 @@ const ProductsPanel = () => {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <Import1CBlock onDone={load} defaultCategory="interior" />
+
+      <div className="flex justify-between items-center mb-6 mt-6">
         <h2 className={ui.h2}>Товары ({items.length})</h2>
         <button
           onClick={() => setEditing({ ...emptyProduct })}
