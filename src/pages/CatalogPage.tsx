@@ -3,7 +3,8 @@ import { useSearchParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Heart, ShoppingCart, SlidersHorizontal, ArrowLeft, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { products, categories, type Category } from "@/data/products";
+import { categories, type Category } from "@/data/products";
+import { useDbProducts } from "@/lib/dbProducts";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import CatalogFilters from "@/components/CatalogFilters";
@@ -71,6 +72,7 @@ const categoryImages: Record<string, string> = {
 const CatalogPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { addItem } = useCart();
+  const { products, loading: productsLoading } = useDbProducts();
   const activeCategory = searchParams.get("category") || null;
   const activeSubcategory = searchParams.get("sub") || null;
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
