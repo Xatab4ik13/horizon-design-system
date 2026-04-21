@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -6,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectItem as _S, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 import workshopBg from "@/assets/workshop-bg.jpg";
 
 const schema = z.object({
@@ -30,12 +32,30 @@ const subjects = [
 
 const ContactForm = () => {
   const { toast } = useToast();
+  const [submitting, setSubmitting] = useState(false);
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { name: "", phone: "", email: "", subject: "", message: "" },
   });
 
-  const onSubmit = (_data: FormData) => {
+  const onSubmit = async (data: FormData) => {
+    setSubmitting(true);
+    const contact = data.email ? `${data.phone} / ${data.email}` : data.phone;
+    const { error } = await supabase.from("contact_requests").insert({
+      name: data.name,
+      contact,
+      subject: data.subject,
+      message: data.message,
+    });
+    setSubmitting(false);
+    if (error) {
+      toast({
+        title: "Не удалось отправить",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
     toast({
       title: "Заявка отправлена!",
       description: "Наш менеджер свяжется с вами в течение часа.",
@@ -147,8 +167,8 @@ const ContactForm = () => {
                 </FormItem>
               )} />
 
-              <Button type="submit" size="lg" className="w-full rounded-full text-base">
-                Отправить заявку
+              <Button type="submit" size="lg" disabled={submitting} className="w-full rounded-full text-base">
+                {submitting ? "Отправка..." : "Отправить заявку"}
               </Button>
 
               <p className="text-center text-xs text-muted-foreground/60">
