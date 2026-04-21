@@ -159,7 +159,7 @@ const CheckoutPage = () => {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-16">
               <CheckCircle2 className="h-20 w-20 text-primary mx-auto mb-6" />
               <h2 className="text-3xl font-bold text-foreground mb-3">Заказ оформлен!</h2>
-              <p className="text-muted-foreground mb-2">Номер заказа: <span className="text-foreground font-semibold">#DW-{Math.floor(Math.random() * 90000 + 10000)}</span></p>
+              <p className="text-muted-foreground mb-2">Номер заказа: <span className="text-foreground font-semibold">#{orderNumber}</span></p>
               <p className="text-muted-foreground mb-8 max-w-md mx-auto">
                 {isPickup
                   ? "Мы свяжемся с вами, когда заказ будет готов к выдаче."
@@ -181,22 +181,28 @@ const CheckoutPage = () => {
                       <h2 className="text-xl font-bold text-foreground">Контактные данные</h2>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                      {[
-                        { label: "Имя *", placeholder: "Иван" },
-                        { label: "Фамилия *", placeholder: "Иванов" },
-                        { label: "Телефон *", placeholder: "+7 (900) 123-45-67" },
-                        { label: "Email *", placeholder: "mail@example.com" },
-                      ].map((f) => (
-                        <div key={f.label}>
+                      {([
+                        { key: "firstName", label: "Имя *", placeholder: "Иван", type: "text" },
+                        { key: "lastName", label: "Фамилия *", placeholder: "Иванов", type: "text" },
+                        { key: "phone", label: "Телефон *", placeholder: "+7 (900) 123-45-67", type: "tel" },
+                        { key: "email", label: "Email *", placeholder: "mail@example.com", type: "email" },
+                      ] as const).map((f) => (
+                        <div key={f.key}>
                           <label className="text-sm text-muted-foreground mb-1.5 block">{f.label}</label>
-                          <input className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors" placeholder={f.placeholder} />
+                          <input
+                            type={f.type}
+                            value={contact[f.key]}
+                            onChange={(e) => setContact((c) => ({ ...c, [f.key]: e.target.value }))}
+                            className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors"
+                            placeholder={f.placeholder}
+                          />
                         </div>
                       ))}
                     </div>
                     <p className="text-xs text-muted-foreground mb-4">
                       Уже есть аккаунт? <Link to="/account" className="text-primary hover:underline">Войти</Link>
                     </p>
-                    <Button onClick={() => setStep(1)} size="lg" className="rounded-xl w-full sm:w-auto">
+                    <Button onClick={() => setStep(1)} size="lg" disabled={!canProceedFromContact} className="rounded-xl w-full sm:w-auto">
                       Далее: Доставка
                     </Button>
                   </motion.div>
