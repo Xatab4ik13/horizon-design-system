@@ -257,6 +257,43 @@ Deno.serve(async (req) => {
         return json({ data: { url: pub.publicUrl } });
       }
 
+      // ===== APP SETTINGS (sender etc.) =====
+      case "settings.get": {
+        const key = String(payload?.key ?? "");
+        const { data, error } = await admin
+          .from("app_settings")
+          .select("value")
+          .eq("key", key)
+          .maybeSingle();
+        if (error) throw error;
+        return json({ data: data?.value ?? {} });
+      }
+      case "settings.set": {
+        const key = String(payload?.key ?? "");
+        const value = payload?.value ?? {};
+        const { error } = await admin
+          .from("app_settings")
+          .upsert({ key, value, updated_at: new Date().toISOString() });
+        if (error) throw error;
+        return json({ ok: true });
+      }
+
+      // ===== DELIVERY: create claim at carrier =====
+      case "delivery.create": {
+        const r = await fetch(`${SUPABASE_URL}/functions/v1/delivery-create`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-password": ADMIN_PASSWORD,
+            Authorization: `Bearer ${SERVICE_ROLE}`,
+          },
+          body: JSON.stringify({ provider: payload?.provider, orderId: payload?.orderId }),
+        });
+        const j = await r.json();
+        if (!r.ok) return json({ error: j?.error ?? "delivery-create failed" }, r.status);
+        return json(j);
+      }
+
       // ===== DASHBOARD STATS =====
       case "stats": {
         const [orders, requests] = await Promise.all([
