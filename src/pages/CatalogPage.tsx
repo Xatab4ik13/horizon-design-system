@@ -126,7 +126,7 @@ const CatalogPage = () => {
     if (sortBy === "price-desc") result = [...result].sort((a, b) => b.price - a.price);
     if (sortBy === "material") result = [...result].sort((a, b) => a.material.localeCompare(b.material));
     return result;
-  }, [activeCategory, activeSubcategory, selectedWoods, priceRange, inStockOnly, sortBy]);
+  }, [products, activeCategory, activeSubcategory, selectedWoods, priceRange, inStockOnly, sortBy]);
 
   const toggleWood = (wood: string) => {
     setSelectedWoods((prev) =>
