@@ -391,6 +391,38 @@ const Import1CBlock = ({
   );
 };
 
+// QR-код на страницу товара (для печати/визиток/AR-перехода)
+const QrModal = ({ product, onClose }: { product: any; onClose: () => void }) => {
+  const url = `${window.location.origin}/product/${product.id}`;
+  const download = () => {
+    const canvas = document.querySelector("#admin-qr-canvas") as HTMLCanvasElement | null;
+    if (!canvas) return;
+    const link = document.createElement("a");
+    link.download = `qr-${product.sku ?? product.id}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  };
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={onClose}>
+      <div className={`${ui.card} max-w-md w-full`} onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className={ui.h3}>QR-код товара</h3>
+          <button onClick={onClose} className="text-[#888] hover:text-white"><X size={22} /></button>
+        </div>
+        <p className="text-[14px] text-[#aaa] mb-2 truncate">{product.name}</p>
+        <p className="text-[12px] text-[#777] font-mono break-all mb-4">{url}</p>
+        <div className="bg-white p-4 rounded-lg flex justify-center mb-4">
+          <QRCodeCanvas id="admin-qr-canvas" value={url} size={256} level="H" includeMargin />
+        </div>
+        <button onClick={download} className={`${ui.btn} ${ui.btnPrimary} w-full`}>
+          <Download size={18} />
+          Скачать PNG
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const ProductsPanel = () => {
   const [items, setItems] = useState<any[]>([]);
   const [editing, setEditing] = useState<any | null>(null);
