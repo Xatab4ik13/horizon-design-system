@@ -18,6 +18,9 @@ export interface DbProductRow {
   is_active: boolean;
   sort_order: number;
   created_at: string;
+  sku?: string | null;
+  ar_glb_url?: string | null;
+  ar_usdz_url?: string | null;
 }
 
 // Маппинг "категорий админки" в category/subcategory сайта
@@ -43,22 +46,31 @@ const formatDimensions = (
 };
 
 export const dbToUiProduct = (row: DbProductRow): Product => {
+  const opts = row.options ?? {};
+  const subFromOpts = typeof (opts as any).subcategory === "string" ? (opts as any).subcategory : undefined;
   const map = CATEGORY_MAP[row.category] ?? { category: row.category, subcategory: row.category };
+  const subcategory = subFromOpts ?? map.subcategory;
+  const material = typeof (opts as any).material === "string" ? (opts as any).material : "";
+  const coating = typeof (opts as any).coating === "string" ? (opts as any).coating : "";
+  const arModel = row.ar_glb_url || row.ar_usdz_url
+    ? { glb: row.ar_glb_url ?? "", usdz: row.ar_usdz_url ?? "" }
+    : undefined;
   return {
     id: row.id,
-    sku: row.id.slice(0, 8).toUpperCase(),
+    sku: row.sku ?? row.id.slice(0, 8).toUpperCase(),
     name: row.name,
     price: Number(row.price),
     category: map.category,
-    subcategory: map.subcategory,
-    material: "",
-    coating: "",
+    subcategory,
+    material,
+    coating,
     description: row.description ?? "",
     details: row.description ?? "",
     dimensions: formatDimensions(row.width_cm, row.height_cm, row.depth_cm),
     weight: row.weight_kg ? `${row.weight_kg} кг` : "",
     images: row.images && row.images.length > 0 ? row.images : ["/placeholder.svg"],
     inStock: true,
+    arModel,
     reviews: [],
     qa: [],
     rating: 0,
