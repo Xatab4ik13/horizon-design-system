@@ -3,7 +3,8 @@ import { useSearchParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Heart, ShoppingCart, SlidersHorizontal, ArrowLeft, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { products, categories, type Category } from "@/data/products";
+import { categories, type Category } from "@/data/products";
+import { useDbProducts } from "@/lib/dbProducts";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import CatalogFilters from "@/components/CatalogFilters";
@@ -71,6 +72,7 @@ const categoryImages: Record<string, string> = {
 const CatalogPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { addItem } = useCart();
+  const { products, loading: productsLoading } = useDbProducts();
   const activeCategory = searchParams.get("category") || null;
   const activeSubcategory = searchParams.get("sub") || null;
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
@@ -124,7 +126,7 @@ const CatalogPage = () => {
     if (sortBy === "price-desc") result = [...result].sort((a, b) => b.price - a.price);
     if (sortBy === "material") result = [...result].sort((a, b) => a.material.localeCompare(b.material));
     return result;
-  }, [activeCategory, activeSubcategory, selectedWoods, priceRange, inStockOnly, sortBy]);
+  }, [products, activeCategory, activeSubcategory, selectedWoods, priceRange, inStockOnly, sortBy]);
 
   const toggleWood = (wood: string) => {
     setSelectedWoods((prev) =>
@@ -385,6 +387,18 @@ const CatalogPage = () => {
           />
 
           {/* Products grid */}
+          {productsLoading ? (
+            <div className="flex justify-center py-20">
+              <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="text-center py-20 px-4">
+              <p className="text-2xl text-foreground/80 mb-3">Товары скоро появятся</p>
+              <p className="text-muted-foreground">
+                Мы обновляем каталог. Свяжитесь с нами, чтобы обсудить индивидуальный заказ.
+              </p>
+            </div>
+          ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProducts.map((product, i) => (
               <motion.div
@@ -474,15 +488,8 @@ const CatalogPage = () => {
               </motion.div>
             ))}
           </div>
-
-          {filteredProducts.length === 0 && (
-            <div className="text-center py-20">
-              <p className="text-muted-foreground text-lg">Товары не найдены</p>
-              <Button variant="outline" className="mt-4" onClick={() => { setSubcategory(null); setSelectedWoods([]); }}>
-                Сбросить фильтры
-              </Button>
-            </div>
           )}
+
         </div>
       </main>
       <Footer />

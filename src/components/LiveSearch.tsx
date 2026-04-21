@@ -2,7 +2,8 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, Tag, FolderOpen } from "lucide-react";
-import { products, categories } from "@/data/products";
+import { categories } from "@/data/products";
+import { useDbProducts } from "@/lib/dbProducts";
 import { cn } from "@/lib/utils";
 
 interface SearchResult {
@@ -27,6 +28,7 @@ const LiveSearch = ({ isOpen, onClose }: LiveSearchProps) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { products } = useDbProducts();
 
   useEffect(() => {
     if (isOpen) {
@@ -93,7 +95,7 @@ const LiveSearch = ({ isOpen, onClose }: LiveSearchProps) => {
     });
 
     setResults(found.slice(0, 8));
-  }, []);
+  }, [products]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
