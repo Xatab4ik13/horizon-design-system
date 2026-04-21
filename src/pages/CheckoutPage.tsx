@@ -133,9 +133,9 @@ const CheckoutPage = () => {
     const customerName = `${contact.firstName.trim()} ${contact.lastName.trim()}`.trim();
     const providerName =
       delivery === "yandex" ? "Яндекс Доставка" : delivery === "pek" ? "ПЭК" : "Самовывоз";
-    const { data, error } = await supabase
-      .from("orders")
-      .insert({
+
+    const { data, error } = await supabase.functions.invoke("order-place", {
+      body: {
         user_id: user?.id ?? null,
         customer_name: customerName,
         customer_phone: contact.phone.trim(),
@@ -158,19 +158,42 @@ const CheckoutPage = () => {
           weight: i.weight ?? null,
         })),
         total_amount: grandTotal,
-      })
-      .select("id")
-      .single();
+      },
+    });
+
     setSubmitting(false);
-    if (error) {
+
+    const errMsg = error?.message ?? (data as any)?.error;
+    if (errMsg) {
       toast({
         title: "Не удалось оформить заказ",
-        description: error.message,
+        description: errMsg,
         variant: "destructive",
       });
       return;
     }
-    setOrderNumber(data?.id ? `DW-${data.id.slice(0, 6).toUpperCase()}` : "");
+
+    const orderId = (data as any)?.data?.order_id as string | undefined;
+    const deliveryRes = (data as any)?.data?.delivery as
+      | { ok: boolean; tracking?: string; error?: string }
+      | undefined;
+
+    setOrderNumber(orderId ? `DW-${orderId.slice(0, 6).toUpperCase()}` : "");
+
+    if (delivery !== "pickup") {
+      if (deliveryRes?.ok) {
+        toast({
+          title: "Заявка перевозчику создана",
+          description: deliveryRes.tracking ? `Трек: ${deliveryRes.tracking}` : undefined,
+        });
+      } else if (deliveryRes?.error) {
+        toast({
+          title: "Заказ принят, но заявка перевозчику не создана",
+          description: "Менеджер оформит её вручную и свяжется с вами.",
+        });
+      }
+    }
+
     setStep(3);
     clearCart();
   };
