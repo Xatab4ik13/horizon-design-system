@@ -346,7 +346,7 @@ const CheckoutPage = () => {
 
                     <div className="flex gap-3">
                       <Button variant="outline" onClick={() => setStep(1)} className="rounded-xl">Назад</Button>
-                      <Button onClick={handleComplete} size="lg" className="rounded-xl">Оформить заказ</Button>
+                      <Button onClick={handleComplete} size="lg" disabled={submitting} className="rounded-xl">{submitting ? "Оформление..." : "Оформить заказ"}</Button>
                     </div>
                   </motion.div>
                 )}
