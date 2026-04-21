@@ -93,6 +93,41 @@ Deno.serve(async (req) => {
         if (error) throw error;
         return json({ ok: true });
       }
+      // Массовый импорт из 1С: upsert по sku. Если sku отсутствует — создаём как новый.
+      case "products.bulkUpsert": {
+        const items = Array.isArray(payload?.items) ? payload.items : [];
+        let created = 0;
+        let updated = 0;
+        const errors: string[] = [];
+        for (const item of items) {
+          try {
+            const sku = item?.sku ? String(item.sku).trim() : null;
+            if (sku) {
+              const { data: existing, error: selErr } = await admin
+                .from("products")
+                .select("id")
+                .eq("sku", sku)
+                .maybeSingle();
+              if (selErr) throw selErr;
+              if (existing?.id) {
+                const { error: upErr } = await admin
+                  .from("products")
+                  .update(item)
+                  .eq("id", existing.id);
+                if (upErr) throw upErr;
+                updated++;
+                continue;
+              }
+            }
+            const { error: insErr } = await admin.from("products").insert(item);
+            if (insErr) throw insErr;
+            created++;
+          } catch (e: any) {
+            errors.push(`${item?.name ?? item?.sku ?? "?"}: ${e?.message ?? e}`);
+          }
+        }
+        return json({ data: { created, updated, errors } });
+      }
 
       // ===== ORDERS =====
       case "orders.list": {
