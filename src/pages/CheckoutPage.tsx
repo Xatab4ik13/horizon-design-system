@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useCart } from "@/contexts/CartContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 import logoCdek from "@/assets/logo-cdek.png";
 import logoBoxberry from "@/assets/logo-boxberry.png";
@@ -33,28 +35,78 @@ const steps = ["Контактные данные", "Доставка", "Опл�
 
 const CheckoutPage = () => {
   const { items, totalPrice, clearCart } = useCart();
+  const { toast } = useToast();
   const [step, setStep] = useState(0);
   const [delivery, setDelivery] = useState("cdek");
   const [payment, setPayment] = useState("card");
   const [deliveryConfirmed, setDeliveryConfirmed] = useState(false);
   const [address, setAddress] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [orderNumber, setOrderNumber] = useState<string>("");
+  const [contact, setContact] = useState({
+    firstName: "",
+    lastName: "",
+    phone: "",
+    email: "",
+  });
 
   const formatPrice = (n: number) => n.toLocaleString("ru-RU") + " ₽";
 
   const isPickup = delivery === "pickup";
   const canProceedToPayment = isPickup || (deliveryConfirmed && address.trim().length > 0);
+  const canProceedFromContact =
+    contact.firstName.trim().length >= 2 &&
+    contact.lastName.trim().length >= 2 &&
+    contact.phone.trim().length >= 5 &&
+    contact.email.trim().length >= 3;
 
   const handleDeliveryChange = (id: string) => {
     setDelivery(id);
     setDeliveryConfirmed(false);
   };
 
-  const handleComplete = () => {
+  const selectedDelivery = deliveryOptions.find((d) => d.id === delivery)!;
+
+  const handleComplete = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    const customerName = `${contact.firstName.trim()} ${contact.lastName.trim()}`.trim();
+    const { data, error } = await supabase
+      .from("orders")
+      .insert({
+        customer_name: customerName,
+        customer_phone: contact.phone.trim(),
+        customer_email: contact.email.trim() || null,
+        delivery_method: selectedDelivery.name,
+        delivery_address: isPickup ? null : address.trim(),
+        payment_method: paymentOptions.find((p) => p.id === payment)?.label ?? payment,
+        items: items.map((i) => ({
+          productId: i.productId,
+          name: i.name,
+          price: i.price,
+          quantity: i.quantity,
+          image: i.image,
+          variations: i.variationLabels ?? null,
+          dimensions: i.dimensions ?? null,
+          weight: i.weight ?? null,
+        })),
+        total_amount: totalPrice,
+      })
+      .select("id")
+      .single();
+    setSubmitting(false);
+    if (error) {
+      toast({
+        title: "Не удалось оформить заказ",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+    setOrderNumber(data?.id ? `DW-${data.id.slice(0, 6).toUpperCase()}` : "");
     setStep(3);
     clearCart();
   };
-
-  const selectedDelivery = deliveryOptions.find((d) => d.id === delivery)!;
 
   if (items.length === 0 && step !== 3) {
     return (
@@ -107,7 +159,7 @@ const CheckoutPage = () => {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-16">
               <CheckCircle2 className="h-20 w-20 text-primary mx-auto mb-6" />
               <h2 className="text-3xl font-bold text-foreground mb-3">Заказ оформлен!</h2>
-              <p className="text-muted-foreground mb-2">Номер заказа: <span className="text-foreground font-semibold">#DW-{Math.floor(Math.random() * 90000 + 10000)}</span></p>
+              <p className="text-muted-foreground mb-2">Номер заказа: <span className="text-foreground font-semibold">#{orderNumber}</span></p>
               <p className="text-muted-foreground mb-8 max-w-md mx-auto">
                 {isPickup
                   ? "Мы свяжемся с вами, когда заказ будет готов к выдаче."
@@ -129,22 +181,28 @@ const CheckoutPage = () => {
                       <h2 className="text-xl font-bold text-foreground">Контактные данные</h2>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                      {[
-                        { label: "Имя *", placeholder: "Иван" },
-                        { label: "Фамилия *", placeholder: "Иванов" },
-                        { label: "Телефон *", placeholder: "+7 (900) 123-45-67" },
-                        { label: "Email *", placeholder: "mail@example.com" },
-                      ].map((f) => (
-                        <div key={f.label}>
+                      {([
+                        { key: "firstName", label: "Имя *", placeholder: "Иван", type: "text" },
+                        { key: "lastName", label: "Фамилия *", placeholder: "Иванов", type: "text" },
+                        { key: "phone", label: "Телефон *", placeholder: "+7 (900) 123-45-67", type: "tel" },
+                        { key: "email", label: "Email *", placeholder: "mail@example.com", type: "email" },
+                      ] as const).map((f) => (
+                        <div key={f.key}>
                           <label className="text-sm text-muted-foreground mb-1.5 block">{f.label}</label>
-                          <input className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors" placeholder={f.placeholder} />
+                          <input
+                            type={f.type}
+                            value={contact[f.key]}
+                            onChange={(e) => setContact((c) => ({ ...c, [f.key]: e.target.value }))}
+                            className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors"
+                            placeholder={f.placeholder}
+                          />
                         </div>
                       ))}
                     </div>
                     <p className="text-xs text-muted-foreground mb-4">
                       Уже есть аккаунт? <Link to="/account" className="text-primary hover:underline">Войти</Link>
                     </p>
-                    <Button onClick={() => setStep(1)} size="lg" className="rounded-xl w-full sm:w-auto">
+                    <Button onClick={() => setStep(1)} size="lg" disabled={!canProceedFromContact} className="rounded-xl w-full sm:w-auto">
                       Далее: Доставка
                     </Button>
                   </motion.div>
@@ -288,7 +346,7 @@ const CheckoutPage = () => {
 
                     <div className="flex gap-3">
                       <Button variant="outline" onClick={() => setStep(1)} className="rounded-xl">Назад</Button>
-                      <Button onClick={handleComplete} size="lg" className="rounded-xl">Оформить заказ</Button>
+                      <Button onClick={handleComplete} size="lg" disabled={submitting} className="rounded-xl">{submitting ? "Оформление..." : "Оформить заказ"}</Button>
                     </div>
                   </motion.div>
                 )}
