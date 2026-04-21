@@ -583,6 +583,33 @@ const ProductEditor = ({
     setForm({ ...form, images: form.images.filter((_: any, i: number) => i !== idx) });
   };
 
+  const [arUploading, setArUploading] = useState<"glb" | "usdz" | null>(null);
+  const handleArUpload = async (file: File, kind: "glb" | "usdz") => {
+    setArUploading(kind);
+    try {
+      const reader = new FileReader();
+      const dataUrl = await new Promise<string>((res, rej) => {
+        reader.onload = () => res(reader.result as string);
+        reader.onerror = rej;
+        reader.readAsDataURL(file);
+      });
+      const path = `${Date.now()}-${file.name.replace(/[^\w.\-]/g, "_")}`;
+      const contentType = kind === "glb" ? "model/gltf-binary" : "model/vnd.usdz+zip";
+      const r = await adminCall("storage.upload", {
+        bucket: "product-models",
+        path,
+        dataUrl,
+        contentType: file.type || contentType,
+      });
+      const field = kind === "glb" ? "ar_glb_url" : "ar_usdz_url";
+      setForm({ ...form, [field]: r.data.url });
+      toast.success(`${kind.toUpperCase()} загружен`);
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+    setArUploading(null);
+  };
+
   const NumField = ({ k, label }: { k: string; label: string }) => (
     <div>
       <label className={ui.label}>{label}</label>
