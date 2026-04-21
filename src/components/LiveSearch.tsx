@@ -28,6 +28,7 @@ const LiveSearch = ({ isOpen, onClose }: LiveSearchProps) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { products } = useDbProducts();
 
   useEffect(() => {
     if (isOpen) {
