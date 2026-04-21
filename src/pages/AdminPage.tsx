@@ -189,14 +189,16 @@ const Dashboard = ({ onNavigate }: { onNavigate: (t: Tab) => void }) => {
 // ===================================================================
 const emptyProduct = {
   name: "",
+  sku: "",
   description: "",
-  category: "furniture",
+  category: "interior",
   price: 0,
   width_cm: null as number | null,
   height_cm: null as number | null,
   depth_cm: null as number | null,
   weight_kg: null as number | null,
   images: [] as string[],
+  options: {} as Record<string, string>,
   is_active: true,
   sort_order: 0,
 };
