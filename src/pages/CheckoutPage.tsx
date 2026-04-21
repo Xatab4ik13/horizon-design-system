@@ -47,10 +47,10 @@ const CheckoutPage = () => {
   const { user } = useAuth();
   const [step, setStep] = useState(0);
 
-  const [delivery, setDelivery] = useState<"yandex" | "pek" | "pickup">("yandex");
+  const [delivery, setDelivery] = useState<"yandex" | "pek" | "cdek" | "pickup">("yandex");
   const [city, setCity] = useState("");
   const [address, setAddress] = useState("");
-  const [quotes, setQuotes] = useState<{ yandex?: QuoteResult; pek?: QuoteResult } | null>(null);
+  const [quotes, setQuotes] = useState<{ yandex?: QuoteResult; pek?: QuoteResult; cdek?: QuoteResult } | null>(null);
   const [quoting, setQuoting] = useState(false);
 
   const [payment, setPayment] = useState("card");
@@ -132,7 +132,13 @@ const CheckoutPage = () => {
     setSubmitting(true);
     const customerName = `${contact.firstName.trim()} ${contact.lastName.trim()}`.trim();
     const providerName =
-      delivery === "yandex" ? "Яндекс Доставка" : delivery === "pek" ? "ПЭК" : "Самовывоз";
+      delivery === "yandex"
+        ? "Яндекс Доставка"
+        : delivery === "pek"
+        ? "ПЭК"
+        : delivery === "cdek"
+        ? "СДЭК"
+        : "Самовывоз";
 
     const { data, error } = await supabase.functions.invoke("order-place", {
       body: {
@@ -405,6 +411,29 @@ const CheckoutPage = () => {
                         </div>
                         {quotes?.pek?.ok && (
                           <span className="text-primary font-semibold text-sm whitespace-nowrap">{formatPrice(quotes.pek.cost!)}</span>
+                        )}
+                      </label>
+
+                      {/* СДЭК */}
+                      <label className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
+                        !quotes?.cdek?.ok ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                      } ${delivery === "cdek" ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"}`}>
+                        <input type="radio" checked={delivery === "cdek"} disabled={!quotes?.cdek?.ok}
+                          onChange={() => setDelivery("cdek")} className="sr-only" />
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                          delivery === "cdek" ? "border-primary" : "border-muted-foreground/30"
+                        }`}>
+                          {delivery === "cdek" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                        </div>
+                        <Truck className="h-5 w-5 text-primary" />
+                        <div className="flex-1">
+                          <p className="text-foreground font-medium text-sm">СДЭК</p>
+                          <p className="text-xs text-muted-foreground">
+                            {quotes?.cdek?.ok ? quotes.cdek.days : (quotes?.cdek?.error ?? "Введите адрес и нажмите «Рассчитать»")}
+                          </p>
+                        </div>
+                        {quotes?.cdek?.ok && (
+                          <span className="text-primary font-semibold text-sm whitespace-nowrap">{formatPrice(quotes.cdek.cost!)}</span>
                         )}
                       </label>
                     </div>

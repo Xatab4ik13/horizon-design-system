@@ -23,6 +23,8 @@ const ADMIN_PASSWORD = Deno.env.get("ADMIN_PASSWORD") ?? "";
 const YANDEX_TOKEN = Deno.env.get("YANDEX_DELIVERY_TOKEN") ?? "";
 const PEK_LOGIN = Deno.env.get("PEK_API_LOGIN") ?? "";
 const PEK_KEY = Deno.env.get("PEK_API_KEY") ?? "";
+const CDEK_ACCOUNT = Deno.env.get("CDEK_ACCOUNT") ?? "";
+const CDEK_PASSWORD = Deno.env.get("CDEK_SECURE_PASSWORD") ?? "";
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -142,6 +144,76 @@ async function createPekOrder(order: any, sender: Record<string, any>) {
   };
 }
 
+// ===== СДЭК =====
+async function getCdekToken() {
+  const r = await fetch("https://api.cdek.ru/v2/oauth/token?parameters", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: CDEK_ACCOUNT,
+      client_secret: CDEK_PASSWORD,
+    }).toString(),
+  });
+  const text = await r.text();
+  if (!r.ok) throw new Error(`CDEK auth ${r.status}: ${text.slice(0, 200)}`);
+  const j = JSON.parse(text);
+  if (!j.access_token) throw new Error("CDEK auth: нет access_token");
+  return j.access_token as string;
+}
+
+async function createCdekOrder(order: any, sender: Record<string, any>) {
+  if (!CDEK_ACCOUNT || !CDEK_PASSWORD) throw new Error("СДЭК ключи не настроены");
+  const token = await getCdekToken();
+  const packages = (order.items as any[]).map((i: any, idx: number) => ({
+    number: `${order.id}-${idx + 1}`,
+    weight: Math.max(
+      100,
+      Math.round(
+        (i.weight ? Number(String(i.weight).replace(/[^0-9.]/g, "")) || 1 : 1) * 1000,
+      ),
+    ),
+    length: 30,
+    width: 30,
+    height: 30,
+    items: [
+      {
+        name: i.name ?? `item-${idx + 1}`,
+        ware_key: String(i.productId ?? idx + 1),
+        cost: Number(i.price ?? 0),
+        amount: Number(i.quantity ?? 1),
+        weight: 1000,
+        payment: { value: 0 },
+      },
+    ],
+  }));
+  const body = {
+    tariff_code: 137, // склад-дверь
+    number: order.id,
+    sender: {
+      name: sender.contact_name ?? "FAKTURA",
+      phones: [{ number: sender.contact_phone ?? "+79991234567" }],
+    },
+    recipient: {
+      name: order.customer_name,
+      phones: [{ number: order.customer_phone }],
+    },
+    from_location: { address: sender.address || sender.city || "Москва" },
+    to_location: { address: order.delivery_address || order.delivery_city || "" },
+    packages,
+  };
+  const r = await fetch("https://api.cdek.ru/v2/orders", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const text = await r.text();
+  if (!r.ok) throw new Error(`СДЭК ${r.status}: ${text.slice(0, 300)}`);
+  const j = JSON.parse(text);
+  const uuid = j?.entity?.uuid ?? "";
+  return { external_id: uuid, tracking: uuid, raw: j };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
@@ -150,7 +222,7 @@ Deno.serve(async (req) => {
       return json({ error: "Unauthorized" }, 401);
     }
     const { provider, orderId } = await req.json();
-    if (!["yandex", "pek"].includes(provider)) {
+    if (!["yandex", "pek", "cdek"].includes(provider)) {
       return json({ error: "Unknown provider" }, 400);
     }
     const { data: order, error: oErr } = await admin
@@ -164,7 +236,9 @@ Deno.serve(async (req) => {
     const result =
       provider === "yandex"
         ? await createYandexClaim(order, sender)
-        : await createPekOrder(order, sender);
+        : provider === "pek"
+        ? await createPekOrder(order, sender)
+        : await createCdekOrder(order, sender);
 
     await admin
       .from("orders")
