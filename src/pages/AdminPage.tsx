@@ -696,7 +696,28 @@ const ProductEditor = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* AR-модели */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className={ui.label}>AR — Android (.glb URL)</label>
+            <input
+              value={form.ar_glb_url ?? ""}
+              onChange={(e) => setForm({ ...form, ar_glb_url: e.target.value || null })}
+              className={ui.input}
+              placeholder="https://.../model.glb"
+            />
+          </div>
+          <div>
+            <label className={ui.label}>AR — iOS (.usdz URL)</label>
+            <input
+              value={form.ar_usdz_url ?? ""}
+              onChange={(e) => setForm({ ...form, ar_usdz_url: e.target.value || null })}
+              className={ui.input}
+              placeholder="https://.../model.usdz"
+            />
+          </div>
+        </div>
+
           <input
             type="checkbox"
             id="active"
