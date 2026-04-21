@@ -191,23 +191,8 @@ const ProductGallery = ({
 
 // ─── Product Card (for cross-sells) ───
 const MiniProductCard = ({ productId }: { productId: string }) => {
-  const p = getProductById(productId);
-  if (!p) return null;
-  return (
-    <Link
-      to={`/product/${p.id}`}
-      className="group block bg-card rounded-2xl border border-border overflow-hidden hover:border-primary/40 transition-all duration-300"
-    >
-      <div className="aspect-square overflow-hidden">
-        <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-      </div>
-      <div className="p-4">
-        <p className="text-xs text-muted-foreground mb-1">{p.material}</p>
-        <h4 className="text-sm text-foreground group-hover:text-primary transition-colors mb-2 line-clamp-1">{p.name}</h4>
-        <span className="text-primary font-bold">{p.price.toLocaleString("ru-RU")} ₽</span>
-      </div>
-    </Link>
-  );
+  // Связанные товары пока не реализованы для БД-каталога
+  return null;
 };
 
 // ─── Main page ───
