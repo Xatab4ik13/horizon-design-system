@@ -22,6 +22,8 @@ const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const YANDEX_TOKEN = Deno.env.get("YANDEX_DELIVERY_TOKEN") ?? "";
 const PEK_LOGIN = Deno.env.get("PEK_API_LOGIN") ?? "";
 const PEK_KEY = Deno.env.get("PEK_API_KEY") ?? "";
+const CDEK_ACCOUNT = Deno.env.get("CDEK_ACCOUNT") ?? "";
+const CDEK_PASSWORD = Deno.env.get("CDEK_SECURE_PASSWORD") ?? "";
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, {
   auth: { persistSession: false, autoRefreshToken: false },
