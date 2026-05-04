@@ -1201,20 +1201,8 @@ const BlogPanel = () => {
   const uploadCover = async (file: File) => {
     setUploading(true);
     try {
-      const reader = new FileReader();
-      const dataUrl = await new Promise<string>((res, rej) => {
-        reader.onload = () => res(reader.result as string);
-        reader.onerror = rej;
-        reader.readAsDataURL(file);
-      });
-      const path = `${Date.now()}-${file.name.replace(/[^\w.\-]/g, "_")}`;
-      const r = await adminCall("storage.upload", {
-        bucket: "blog-images",
-        path,
-        dataUrl,
-        contentType: file.type,
-      });
-      setEditing({ ...editing, cover_image: r.data.url });
+      const url = await adminUploadFile("blog-images", file);
+      setEditing({ ...editing, cover_image: url });
     } catch (e: any) {
       toast.error(e.message);
     }
