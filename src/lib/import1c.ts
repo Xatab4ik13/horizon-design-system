@@ -9,10 +9,22 @@ export type Parsed1CProduct = {
   name: string;
   description: string | null;
   price: number;
+  discount_percent: number;
+  stock_status: string | null;
   width_cm: number | null;
   height_cm: number | null;
   depth_cm: number | null;
   weight_kg: number | null;
+  weight_gross_kg: number | null;
+  area_m2: number | null;
+  volume_m3: number | null;
+  package_info: string | null;
+  material: string | null;
+  wood_species: string | null;
+  coating: string | null;
+  brand: string | null;
+  country: string | null;
+  manufacturer: string | null;
   options: Record<string, string>;
 };
 
