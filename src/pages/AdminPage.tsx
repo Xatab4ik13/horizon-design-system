@@ -704,9 +704,112 @@ const ProductEditor = ({
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <NumField k="width_cm" label="Ширина, см" />
-          <NumField k="height_cm" label="Высота, см" />
-          <NumField k="depth_cm" label="Глубина, см" />
-          <NumField k="weight_kg" label="Вес, кг" />
+          <NumField k="height_cm" label="Высота (длина), см" />
+          <NumField k="depth_cm" label="Толщина, см" />
+          <NumField k="weight_kg" label="Вес нетто, кг" />
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div>
+            <label className={ui.label}>Скидка, %</label>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              step={1}
+              value={form.discount_percent ?? 0}
+              onChange={(e) =>
+                setForm({ ...form, discount_percent: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })
+              }
+              className={ui.input}
+              placeholder="0"
+            />
+          </div>
+          <div>
+            <label className={ui.label}>Наличие</label>
+            <select
+              value={form.stock_status ?? ""}
+              onChange={(e) => setForm({ ...form, stock_status: e.target.value || null })}
+              className={ui.input}
+            >
+              <option value="">— не указано —</option>
+              <option value="В наличии">В наличии</option>
+              <option value="На заказ">На заказ</option>
+              <option value="Под заказ">Под заказ</option>
+              <option value="Нет в наличии">Нет в наличии</option>
+            </select>
+          </div>
+          <NumField k="weight_gross_kg" label="Вес брутто, кг" />
+          <NumField k="area_m2" label="Площадь, м²" />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className={ui.label}>Материал</label>
+            <input
+              value={form.material ?? ""}
+              onChange={(e) => setForm({ ...form, material: e.target.value || null })}
+              className={ui.input}
+              placeholder="напр. Дерево"
+            />
+          </div>
+          <div>
+            <label className={ui.label}>Порода</label>
+            <input
+              value={form.wood_species ?? ""}
+              onChange={(e) => setForm({ ...form, wood_species: e.target.value || null })}
+              className={ui.input}
+              placeholder="напр. Дуб"
+            />
+          </div>
+          <div>
+            <label className={ui.label}>Покрытие</label>
+            <input
+              value={form.coating ?? ""}
+              onChange={(e) => setForm({ ...form, coating: e.target.value || null })}
+              className={ui.input}
+              placeholder="напр. Воск"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <NumField k="volume_m3" label="Объём, м³" />
+          <div>
+            <label className={ui.label}>Упаковка</label>
+            <input
+              value={form.package_info ?? ""}
+              onChange={(e) => setForm({ ...form, package_info: e.target.value || null })}
+              className={ui.input}
+              placeholder="напр. 200x100x11"
+            />
+          </div>
+          <div>
+            <label className={ui.label}>Бренд</label>
+            <input
+              value={form.brand ?? ""}
+              onChange={(e) => setForm({ ...form, brand: e.target.value || null })}
+              className={ui.input}
+            />
+          </div>
+          <div>
+            <label className={ui.label}>Страна</label>
+            <input
+              value={form.country ?? ""}
+              onChange={(e) => setForm({ ...form, country: e.target.value || null })}
+              className={ui.input}
+              placeholder="напр. Россия"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className={ui.label}>Производитель</label>
+          <input
+            value={form.manufacturer ?? ""}
+            onChange={(e) => setForm({ ...form, manufacturer: e.target.value || null })}
+            className={ui.input}
+          />
         </div>
 
         <div>
