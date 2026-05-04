@@ -1,8 +1,9 @@
 import { Hand, Leaf, UserCheck, Truck } from "lucide-react";
 import { motion } from "framer-motion";
 import workshopBg from "@/assets/workshop-bg.jpg";
+import { useHomepageContent } from "@/hooks/useSiteContent";
 
-const advantages = [
+const defaultAdvantages = [
   { icon: Hand, title: "Ручная работа", desc: "Каждое изделие создаётся мастером вручную с вниманием к деталям" },
   { icon: Leaf, title: "Натуральные материалы", desc: "Только экологичная древесина из проверенных источников" },
   { icon: UserCheck, title: "Индивидуальный подход", desc: "Изготовление по вашим размерам и пожеланиям" },
@@ -23,6 +24,15 @@ const cardVariants = {
 };
 
 const AdvantagesSection = () => {
+  const content = useHomepageContent();
+  const overrides = content.advantages?.items ?? [];
+  const advantages = defaultAdvantages.map((a, i) => ({
+    ...a,
+    title: overrides[i]?.title?.trim() || a.title,
+    desc: overrides[i]?.desc?.trim() || a.desc,
+  }));
+  const sectionTitle = content.advantages?.title?.trim() || "Почему выбирают нас";
+
   return (
     <section className="py-24 relative overflow-hidden">
       {/* Background image */}
@@ -45,7 +55,7 @@ const AdvantagesSection = () => {
           transition={{ duration: 0.6 }}
           className="text-3xl md:text-4xl text-center mb-16 text-foreground"
         >
-          Почему выбирают нас
+          {sectionTitle}
         </motion.h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

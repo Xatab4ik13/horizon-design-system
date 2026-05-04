@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import Logo from "@/components/Logo";
+import { useHomepageContent } from "@/hooks/useSiteContent";
 
 const siteMap = [
   {
@@ -35,6 +36,11 @@ const siteMap = [
 ];
 
 const Footer = () => {
+  const content = useHomepageContent();
+  const fTagline = content.footer?.tagline?.trim() || "Мастерская изделий из натурального дерева";
+  const fPhone = content.footer?.phone?.trim() || "+7 (999) 123-45-67";
+  const fEmail = content.footer?.email?.trim() || "info@faktura.ru";
+  const fCopyright = content.footer?.copyright?.trim() || `© ${new Date().getFullYear()} FAKTURA. Все права защищены.`;
   return (
     <footer className="bg-card border-t border-border/30 py-8">
       <div className="container mx-auto px-4">
@@ -43,7 +49,7 @@ const Footer = () => {
           <div>
             <Logo size="md" className="mb-3" />
             <p className="text-xs text-muted-foreground leading-relaxed font-light mb-4">
-              Мастерская изделий из натурального дерева
+              {fTagline}
             </p>
             <div className="flex items-center gap-3">
               <a href="https://vk.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors text-xs">VK</a>
@@ -71,10 +77,10 @@ const Footer = () => {
 
         <div className="border-t border-border/30 mt-6 pt-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-[11px] text-muted-foreground/50">
-            © {new Date().getFullYear()} FAKTURA. Все права защищены.
+            {fCopyright}
           </p>
           <p className="text-[11px] text-muted-foreground/40">
-            +7 (999) 123-45-67 • info@faktura.ru
+            {fPhone} • {fEmail}
           </p>
         </div>
       </div>

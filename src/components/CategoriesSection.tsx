@@ -6,8 +6,9 @@ import categoryDecor from "@/assets/category-decor.png";
 import categoryShelves from "@/assets/category-shelves.png";
 import categoryCrafts from "@/assets/category-crafts.png";
 import categoryDoors from "@/assets/category-doors.png";
+import { useHomepageContent } from "@/hooks/useSiteContent";
 
-const categories = [
+const defaultCategories = [
   { name: "Мебель", slug: "furniture", image: categoryTable },
   { name: "Кухонные принадлежности", slug: "kitchen", image: categoryChairs },
   { name: "Системы хранения", slug: "storage", image: categoryDecor },
@@ -17,6 +18,15 @@ const categories = [
 ];
 
 const CategoriesSection = () => {
+  const content = useHomepageContent();
+  const overrides = content.categories?.items ?? [];
+  const categories = defaultCategories.map((c, i) => ({
+    ...c,
+    name: overrides[i]?.name?.trim() || c.name,
+    image: overrides[i]?.image?.trim() || c.image,
+  }));
+  const title = content.categories?.title?.trim() || "Категории каталога";
+
   return (
     <section
       className="py-16 relative"
@@ -31,7 +41,7 @@ const CategoriesSection = () => {
 
       <div className="container mx-auto px-4 relative z-10">
         <h2 className="text-3xl md:text-4xl text-center mb-10 text-foreground">
-          Категории каталога
+          {title}
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {categories.map((cat, i) => (

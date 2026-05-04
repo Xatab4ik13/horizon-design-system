@@ -9,6 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { useHomepageContent } from "@/hooks/useSiteContent";
 import workshopBg from "@/assets/workshop-bg.jpg";
 
 const schema = z.object({
@@ -33,6 +34,11 @@ const subjects = [
 const ContactForm = () => {
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState(false);
+  const content = useHomepageContent();
+  const cTitle = content.contact?.title?.trim() || "Оставить заявку";
+  const cSubtitle = content.contact?.subtitle?.trim() || "Расскажите о вашем проекте — мы подберём оптимальное решение и рассчитаем стоимость";
+  const cConsent = content.contact?.consent?.trim() || "Нажимая кнопку, вы соглашаетесь с обработкой персональных данных";
+  const cSubmit = content.contact?.submitLabel?.trim() || "Отправить заявку";
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { name: "", phone: "", email: "", subject: "", message: "" },
@@ -79,10 +85,10 @@ const ContactForm = () => {
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-3xl md:text-4xl text-center mb-3 text-foreground">
-            Оставить заявку
+            {cTitle}
           </h2>
           <p className="text-center text-muted-foreground mb-10 font-light max-w-md mx-auto">
-            Расскажите о вашем проекте — мы подберём оптимальное решение и рассчитаем стоимость
+            {cSubtitle}
           </p>
 
           <Form {...form}>
@@ -168,11 +174,11 @@ const ContactForm = () => {
               )} />
 
               <Button type="submit" size="lg" disabled={submitting} className="w-full rounded-full text-base">
-                {submitting ? "Отправка..." : "Отправить заявку"}
+                {submitting ? "Отправка..." : cSubmit}
               </Button>
 
               <p className="text-center text-xs text-muted-foreground/60">
-                Нажимая кнопку, вы соглашаетесь с обработкой персональных данных
+                {cConsent}
               </p>
             </form>
           </Form>
