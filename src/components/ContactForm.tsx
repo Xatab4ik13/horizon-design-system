@@ -9,6 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { useHomepageContent } from "@/hooks/useSiteContent";
 import workshopBg from "@/assets/workshop-bg.jpg";
 
 const schema = z.object({
