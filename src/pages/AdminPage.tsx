@@ -2,6 +2,7 @@ import { useEffect, useState, FormEvent } from "react";
 import { adminAuth, adminCall, adminLogin, adminUploadFile } from "@/lib/adminApi";
 import { supabase } from "@/integrations/supabase/client";
 import { parse1CFile } from "@/lib/import1c";
+import { exportProductsTo1CXlsx, downloadBlob } from "@/lib/export1c";
 import { toast } from "sonner";
 import {
   Package,
@@ -20,6 +21,8 @@ import {
   QrCode,
   Download,
   Settings,
+  ExternalLink,
+  ImageIcon,
 } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 
@@ -471,15 +474,33 @@ const ProductsPanel = () => {
     <div>
       <Import1CBlock onDone={load} defaultCategory="interior" />
 
-      <div className="flex justify-between items-center mb-6 mt-6">
+      <div className="flex justify-between items-center mb-6 mt-6 gap-3 flex-wrap">
         <h2 className={ui.h2}>Товары ({items.length})</h2>
-        <button
-          onClick={() => setEditing({ ...emptyProduct })}
-          className={`${ui.btn} ${ui.btnPrimary}`}
-        >
-          <Plus size={20} />
-          Добавить товар
-        </button>
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={() => {
+              if (!items.length) {
+                toast.error("Нет товаров для экспорта");
+                return;
+              }
+              const blob = exportProductsTo1CXlsx(items);
+              downloadBlob(blob, `faktura-products-${new Date().toISOString().slice(0, 10)}.xlsx`);
+              toast.success(`Экспортировано: ${items.length}`);
+            }}
+            className={`${ui.btn} ${ui.btnSecondary}`}
+            title="Экспорт всех товаров в XLSX в формате карточки 1С (round-trip с импортом)"
+          >
+            <FileSpreadsheet size={18} />
+            Экспорт XLSX (1С)
+          </button>
+          <button
+            onClick={() => setEditing({ ...emptyProduct })}
+            className={`${ui.btn} ${ui.btnPrimary}`}
+          >
+            <Plus size={20} />
+            Добавить товар
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -492,9 +513,19 @@ const ProductsPanel = () => {
         <div className="grid gap-3">
           {items.map((p) => (
             <div key={p.id} className={`${ui.card} flex items-center gap-4`}>
-              <div className="w-20 h-20 bg-[#1a1a1a] rounded-lg overflow-hidden flex-shrink-0">
-                {p.images?.[0] && (
-                  <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover" />
+              <div className="w-20 h-20 bg-[#1a1a1a] rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center">
+                {p.images?.[0] ? (
+                  <img
+                    src={p.images[0]}
+                    alt={p.name}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <ImageIcon size={28} className="text-[#555]" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
@@ -506,10 +537,19 @@ const ProductsPanel = () => {
                   {!p.is_active && " • СКРЫТ"}
                 </div>
               </div>
+              <a
+                href={`/product/${p.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${ui.btn} ${ui.btnSecondary}`}
+                title="Открыть страницу товара на сайте в новой вкладке"
+              >
+                <ExternalLink size={16} />
+              </a>
               <button
                 onClick={() => setQrFor(p)}
                 className={`${ui.btn} ${ui.btnSecondary}`}
-                title="QR-код на товар"
+                title="QR-код ведёт на страницу товара на сайте — удобно для печати ценников и AR-перехода с телефона"
               >
                 <QrCode size={16} />
               </button>
