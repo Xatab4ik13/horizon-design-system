@@ -59,9 +59,18 @@ const CheckoutPage = () => {
   const [contact, setContact] = useState({
     firstName: "",
     lastName: "",
-    phone: "",
+    phone: "+7 ",
     email: "",
   });
+
+  // Гарантируем префикс +7 в телефоне (п.8)
+  const onPhoneChange = (raw: string) => {
+    let v = raw.replace(/[^\d+\s\-()]/g, "");
+    const digits = v.replace(/\D/g, "");
+    if (!v.startsWith("+")) v = "+" + (digits.startsWith("7") ? digits : "7" + digits);
+    if (!v.startsWith("+7")) v = "+7" + v.replace(/^\+?\d?/, "");
+    setContact((c) => ({ ...c, phone: v }));
+  };
 
   useEffect(() => {
     if (!user) return;
