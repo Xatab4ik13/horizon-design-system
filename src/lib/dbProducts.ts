@@ -9,6 +9,8 @@ export interface DbProductRow {
   description: string | null;
   category: string;
   price: number;
+  discount_percent?: number | null;
+  stock_status?: string | null;
   width_cm: number | null;
   height_cm: number | null;
   depth_cm: number | null;
@@ -21,6 +23,9 @@ export interface DbProductRow {
   sku?: string | null;
   ar_glb_url?: string | null;
   ar_usdz_url?: string | null;
+  material?: string | null;
+  coating?: string | null;
+  wood_species?: string | null;
 }
 
 // Маппинг "категорий админки" в category/subcategory сайта
