@@ -830,6 +830,13 @@ const OrdersPanel = () => {
   };
   useEffect(() => {
     load();
+    const channel = supabase
+      .channel("admin-orders")
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => load())
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const setStatus = async (id: string, status: string) => {
