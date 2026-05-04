@@ -2030,4 +2030,80 @@ const NavMenuEditor = () => {
   );
 };
 
+// ===================================================================
+// BLOCKS ORDER EDITOR — порядок секций главной
+// ===================================================================
+const blockLabels: Record<string, string> = {
+  hero: "Главный экран (видео + бегущая строка)",
+  popular: "Популярные изделия",
+  categories: "Категории каталога",
+  advantages: "Преимущества",
+  contact: "Форма контакта",
+};
+const defaultBlocksOrder = ["hero", "popular", "categories", "advantages", "contact"];
+
+const BlocksOrderEditor = () => {
+  const [order, setOrder] = useState<string[]>(defaultBlocksOrder);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    adminCall("settings.get", { key: "homepage_blocks" })
+      .then((r) => {
+        const v = r.data;
+        if (v?.order && Array.isArray(v.order) && v.order.length > 0) setOrder(v.order);
+        setLoading(false);
+      })
+      .catch((e) => { toast.error(e.message); setLoading(false); });
+  }, []);
+
+  const move = (i: number, dir: -1 | 1) => {
+    setOrder((arr) => {
+      const j = i + dir;
+      if (j < 0 || j >= arr.length) return arr;
+      const next = [...arr];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+  };
+  const reset = () => setOrder(defaultBlocksOrder);
+  const save = async () => {
+    setSaving(true);
+    try {
+      await adminCall("settings.set", { key: "homepage_blocks", value: { order } });
+      toast.success("Порядок блоков сохранён. Обновите главную страницу.");
+    } catch (e: any) { toast.error(e.message); }
+    setSaving(false);
+  };
+
+  if (loading) return <div className={ui.card}>Загрузка порядка блоков…</div>;
+
+  return (
+    <div className={ui.card}>
+      <h3 className={`${ui.h3} mb-4`}>Порядок блоков на главной</h3>
+      <p className="text-sm text-[#999] mb-4">
+        Перемещайте секции главной страницы вверх/вниз — порядок применится после сохранения.
+      </p>
+      <div className="space-y-2 mb-4">
+        {order.map((id, i) => (
+          <div key={id} className="flex items-center gap-3 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-3">
+            <div className="flex flex-col gap-1">
+              <button onClick={() => move(i, -1)} className="px-2 py-0.5 bg-[#3a3a3a] rounded text-xs hover:bg-[#4a4a4a]">↑</button>
+              <button onClick={() => move(i, 1)} className="px-2 py-0.5 bg-[#3a3a3a] rounded text-xs hover:bg-[#4a4a4a]">↓</button>
+            </div>
+            <div className="text-[#888] w-8 text-center">{i + 1}</div>
+            <div className="flex-1">{blockLabels[id] ?? id}</div>
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-2 flex-wrap">
+        <button onClick={reset} className={`${ui.btn} ${ui.btnSecondary}`}>Сбросить к стандарту</button>
+        <button onClick={save} disabled={saving} className={`${ui.btn} ${ui.btnPrimary} ${saving ? "opacity-50" : ""}`}>
+          <Check size={18} /> {saving ? "Сохранение…" : "Сохранить порядок"}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export default AdminPage;
