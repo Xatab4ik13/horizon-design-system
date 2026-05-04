@@ -31,7 +31,7 @@ const CategoriesSection = () => {
     <section
       className="py-16 relative"
       style={{
-        background: "radial-gradient(ellipse at 50% 50%, hsl(25 30% 10%) 0%, hsl(20 15% 6%) 50%, hsl(0 0% 2%) 100%)"
+        background: "radial-gradient(ellipse at 50% 50%, hsl(25 40% 12%) 0%, hsl(20 20% 6%) 50%, hsl(0 0% 2%) 100%)"
       }}
     >
       {/* Top fade */}
@@ -43,7 +43,7 @@ const CategoriesSection = () => {
         <h2 className="text-3xl md:text-4xl text-center mb-10 text-foreground">
           {title}
         </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-6">
           {categories.map((cat, i) => (
             <Link
               key={cat.slug}
