@@ -49,7 +49,7 @@ const Footer = () => {
           <div>
             <Logo size="md" className="mb-3" />
             <p className="text-xs text-muted-foreground leading-relaxed font-light mb-4">
-              Мастерская изделий из натурального дерева
+              {fTagline}
             </p>
             <div className="flex items-center gap-3">
               <a href="https://vk.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors text-xs">VK</a>
