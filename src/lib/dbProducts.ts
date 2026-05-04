@@ -50,31 +50,54 @@ const formatDimensions = (
   return `${parts.join(" × ")} см`;
 };
 
+// "Наличие" из 1С: считаем "В наличии" / "" / "есть" — товар на складе;
+// "На заказ", "Под заказ", "Нет" — товар не в моментальном наличии.
+const isInStockStatus = (s?: string | null): boolean => {
+  if (!s) return true; // нет данных — считаем доступным
+  const t = s.toLowerCase().trim();
+  if (!t) return true;
+  if (/(на\s*заказ|под\s*заказ|нет|отсут)/i.test(t)) return false;
+  return true;
+};
+
 export const dbToUiProduct = (row: DbProductRow): Product => {
   const opts = row.options ?? {};
   const subFromOpts = typeof (opts as any).subcategory === "string" ? (opts as any).subcategory : undefined;
   const map = CATEGORY_MAP[row.category] ?? { category: row.category, subcategory: row.category };
   const subcategory = subFromOpts ?? map.subcategory;
-  const material = typeof (opts as any).material === "string" ? (opts as any).material : "";
-  const coating = typeof (opts as any).coating === "string" ? (opts as any).coating : "";
+  const material =
+    row.material ??
+    (typeof (opts as any).material === "string" ? (opts as any).material : "") ??
+    "";
+  const coating =
+    row.coating ??
+    (typeof (opts as any).coating === "string" ? (opts as any).coating : "") ??
+    "";
   const arModel = row.ar_glb_url || row.ar_usdz_url
     ? { glb: row.ar_glb_url ?? "", usdz: row.ar_usdz_url ?? "" }
     : undefined;
+
+  const basePrice = Number(row.price);
+  const discount = Math.max(0, Math.min(100, Number(row.discount_percent ?? 0)));
+  const finalPrice = discount > 0 ? Math.round(basePrice * (1 - discount / 100)) : basePrice;
+  const oldPrice = discount > 0 ? basePrice : undefined;
+
   return {
     id: row.id,
     sku: row.sku ?? row.id.slice(0, 8).toUpperCase(),
     name: row.name,
-    price: Number(row.price),
+    price: finalPrice,
+    oldPrice,
     category: map.category,
     subcategory,
-    material,
-    coating,
+    material: material || "",
+    coating: coating || "",
     description: row.description ?? "",
     details: row.description ?? "",
     dimensions: formatDimensions(row.width_cm, row.height_cm, row.depth_cm),
     weight: row.weight_kg ? `${row.weight_kg} кг` : "",
     images: row.images && row.images.length > 0 ? row.images : ["/placeholder.svg"],
-    inStock: true,
+    inStock: isInStockStatus(row.stock_status),
     arModel,
     reviews: [],
     qa: [],
