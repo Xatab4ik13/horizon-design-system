@@ -1575,6 +1575,7 @@ const SettingsPanel = () => {
       </div>
 
       <NavMenuEditor />
+      <BlocksOrderEditor />
       <HomepageEditor />
     </div>
   );
