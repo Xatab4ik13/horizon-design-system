@@ -1,5 +1,6 @@
 import { useEffect, useState, FormEvent } from "react";
 import { adminAuth, adminCall, adminLogin, adminUploadFile } from "@/lib/adminApi";
+import { supabase } from "@/integrations/supabase/client";
 import { parse1CFile } from "@/lib/import1c";
 import { toast } from "sonner";
 import {
