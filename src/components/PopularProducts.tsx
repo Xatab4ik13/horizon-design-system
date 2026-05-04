@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, memo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import showcaseMirror from "@/assets/showcase-mirror.png";
 import showcasePano from "@/assets/showcase-pano.png";
+import { useHomepageContent } from "@/hooks/useSiteContent";
 
 const showcaseItems = [
   {
