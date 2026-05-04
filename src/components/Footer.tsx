@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import Logo from "@/components/Logo";
+import { useHomepageContent } from "@/hooks/useSiteContent";
 
 const siteMap = [
   {
