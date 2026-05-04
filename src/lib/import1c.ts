@@ -99,31 +99,53 @@ function buildProduct(d: Record<string, string>): Parsed1CProduct | null {
 
   const sku = d["Артикул"] || null;
   const price = num(d["Стоимость"]) ?? 0;
+  const discount_percent = Math.max(0, Math.min(100, num(d["Скидка"]) ?? 0));
 
   // 1С: Длинна = длина (=высота для панно), Ширина, Толщина (=глубина)
   const height_cm = num(d["Длинна"] ?? d["Длина"]);
   const width_cm = num(d["Ширина"]);
   const depth_cm = num(d["Толщина"]);
-  const weight_kg = num(d["Вес нетто"]) ?? num(d["Вес брутто"]);
+  const weight_kg = num(d["Вес нетто"]);
+  const weight_gross_kg = num(d["Вес брутто"]);
+  const area_m2 = num(d["Площадь"]);
+  const volume_m3 = num(d["Объем"]);
 
   const description = (d["Текстовое описание"] || "").trim() || null;
 
-  const optionsRaw: Record<string, string> = {
-    Материал: d["Материал"],
-    Порода: d["Порода"],
-    Покрытие: d["Покрытие"],
-    Площадь: d["Площадь"],
-    Объем: d["Объем"],
-    Упаковка: d["Упаковка"],
-    "Вес брутто": d["Вес брутто"],
-    Наличие: d["Наличие"],
-    Бренд: d["Марка (бренд)"],
-    Страна: d["Страна происхождения"],
-    Производитель: d["Производитель (бренд)"] || d["Производитель, импортер (контрагент)"],
+  const pickStr = (k: string): string | null => {
+    const v = (d[k] || "").trim();
+    if (!v || isPlaceholder(v)) return null;
+    return v;
+  };
+
+  const material = pickStr("Материал");
+  const wood_species = pickStr("Порода");
+  const coating = pickStr("Покрытие");
+  const package_info = pickStr("Упаковка");
+  const stock_status = pickStr("Наличие");
+  const brand = pickStr("Марка (бренд)");
+  const country = pickStr("Страна происхождения");
+  const manufacturer =
+    pickStr("Производитель (бренд)") ||
+    pickStr("Производитель, импортер (контрагент)");
+
+  // options оставляем для обратной совместимости (отображение в UI)
+  const optionsRaw: Record<string, string | null> = {
+    Материал: material,
+    Порода: wood_species,
+    Покрытие: coating,
+    Площадь: area_m2 != null ? String(area_m2) : null,
+    Объем: volume_m3 != null ? String(volume_m3) : null,
+    Упаковка: package_info,
+    "Вес брутто": weight_gross_kg != null ? String(weight_gross_kg) : null,
+    Наличие: stock_status,
+    Бренд: brand,
+    Страна: country,
+    Производитель: manufacturer,
   };
   const options: Record<string, string> = {};
   for (const [k, v] of Object.entries(optionsRaw)) {
-    if (v && !isPlaceholder(v)) options[k] = v;
+    if (v) options[k] = v;
   }
 
   return {
@@ -131,10 +153,22 @@ function buildProduct(d: Record<string, string>): Parsed1CProduct | null {
     name,
     description,
     price,
+    discount_percent,
+    stock_status,
     width_cm,
     height_cm,
     depth_cm,
     weight_kg,
+    weight_gross_kg,
+    area_m2,
+    volume_m3,
+    package_info,
+    material,
+    wood_species,
+    coating,
+    brand,
+    country,
+    manufacturer,
     options,
   };
 }
