@@ -2,11 +2,15 @@ import { useRef } from "react";
 import { motion } from "framer-motion";
 import heroVideo from "@/assets/hero-video.mp4";
 import Logo from "@/components/Logo";
+import { useHomepageContent } from "@/hooks/useSiteContent";
 
-const marqueeText = "FAKTURA — изделия из натурального дерева ручной работы • панно • зеркала • мебель • двери • ";
+const DEFAULT_MARQUEE = "FAKTURA — изделия из натурального дерева ручной работы • панно • зеркала • мебель • двери • ";
 
 const HeroSection = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const content = useHomepageContent();
+  const marqueeText = content.hero?.marqueeText || DEFAULT_MARQUEE;
+  const videoSrc = content.hero?.videoUrl || heroVideo;
 
   return (
     <section className="relative h-screen w-full overflow-hidden">
