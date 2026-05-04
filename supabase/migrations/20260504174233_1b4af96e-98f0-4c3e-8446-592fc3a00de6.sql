@@ -1,0 +1,16 @@
+ALTER TABLE public.products
+  ADD COLUMN IF NOT EXISTS discount_percent NUMERIC NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS stock_status TEXT,
+  ADD COLUMN IF NOT EXISTS area_m2 NUMERIC,
+  ADD COLUMN IF NOT EXISTS volume_m3 NUMERIC,
+  ADD COLUMN IF NOT EXISTS package_info TEXT,
+  ADD COLUMN IF NOT EXISTS weight_gross_kg NUMERIC,
+  ADD COLUMN IF NOT EXISTS wood_species TEXT,
+  ADD COLUMN IF NOT EXISTS coating TEXT,
+  ADD COLUMN IF NOT EXISTS material TEXT,
+  ADD COLUMN IF NOT EXISTS brand TEXT,
+  ADD COLUMN IF NOT EXISTS country TEXT,
+  ADD COLUMN IF NOT EXISTS manufacturer TEXT;
+
+ALTER TABLE public.products
+  ADD CONSTRAINT products_discount_range CHECK (discount_percent >= 0 AND discount_percent <= 100);
