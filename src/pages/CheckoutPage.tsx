@@ -383,7 +383,7 @@ const CheckoutPage = () => {
 
                       {/* Яндекс */}
                       <label className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
-                        !quotes?.yandex?.ok ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                        "cursor-pointer"
                       } ${delivery === "yandex" ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"}`}>
                         <input type="radio" checked={delivery === "yandex"} 
                           onChange={() => setDelivery("yandex")} className="sr-only" />
@@ -406,7 +406,7 @@ const CheckoutPage = () => {
 
                       {/* ПЭК */}
                       <label className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
-                        !quotes?.pek?.ok ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                        "cursor-pointer"
                       } ${delivery === "pek" ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"}`}>
                         <input type="radio" checked={delivery === "pek"} 
                           onChange={() => setDelivery("pek")} className="sr-only" />
@@ -429,7 +429,7 @@ const CheckoutPage = () => {
 
                       {/* СДЭК */}
                       <label className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
-                        !quotes?.cdek?.ok ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                        "cursor-pointer"
                       } ${delivery === "cdek" ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"}`}>
                         <input type="radio" checked={delivery === "cdek"} 
                           onChange={() => setDelivery("cdek")} className="sr-only" />
