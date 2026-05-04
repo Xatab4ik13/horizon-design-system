@@ -77,10 +77,10 @@ const Footer = () => {
 
         <div className="border-t border-border/30 mt-6 pt-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-[11px] text-muted-foreground/50">
-            © {new Date().getFullYear()} FAKTURA. Все права защищены.
+            {fCopyright}
           </p>
           <p className="text-[11px] text-muted-foreground/40">
-            +7 (999) 123-45-67 • info@faktura.ru
+            {fPhone} • {fEmail}
           </p>
         </div>
       </div>
