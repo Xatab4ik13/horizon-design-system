@@ -131,28 +131,45 @@ const CartPage = () => {
                 <div className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-6 sticky top-36">
                   <h3 className="text-lg font-bold text-foreground mb-4">Итого</h3>
 
-                  <div className="space-y-3 mb-6">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Товары ({totalItems})</span>
-                      <span className="text-foreground">{formatPrice(totalPrice)}</span>
-                    </div>
-
-                    {/* Dimensions & Weight per item */}
-                    {items.map((item) => (
-                      (item.dimensions || item.weight) && (
-                        <div key={item.productId} className="text-xs text-muted-foreground border-t border-border/30 pt-2">
-                          <p className="text-foreground/70 font-medium text-[11px] mb-1 truncate">{item.name}</p>
-                          {item.dimensions && <p>Размеры: {item.dimensions}</p>}
-                          {item.weight && <p>Вес: {item.weight}</p>}
+                  {(() => {
+                    const totalWeight = items.reduce((sum, i) => {
+                      const m = (i.weight || "").match(/[\d.,]+/);
+                      const v = m ? parseFloat(m[0].replace(",", ".")) : 0;
+                      return sum + v * i.quantity;
+                    }, 0);
+                    return (
+                      <div className="space-y-3 mb-6">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Товары ({totalItems})</span>
+                          <span className="text-foreground">{formatPrice(totalPrice)}</span>
                         </div>
-                      )
-                    ))}
+                        {totalWeight > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Общий вес</span>
+                            <span className="text-foreground">{totalWeight.toFixed(1).replace(/\.0$/, "")} кг</span>
+                          </div>
+                        )}
 
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Доставка</span>
-                      <span className="text-foreground/60">Рассчитывается при оформлении</span>
-                    </div>
-                  </div>
+                        {/* Dimensions per item */}
+                        {items.some((i) => i.dimensions) && (
+                          <div className="border-t border-border/30 pt-2 space-y-1.5">
+                            <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Габариты</p>
+                            {items.map((item) => item.dimensions && (
+                              <div key={item.productId} className="text-xs text-muted-foreground">
+                                <span className="text-foreground/70">{item.name}:</span> {item.dimensions}
+                                {item.quantity > 1 && <span className="text-foreground/50"> × {item.quantity}</span>}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="flex justify-between text-sm border-t border-border/30 pt-3">
+                          <span className="text-muted-foreground">Доставка</span>
+                          <span className="text-foreground/60">При оформлении</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Promo code */}
                   <div className="flex gap-2 mb-6">
