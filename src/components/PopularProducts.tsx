@@ -188,7 +188,7 @@ const PopularProducts = () => {
               </div>
             </motion.div>
           </AnimatePresence>
-        </div>
+        </motion.div>
 
         {/* Navigation arrows */}
         <button
