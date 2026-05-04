@@ -1,5 +1,6 @@
 import { useEffect, useState, FormEvent } from "react";
-import { adminAuth, adminCall, adminLogin } from "@/lib/adminApi";
+import { adminAuth, adminCall, adminLogin, adminUploadFile } from "@/lib/adminApi";
+import { supabase } from "@/integrations/supabase/client";
 import { parse1CFile } from "@/lib/import1c";
 import { toast } from "sonner";
 import {
@@ -561,20 +562,8 @@ const ProductEditor = ({
   const handleUpload = async (file: File) => {
     setUploading(true);
     try {
-      const reader = new FileReader();
-      const dataUrl = await new Promise<string>((res, rej) => {
-        reader.onload = () => res(reader.result as string);
-        reader.onerror = rej;
-        reader.readAsDataURL(file);
-      });
-      const path = `${Date.now()}-${file.name.replace(/[^\w.\-]/g, "_")}`;
-      const r = await adminCall("storage.upload", {
-        bucket: "product-images",
-        path,
-        dataUrl,
-        contentType: file.type,
-      });
-      setForm({ ...form, images: [...(form.images ?? []), r.data.url] });
+      const url = await adminUploadFile("product-images", file);
+      setForm({ ...form, images: [...(form.images ?? []), url] });
       toast.success("Фото загружено");
     } catch (e: any) {
       toast.error(e.message);
@@ -590,22 +579,9 @@ const ProductEditor = ({
   const handleArUpload = async (file: File, kind: "glb" | "usdz") => {
     setArUploading(kind);
     try {
-      const reader = new FileReader();
-      const dataUrl = await new Promise<string>((res, rej) => {
-        reader.onload = () => res(reader.result as string);
-        reader.onerror = rej;
-        reader.readAsDataURL(file);
-      });
-      const path = `${Date.now()}-${file.name.replace(/[^\w.\-]/g, "_")}`;
-      const contentType = kind === "glb" ? "model/gltf-binary" : "model/vnd.usdz+zip";
-      const r = await adminCall("storage.upload", {
-        bucket: "product-models",
-        path,
-        dataUrl,
-        contentType: file.type || contentType,
-      });
+      const url = await adminUploadFile("product-models", file);
       const field = kind === "glb" ? "ar_glb_url" : "ar_usdz_url";
-      setForm({ ...form, [field]: r.data.url });
+      setForm({ ...form, [field]: url });
       toast.success(`${kind.toUpperCase()} загружен`);
     } catch (e: any) {
       toast.error(e.message);
@@ -855,6 +831,9 @@ const OrdersPanel = () => {
   };
   useEffect(() => {
     load();
+    // Polling: realtime требует RLS-доступа, у анонимов его нет. 10 сек — компромисс.
+    const t = setInterval(load, 10000);
+    return () => clearInterval(t);
   }, []);
 
   const setStatus = async (id: string, status: string) => {
@@ -1226,20 +1205,8 @@ const BlogPanel = () => {
   const uploadCover = async (file: File) => {
     setUploading(true);
     try {
-      const reader = new FileReader();
-      const dataUrl = await new Promise<string>((res, rej) => {
-        reader.onload = () => res(reader.result as string);
-        reader.onerror = rej;
-        reader.readAsDataURL(file);
-      });
-      const path = `${Date.now()}-${file.name.replace(/[^\w.\-]/g, "_")}`;
-      const r = await adminCall("storage.upload", {
-        bucket: "blog-images",
-        path,
-        dataUrl,
-        contentType: file.type,
-      });
-      setEditing({ ...editing, cover_image: r.data.url });
+      const url = await adminUploadFile("blog-images", file);
+      setEditing({ ...editing, cover_image: url });
     } catch (e: any) {
       toast.error(e.message);
     }

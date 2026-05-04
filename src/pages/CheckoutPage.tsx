@@ -59,9 +59,18 @@ const CheckoutPage = () => {
   const [contact, setContact] = useState({
     firstName: "",
     lastName: "",
-    phone: "",
+    phone: "+7 ",
     email: "",
   });
+
+  // Гарантируем префикс +7 в телефоне (п.8)
+  const onPhoneChange = (raw: string) => {
+    let v = raw.replace(/[^\d+\s\-()]/g, "");
+    const digits = v.replace(/\D/g, "");
+    if (!v.startsWith("+")) v = "+" + (digits.startsWith("7") ? digits : "7" + digits);
+    if (!v.startsWith("+7")) v = "+7" + v.replace(/^\+?\d?/, "");
+    setContact((c) => ({ ...c, phone: v }));
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -288,7 +297,11 @@ const CheckoutPage = () => {
                           <input
                             type={f.type}
                             value={contact[f.key]}
-                            onChange={(e) => setContact((c) => ({ ...c, [f.key]: e.target.value }))}
+                            onChange={(e) =>
+                              f.key === "phone"
+                                ? onPhoneChange(e.target.value)
+                                : setContact((c) => ({ ...c, [f.key]: e.target.value }))
+                            }
                             className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors"
                             placeholder={f.placeholder}
                           />
@@ -370,9 +383,9 @@ const CheckoutPage = () => {
 
                       {/* Яндекс */}
                       <label className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
-                        !quotes?.yandex?.ok ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                        "cursor-pointer"
                       } ${delivery === "yandex" ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"}`}>
-                        <input type="radio" checked={delivery === "yandex"} disabled={!quotes?.yandex?.ok}
+                        <input type="radio" checked={delivery === "yandex"} 
                           onChange={() => setDelivery("yandex")} className="sr-only" />
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
                           delivery === "yandex" ? "border-primary" : "border-muted-foreground/30"
@@ -393,9 +406,9 @@ const CheckoutPage = () => {
 
                       {/* ПЭК */}
                       <label className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
-                        !quotes?.pek?.ok ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                        "cursor-pointer"
                       } ${delivery === "pek" ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"}`}>
-                        <input type="radio" checked={delivery === "pek"} disabled={!quotes?.pek?.ok}
+                        <input type="radio" checked={delivery === "pek"} 
                           onChange={() => setDelivery("pek")} className="sr-only" />
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
                           delivery === "pek" ? "border-primary" : "border-muted-foreground/30"
@@ -416,9 +429,9 @@ const CheckoutPage = () => {
 
                       {/* СДЭК */}
                       <label className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
-                        !quotes?.cdek?.ok ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                        "cursor-pointer"
                       } ${delivery === "cdek" ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"}`}>
-                        <input type="radio" checked={delivery === "cdek"} disabled={!quotes?.cdek?.ok}
+                        <input type="radio" checked={delivery === "cdek"} 
                           onChange={() => setDelivery("cdek")} className="sr-only" />
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
                           delivery === "cdek" ? "border-primary" : "border-muted-foreground/30"

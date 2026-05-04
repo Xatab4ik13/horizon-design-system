@@ -57,3 +57,29 @@ export async function adminLogin(password: string): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Загрузка файла в Storage минуя лимит invoke 6 МБ.
+ * Запрашивает signed upload URL у admin-api, затем PUT-ом грузит файл напрямую в Storage.
+ */
+export async function adminUploadFile(
+  bucket: string,
+  file: File,
+  opts?: { prefix?: string },
+): Promise<string> {
+  const safeName = file.name.replace(/[^\w.\-]/g, "_");
+  const path = `${opts?.prefix ?? ""}${Date.now()}-${safeName}`;
+  const r = await adminCall<{ data: { token: string; path: string; publicUrl: string } }>(
+    "storage.signUpload",
+    { bucket, path },
+  );
+  const { token, publicUrl } = r.data;
+  const { error } = await supabase.storage
+    .from(bucket)
+    .uploadToSignedUrl(path, token, file, {
+      contentType: file.type || "application/octet-stream",
+      upsert: true,
+    });
+  if (error) throw error;
+  return publicUrl;
+}
