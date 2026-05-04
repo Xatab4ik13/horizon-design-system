@@ -10,10 +10,22 @@ type ProductRow = {
   description?: string | null;
   category?: string;
   price?: number | string;
+  discount_percent?: number | string | null;
+  stock_status?: string | null;
   width_cm?: number | null;
   height_cm?: number | null;
   depth_cm?: number | null;
   weight_kg?: number | null;
+  weight_gross_kg?: number | null;
+  area_m2?: number | null;
+  volume_m3?: number | null;
+  package_info?: string | null;
+  material?: string | null;
+  wood_species?: string | null;
+  coating?: string | null;
+  brand?: string | null;
+  country?: string | null;
+  manufacturer?: string | null;
   options?: Record<string, unknown> | null;
 };
 
@@ -25,29 +37,39 @@ const v = (x: unknown): string => {
 const opt = (o: Record<string, unknown> | null | undefined, k: string) =>
   v(o?.[k]);
 
+// Берём значение из колонки сначала, иначе fallback в options.
+const f = (
+  direct: unknown,
+  o: Record<string, unknown> | null | undefined,
+  k: string,
+) => {
+  const dv = v(direct);
+  return dv || opt(o, k);
+};
+
 function buildCardRows(p: ProductRow): string[][] {
   const o = p.options ?? {};
-  // По 2 пары "метка/значение" в строке (как в исходной 1С-карточке).
   const pairs: Array<[string, string]> = [
     ["Рабочее наименование:", v(p.name)],
     ["Наименование для печати:", v(p.name)],
     ["Артикул:", v(p.sku)],
     ["Стоимость:", v(p.price ?? "")],
+    ["Скидка:", v(p.discount_percent ?? "")],
     ["Длинна:", v(p.height_cm)],
     ["Ширина:", v(p.width_cm)],
     ["Толщина:", v(p.depth_cm)],
     ["Вес нетто:", v(p.weight_kg)],
-    ["Вес брутто:", opt(o, "Вес брутто")],
-    ["Материал:", opt(o, "Материал")],
-    ["Порода:", opt(o, "Порода")],
-    ["Покрытие:", opt(o, "Покрытие")],
-    ["Площадь:", opt(o, "Площадь")],
-    ["Объем:", opt(o, "Объем")],
-    ["Упаковка:", opt(o, "Упаковка")],
-    ["Наличие:", opt(o, "Наличие")],
-    ["Марка (бренд):", opt(o, "Бренд")],
-    ["Страна происхождения:", opt(o, "Страна")],
-    ["Производитель (бренд):", opt(o, "Производитель")],
+    ["Вес брутто:", f(p.weight_gross_kg, o, "Вес брутто")],
+    ["Материал:", f(p.material, o, "Материал")],
+    ["Порода:", f(p.wood_species, o, "Порода")],
+    ["Покрытие:", f(p.coating, o, "Покрытие")],
+    ["Площадь:", f(p.area_m2, o, "Площадь")],
+    ["Объем:", f(p.volume_m3, o, "Объем")],
+    ["Упаковка:", f(p.package_info, o, "Упаковка")],
+    ["Наличие:", f(p.stock_status, o, "Наличие")],
+    ["Марка (бренд):", f(p.brand, o, "Бренд")],
+    ["Страна происхождения:", f(p.country, o, "Страна")],
+    ["Производитель (бренд):", f(p.manufacturer, o, "Производитель")],
     ["Текстовое описание:", v(p.description)],
   ];
 
@@ -57,7 +79,6 @@ function buildCardRows(p: ProductRow): string[][] {
     const b = pairs[i + 1];
     rows.push(b ? [a[0], a[1], b[0], b[1]] : [a[0], a[1]]);
   }
-  // Пустая строка-разделитель между карточками
   rows.push([]);
   return rows;
 }
