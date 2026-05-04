@@ -27,9 +27,9 @@ const HeroSection = () => {
       <div className="absolute inset-0 bg-black/30" />
       <div className="absolute inset-0 flex items-center justify-center">
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.92 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.5, ease: "easeOut" }}
+          transition={{ duration: 3, ease: [0.22, 1, 0.36, 1] }}
         >
           <Logo size="xl" linkTo="/" className="text-white/90 drop-shadow-lg" />
         </motion.div>

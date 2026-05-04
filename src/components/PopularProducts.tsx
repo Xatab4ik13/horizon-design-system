@@ -82,14 +82,15 @@ const PopularProducts = () => {
 
   useEffect(() => {
     if (paused) return;
-    const timer = setInterval(() => paginate(1), 7000);
+    const timer = setInterval(() => paginate(1), 3000);
     return () => clearInterval(timer);
   }, [paused, paginate, current]);
 
   const handleDragEnd = (_: any, info: PanInfo) => {
-    const threshold = 50;
-    if (info.offset.x < -threshold) paginate(1);
-    else if (info.offset.x > threshold) paginate(-1);
+    const threshold = 40;
+    const velocity = info.velocity.x;
+    if (info.offset.x < -threshold || velocity < -300) paginate(1);
+    else if (info.offset.x > threshold || velocity > 300) paginate(-1);
   };
 
   const item = showcaseItems[current];
@@ -104,7 +105,14 @@ const PopularProducts = () => {
       <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-t from-transparent to-[hsl(0_0%_2%)] z-10 pointer-events-none" />
       <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-b from-transparent to-[hsl(0_0%_2%)] z-10 pointer-events-none" />
       <div className="min-h-[80vh] md:min-h-[90vh] flex items-center relative" style={{ perspective: "1400px" }}>
-        <div className="container mx-auto px-4 py-12 md:py-24">
+        <motion.div
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.2}
+          dragMomentum={false}
+          onDragEnd={handleDragEnd}
+          className="container mx-auto px-4 py-12 md:py-16 cursor-grab active:cursor-grabbing touch-pan-y"
+        >
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={current}
@@ -114,14 +122,10 @@ const PopularProducts = () => {
               animate="center"
               exit="exit"
               transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.15}
-              onDragEnd={handleDragEnd}
-              className="flex flex-col-reverse md:flex-row items-center gap-6 md:gap-16 lg:gap-24 cursor-grab active:cursor-grabbing touch-pan-y"
+              className="flex flex-col-reverse md:flex-row items-center gap-4 md:gap-8 lg:gap-12 pointer-events-none"
             >
               {/* Text */}
-              <div className="w-full md:w-5/12 text-center md:text-left">
+              <div className="w-full md:w-5/12 text-center md:text-left pointer-events-auto">
                 <motion.span
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -184,7 +188,7 @@ const PopularProducts = () => {
               </div>
             </motion.div>
           </AnimatePresence>
-        </div>
+        </motion.div>
 
         {/* Navigation arrows */}
         <button
