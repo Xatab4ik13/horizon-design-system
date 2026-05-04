@@ -36,6 +36,11 @@ const siteMap = [
 ];
 
 const Footer = () => {
+  const content = useHomepageContent();
+  const fTagline = content.footer?.tagline?.trim() || "Мастерская изделий из натурального дерева";
+  const fPhone = content.footer?.phone?.trim() || "+7 (999) 123-45-67";
+  const fEmail = content.footer?.email?.trim() || "info@faktura.ru";
+  const fCopyright = content.footer?.copyright?.trim() || `© ${new Date().getFullYear()} FAKTURA. Все права защищены.`;
   return (
     <footer className="bg-card border-t border-border/30 py-8">
       <div className="container mx-auto px-4">
