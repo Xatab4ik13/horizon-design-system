@@ -174,7 +174,7 @@ const ContactForm = () => {
               )} />
 
               <Button type="submit" size="lg" disabled={submitting} className="w-full rounded-full text-base">
-                {submitting ? "Отправка..." : "Отправить заявку"}
+                {submitting ? "Отправка..." : cSubmit}
               </Button>
 
               <p className="text-center text-xs text-muted-foreground/60">
