@@ -6,8 +6,20 @@ import AdvantagesSection from "@/components/AdvantagesSection";
 import ContactForm from "@/components/ContactForm";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
+import { useHomepageBlocks, type HomeBlockId } from "@/hooks/useSiteContent";
+
+const defaultOrder: HomeBlockId[] = ["hero", "popular", "categories", "advantages", "contact"];
+
+const blockMap: Record<HomeBlockId, () => JSX.Element> = {
+  hero: () => <HeroSection />,
+  popular: () => <PopularProducts />,
+  categories: () => <CategoriesSection />,
+  advantages: () => <AdvantagesSection />,
+  contact: () => <ContactForm />,
+};
 
 const Index = () => {
+  const order = useHomepageBlocks(defaultOrder);
   return (
     <div className="min-h-screen">
       <SEO
@@ -16,11 +28,10 @@ const Index = () => {
       />
       <Header />
       <main>
-        <HeroSection />
-        <PopularProducts />
-        <CategoriesSection />
-        <AdvantagesSection />
-        <ContactForm />
+        {order.map((id) => {
+          const R = blockMap[id];
+          return R ? <div key={id}>{R()}</div> : null;
+        })}
       </main>
       <Footer />
     </div>
