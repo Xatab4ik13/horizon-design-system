@@ -106,3 +106,40 @@ export function useNavMenu(fallback: NavItem[]): NavItem[] {
   }, []);
   return items;
 }
+
+// ─── Homepage block order ───
+export type HomeBlockId = "hero" | "popular" | "categories" | "advantages" | "contact";
+
+let blocksCache: HomeBlockId[] | null = null;
+let blocksInflight: Promise<HomeBlockId[] | null> | null = null;
+
+export async function fetchHomepageBlocks(): Promise<HomeBlockId[] | null> {
+  if (blocksCache) return blocksCache;
+  if (blocksInflight) return blocksInflight;
+  blocksInflight = (async () => {
+    const { data } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "homepage_blocks")
+      .maybeSingle();
+    const v = data?.value as { order?: HomeBlockId[] } | null | undefined;
+    blocksCache = (v?.order && Array.isArray(v.order) && v.order.length > 0) ? v.order : null;
+    return blocksCache;
+  })();
+  return blocksInflight;
+}
+
+export function invalidateHomepageBlocks() {
+  blocksCache = null;
+  blocksInflight = null;
+}
+
+export function useHomepageBlocks(fallback: HomeBlockId[]): HomeBlockId[] {
+  const [order, setOrder] = useState<HomeBlockId[]>(blocksCache ?? fallback);
+  useEffect(() => {
+    let alive = true;
+    fetchHomepageBlocks().then((c) => { if (alive && c) setOrder(c); });
+    return () => { alive = false; };
+  }, []);
+  return order;
+}
