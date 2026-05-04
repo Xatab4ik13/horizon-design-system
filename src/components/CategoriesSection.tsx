@@ -6,8 +6,9 @@ import categoryDecor from "@/assets/category-decor.png";
 import categoryShelves from "@/assets/category-shelves.png";
 import categoryCrafts from "@/assets/category-crafts.png";
 import categoryDoors from "@/assets/category-doors.png";
+import { useHomepageContent } from "@/hooks/useSiteContent";
 
-const categories = [
+const defaultCategories = [
   { name: "Мебель", slug: "furniture", image: categoryTable },
   { name: "Кухонные принадлежности", slug: "kitchen", image: categoryChairs },
   { name: "Системы хранения", slug: "storage", image: categoryDecor },
