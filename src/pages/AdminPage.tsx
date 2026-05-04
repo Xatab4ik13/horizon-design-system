@@ -561,20 +561,8 @@ const ProductEditor = ({
   const handleUpload = async (file: File) => {
     setUploading(true);
     try {
-      const reader = new FileReader();
-      const dataUrl = await new Promise<string>((res, rej) => {
-        reader.onload = () => res(reader.result as string);
-        reader.onerror = rej;
-        reader.readAsDataURL(file);
-      });
-      const path = `${Date.now()}-${file.name.replace(/[^\w.\-]/g, "_")}`;
-      const r = await adminCall("storage.upload", {
-        bucket: "product-images",
-        path,
-        dataUrl,
-        contentType: file.type,
-      });
-      setForm({ ...form, images: [...(form.images ?? []), r.data.url] });
+      const url = await adminUploadFile("product-images", file);
+      setForm({ ...form, images: [...(form.images ?? []), url] });
       toast.success("Фото загружено");
     } catch (e: any) {
       toast.error(e.message);
