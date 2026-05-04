@@ -177,62 +177,98 @@ export type Database = {
         Row: {
           ar_glb_url: string | null
           ar_usdz_url: string | null
+          area_m2: number | null
+          brand: string | null
           category: string
+          coating: string | null
+          country: string | null
           created_at: string
           depth_cm: number | null
           description: string | null
+          discount_percent: number
           height_cm: number | null
           id: string
           images: string[]
           is_active: boolean
+          manufacturer: string | null
+          material: string | null
           name: string
           options: Json
+          package_info: string | null
           price: number
           sku: string | null
           sort_order: number
+          stock_status: string | null
           updated_at: string
+          volume_m3: number | null
+          weight_gross_kg: number | null
           weight_kg: number | null
           width_cm: number | null
+          wood_species: string | null
         }
         Insert: {
           ar_glb_url?: string | null
           ar_usdz_url?: string | null
+          area_m2?: number | null
+          brand?: string | null
           category: string
+          coating?: string | null
+          country?: string | null
           created_at?: string
           depth_cm?: number | null
           description?: string | null
+          discount_percent?: number
           height_cm?: number | null
           id?: string
           images?: string[]
           is_active?: boolean
+          manufacturer?: string | null
+          material?: string | null
           name: string
           options?: Json
+          package_info?: string | null
           price?: number
           sku?: string | null
           sort_order?: number
+          stock_status?: string | null
           updated_at?: string
+          volume_m3?: number | null
+          weight_gross_kg?: number | null
           weight_kg?: number | null
           width_cm?: number | null
+          wood_species?: string | null
         }
         Update: {
           ar_glb_url?: string | null
           ar_usdz_url?: string | null
+          area_m2?: number | null
+          brand?: string | null
           category?: string
+          coating?: string | null
+          country?: string | null
           created_at?: string
           depth_cm?: number | null
           description?: string | null
+          discount_percent?: number
           height_cm?: number | null
           id?: string
           images?: string[]
           is_active?: boolean
+          manufacturer?: string | null
+          material?: string | null
           name?: string
           options?: Json
+          package_info?: string | null
           price?: number
           sku?: string | null
           sort_order?: number
+          stock_status?: string | null
           updated_at?: string
+          volume_m3?: number | null
+          weight_gross_kg?: number | null
           weight_kg?: number | null
           width_cm?: number | null
+          wood_species?: string | null
         }
         Relationships: []
       }
