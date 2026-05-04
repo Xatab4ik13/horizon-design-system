@@ -6,7 +6,7 @@ import showcaseMirror from "@/assets/showcase-mirror.png";
 import showcasePano from "@/assets/showcase-pano.png";
 import { useHomepageContent } from "@/hooks/useSiteContent";
 
-const showcaseItems = [
+const defaultShowcaseItems = [
   {
     title: "Панно",
     tagline: "Искусство в дереве",
