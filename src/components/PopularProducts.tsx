@@ -59,6 +59,16 @@ const PopularProducts = () => {
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(1);
   const [paused, setPaused] = useState(false);
+  const content = useHomepageContent();
+  const overrides = content.popular?.items ?? [];
+  const showcaseItems = defaultShowcaseItems.map((it, i) => ({
+    ...it,
+    title: overrides[i]?.title?.trim() || it.title,
+    tagline: overrides[i]?.tagline?.trim() || it.tagline,
+    description: overrides[i]?.description?.trim() || it.description,
+    cta: overrides[i]?.cta?.trim() || it.cta,
+    image: overrides[i]?.image?.trim() || it.image,
+  }));
 
   const paginate = useCallback((dir: number) => {
     setDirection(dir);
