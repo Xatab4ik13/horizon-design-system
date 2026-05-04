@@ -96,7 +96,7 @@ const Header = () => {
                     className={cn(
                       "relative cursor-pointer text-base font-medium px-6 py-2.5 rounded-full transition-colors",
                       "text-foreground/80 hover:text-primary",
-                      isActive && "bg-muted text-primary"
+                      isActive && "bg-foreground/[0.04] text-primary"
                     )}
                   >
                     <span>{item.name}</span>
