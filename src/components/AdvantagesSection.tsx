@@ -1,8 +1,9 @@
 import { Hand, Leaf, UserCheck, Truck } from "lucide-react";
 import { motion } from "framer-motion";
 import workshopBg from "@/assets/workshop-bg.jpg";
+import { useHomepageContent } from "@/hooks/useSiteContent";
 
-const advantages = [
+const defaultAdvantages = [
   { icon: Hand, title: "Ручная работа", desc: "Каждое изделие создаётся мастером вручную с вниманием к деталям" },
   { icon: Leaf, title: "Натуральные материалы", desc: "Только экологичная древесина из проверенных источников" },
   { icon: UserCheck, title: "Индивидуальный подход", desc: "Изготовление по вашим размерам и пожеланиям" },
