@@ -1574,6 +1574,7 @@ const SettingsPanel = () => {
         </div>
       </div>
 
+      <NavMenuEditor />
       <HomepageEditor />
     </div>
   );
@@ -1924,6 +1925,104 @@ const HomepageEditor = () => {
           className={`${ui.btn} ${ui.btnPrimary} ${saving ? "opacity-50" : ""}`}
         >
           <Check size={18} /> {saving ? "Сохранение…" : "Сохранить главную"}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ===================================================================
+// NAV MENU EDITOR — пункты главного меню (header)
+// ===================================================================
+const defaultNav = [
+  { name: "Главная", url: "/" },
+  { name: "Каталог", url: "/catalog" },
+  { name: "Услуги", url: "/services" },
+  { name: "Галерея", url: "/gallery" },
+  { name: "Блог", url: "/blog" },
+  { name: "Доставка и оплата", url: "/delivery" },
+  { name: "Контакты", url: "/contacts" },
+];
+
+const NavMenuEditor = () => {
+  const [items, setItems] = useState<{ name: string; url: string }[]>(defaultNav);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    adminCall("settings.get", { key: "nav_menu" })
+      .then((r) => {
+        const v = r.data;
+        if (v?.items && Array.isArray(v.items) && v.items.length > 0) setItems(v.items);
+        setLoading(false);
+      })
+      .catch((e) => { toast.error(e.message); setLoading(false); });
+  }, []);
+
+  const update = (i: number, key: "name" | "url", v: string) =>
+    setItems((arr) => arr.map((it, idx) => idx === i ? { ...it, [key]: v } : it));
+  const move = (i: number, dir: -1 | 1) => {
+    setItems((arr) => {
+      const j = i + dir;
+      if (j < 0 || j >= arr.length) return arr;
+      const next = [...arr];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+  };
+  const remove = (i: number) => setItems((arr) => arr.filter((_, idx) => idx !== i));
+  const add = () => setItems((arr) => [...arr, { name: "", url: "/" }]);
+  const reset = () => setItems(defaultNav);
+
+  const save = async () => {
+    const cleaned = items
+      .map((i) => ({ name: i.name.trim(), url: i.url.trim() }))
+      .filter((i) => i.name && i.url);
+    if (cleaned.length === 0) { toast.error("Меню не может быть пустым"); return; }
+    setSaving(true);
+    try {
+      await adminCall("settings.set", { key: "nav_menu", value: { items: cleaned } });
+      toast.success("Меню сохранено. Обновите вкладку сайта.");
+    } catch (e: any) { toast.error(e.message); }
+    setSaving(false);
+  };
+
+  if (loading) return <div className={ui.card}>Загрузка меню…</div>;
+
+  return (
+    <div className={ui.card}>
+      <h3 className={`${ui.h3} mb-4`}>Меню сайта (шапка)</h3>
+      <p className="text-sm text-[#999] mb-4">
+        Названия и ссылки пунктов главного меню. Можно менять порядок, переименовывать, добавлять свои страницы.
+      </p>
+      <div className="space-y-2 mb-4">
+        {items.map((it, i) => (
+          <div key={i} className="flex gap-2 items-center">
+            <div className="flex flex-col gap-1">
+              <button onClick={() => move(i, -1)} className="px-2 py-0.5 bg-[#3a3a3a] rounded text-xs hover:bg-[#4a4a4a]">↑</button>
+              <button onClick={() => move(i, 1)} className="px-2 py-0.5 bg-[#3a3a3a] rounded text-xs hover:bg-[#4a4a4a]">↓</button>
+            </div>
+            <input
+              value={it.name}
+              onChange={(e) => update(i, "name", e.target.value)}
+              placeholder="Название"
+              className={`${ui.input} flex-1`}
+            />
+            <input
+              value={it.url}
+              onChange={(e) => update(i, "url", e.target.value)}
+              placeholder="/url"
+              className={`${ui.input} flex-1`}
+            />
+            <button onClick={() => remove(i)} className={`${ui.btn} ${ui.btnDanger}`}>×</button>
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-2 flex-wrap">
+        <button onClick={add} className={`${ui.btn} ${ui.btnSecondary}`}>+ Добавить пункт</button>
+        <button onClick={reset} className={`${ui.btn} ${ui.btnSecondary}`}>Сбросить к стандарту</button>
+        <button onClick={save} disabled={saving} className={`${ui.btn} ${ui.btnPrimary} ${saving ? "opacity-50" : ""}`}>
+          <Check size={18} /> {saving ? "Сохранение…" : "Сохранить меню"}
         </button>
       </div>
     </div>

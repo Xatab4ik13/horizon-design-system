@@ -13,6 +13,7 @@ import categoryDecor from "@/assets/category-decor.png";
 import categoryShelves from "@/assets/category-shelves.png";
 import categoryCrafts from "@/assets/category-crafts.png";
 import categoryDoors from "@/assets/category-doors.png";
+import { useNavMenu } from "@/hooks/useSiteContent";
 
 const categories = [
   { name: "Мебель", slug: "furniture", image: categoryTable },
@@ -23,7 +24,7 @@ const categories = [
   { name: "Двери", slug: "doors", image: categoryDoors },
 ];
 
-const navItems = [
+const defaultNavItems = [
   { name: "Главная", url: "/" },
   { name: "Каталог", url: "/catalog" },
   { name: "Услуги", url: "/services" },
@@ -37,6 +38,7 @@ const Header = () => {
   const location = useLocation();
   const isMobile = useIsMobile();
   const { totalItems } = useCart();
+  const navItems = useNavMenu(defaultNavItems);
   const [activeTab, setActiveTab] = useState(
     navItems.find((item) => item.url === location.pathname)?.name || navItems[0].name
   );

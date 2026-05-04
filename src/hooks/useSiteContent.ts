@@ -67,3 +67,42 @@ export function useHomepageContent(): HomepageContent {
   }, []);
   return content;
 }
+
+// ─── Nav menu (header items) ───
+export type NavItem = { name: string; url: string };
+
+let navCache: NavItem[] | null = null;
+let navInflight: Promise<NavItem[] | null> | null = null;
+
+export async function fetchNavMenu(): Promise<NavItem[] | null> {
+  if (navCache) return navCache;
+  if (navInflight) return navInflight;
+  navInflight = (async () => {
+    const { data } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "nav_menu")
+      .maybeSingle();
+    const v = data?.value as { items?: NavItem[] } | null | undefined;
+    navCache = (v?.items && Array.isArray(v.items) && v.items.length > 0) ? v.items : null;
+    return navCache;
+  })();
+  return navInflight;
+}
+
+export function invalidateNavMenu() {
+  navCache = null;
+  navInflight = null;
+}
+
+export function useNavMenu(fallback: NavItem[]): NavItem[] {
+  const [items, setItems] = useState<NavItem[]>(navCache ?? fallback);
+  useEffect(() => {
+    let alive = true;
+    fetchNavMenu().then((c) => {
+      if (alive && c) setItems(c);
+    });
+    return () => { alive = false; };
+  }, []);
+  return items;
+}

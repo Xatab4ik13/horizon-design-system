@@ -508,9 +508,15 @@ const CheckoutPage = () => {
                       <Button variant="outline" className="rounded-xl px-4">Применить</Button>
                     </div>
 
+                    {!canProceedToPayment && (
+                      <div className="flex items-center gap-2 mb-3 text-xs text-amber-500/90">
+                        <AlertCircle className="h-3.5 w-3.5" />
+                        Сначала рассчитайте стоимость доставки на шаге «Доставка».
+                      </div>
+                    )}
                     <div className="flex gap-3">
                       <Button variant="outline" onClick={() => setStep(1)} className="rounded-xl">Назад</Button>
-                      <Button onClick={handleComplete} size="lg" disabled={submitting} className="rounded-xl">{submitting ? "Оформление..." : "Оформить заказ"}</Button>
+                      <Button onClick={handleComplete} size="lg" disabled={submitting || !canProceedToPayment} className="rounded-xl">{submitting ? "Оформление..." : "Оформить заказ"}</Button>
                     </div>
                   </motion.div>
                 )}
