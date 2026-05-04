@@ -48,7 +48,7 @@ const CategoriesSection = () => {
             <Link
               key={cat.slug}
               to={`/catalog?category=${cat.slug}`}
-              className="group relative h-52 md:h-80 lg:h-96 overflow-visible"
+              className="group relative h-44 md:h-80 lg:h-96 overflow-visible"
             >
               {cat.image ? (
                 <motion.div
