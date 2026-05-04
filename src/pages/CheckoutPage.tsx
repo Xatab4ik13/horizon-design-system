@@ -385,7 +385,7 @@ const CheckoutPage = () => {
                       <label className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
                         !quotes?.yandex?.ok ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
                       } ${delivery === "yandex" ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"}`}>
-                        <input type="radio" checked={delivery === "yandex"} disabled={!quotes?.yandex?.ok}
+                        <input type="radio" checked={delivery === "yandex"} 
                           onChange={() => setDelivery("yandex")} className="sr-only" />
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
                           delivery === "yandex" ? "border-primary" : "border-muted-foreground/30"
@@ -408,7 +408,7 @@ const CheckoutPage = () => {
                       <label className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
                         !quotes?.pek?.ok ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
                       } ${delivery === "pek" ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"}`}>
-                        <input type="radio" checked={delivery === "pek"} disabled={!quotes?.pek?.ok}
+                        <input type="radio" checked={delivery === "pek"} 
                           onChange={() => setDelivery("pek")} className="sr-only" />
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
                           delivery === "pek" ? "border-primary" : "border-muted-foreground/30"
@@ -431,7 +431,7 @@ const CheckoutPage = () => {
                       <label className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
                         !quotes?.cdek?.ok ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
                       } ${delivery === "cdek" ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"}`}>
-                        <input type="radio" checked={delivery === "cdek"} disabled={!quotes?.cdek?.ok}
+                        <input type="radio" checked={delivery === "cdek"} 
                           onChange={() => setDelivery("cdek")} className="sr-only" />
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
                           delivery === "cdek" ? "border-primary" : "border-muted-foreground/30"
