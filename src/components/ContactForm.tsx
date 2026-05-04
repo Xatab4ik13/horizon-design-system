@@ -178,7 +178,7 @@ const ContactForm = () => {
               </Button>
 
               <p className="text-center text-xs text-muted-foreground/60">
-                Нажимая кнопку, вы соглашаетесь с обработкой персональных данных
+                {cConsent}
               </p>
             </form>
           </Form>
