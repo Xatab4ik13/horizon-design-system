@@ -831,13 +831,9 @@ const OrdersPanel = () => {
   };
   useEffect(() => {
     load();
-    const channel = supabase
-      .channel("admin-orders")
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => load())
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    // Polling: realtime требует RLS-доступа, у анонимов его нет. 10 сек — компромисс.
+    const t = setInterval(load, 10000);
+    return () => clearInterval(t);
   }, []);
 
   const setStatus = async (id: string, status: string) => {
