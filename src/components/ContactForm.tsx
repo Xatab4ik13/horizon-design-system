@@ -34,6 +34,11 @@ const subjects = [
 const ContactForm = () => {
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState(false);
+  const content = useHomepageContent();
+  const cTitle = content.contact?.title?.trim() || "Оставить заявку";
+  const cSubtitle = content.contact?.subtitle?.trim() || "Расскажите о вашем проекте — мы подберём оптимальное решение и рассчитаем стоимость";
+  const cConsent = content.contact?.consent?.trim() || "Нажимая кнопку, вы соглашаетесь с обработкой персональных данных";
+  const cSubmit = content.contact?.submitLabel?.trim() || "Отправить заявку";
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { name: "", phone: "", email: "", subject: "", message: "" },
