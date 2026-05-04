@@ -297,7 +297,11 @@ const CheckoutPage = () => {
                           <input
                             type={f.type}
                             value={contact[f.key]}
-                            onChange={(e) => setContact((c) => ({ ...c, [f.key]: e.target.value }))}
+                            onChange={(e) =>
+                              f.key === "phone"
+                                ? onPhoneChange(e.target.value)
+                                : setContact((c) => ({ ...c, [f.key]: e.target.value }))
+                            }
                             className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors"
                             placeholder={f.placeholder}
                           />
