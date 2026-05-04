@@ -1573,6 +1573,359 @@ const SettingsPanel = () => {
           </button>
         </div>
       </div>
+
+      <HomepageEditor />
+    </div>
+  );
+};
+
+// ===================================================================
+// HOMEPAGE EDITOR — тексты и изображения главной страницы
+// ===================================================================
+const emptyHomepage = {
+  hero: { marqueeText: "", videoUrl: "" },
+  popular: {
+    items: [
+      { title: "", tagline: "", description: "", cta: "", image: "" },
+      { title: "", tagline: "", description: "", cta: "", image: "" },
+    ],
+  },
+  categories: {
+    title: "",
+    items: Array.from({ length: 6 }, () => ({ name: "", image: "" })),
+  },
+  advantages: {
+    title: "",
+    items: Array.from({ length: 4 }, () => ({ title: "", desc: "" })),
+  },
+  contact: { title: "", subtitle: "", consent: "", submitLabel: "" },
+  footer: { tagline: "", phone: "", email: "", copyright: "" },
+};
+
+const HomepageEditor = () => {
+  const [data, setData] = useState<any>(emptyHomepage);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    adminCall("settings.get", { key: "homepage" })
+      .then((r) => {
+        const v = r.data ?? {};
+        // Глубокий мерж с пустым шаблоном, чтобы все поля присутствовали
+        setData({
+          hero: { ...emptyHomepage.hero, ...(v.hero ?? {}) },
+          popular: {
+            items: emptyHomepage.popular.items.map((d, i) => ({
+              ...d,
+              ...(v.popular?.items?.[i] ?? {}),
+            })),
+          },
+          categories: {
+            title: v.categories?.title ?? "",
+            items: emptyHomepage.categories.items.map((d, i) => ({
+              ...d,
+              ...(v.categories?.items?.[i] ?? {}),
+            })),
+          },
+          advantages: {
+            title: v.advantages?.title ?? "",
+            items: emptyHomepage.advantages.items.map((d, i) => ({
+              ...d,
+              ...(v.advantages?.items?.[i] ?? {}),
+            })),
+          },
+          contact: { ...emptyHomepage.contact, ...(v.contact ?? {}) },
+          footer: { ...emptyHomepage.footer, ...(v.footer ?? {}) },
+        });
+        setLoading(false);
+      })
+      .catch((e) => {
+        toast.error(e.message);
+        setLoading(false);
+      });
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await adminCall("settings.set", { key: "homepage", value: data });
+      toast.success("Главная сохранена. Обновите вкладку сайта.");
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+    setSaving(false);
+  };
+
+  const uploadImage = async (file: File): Promise<string> => {
+    return await adminUploadFile("site-images", file, { prefix: "homepage/" });
+  };
+
+  const TextField = ({
+    label,
+    value,
+    onChange,
+    placeholder,
+    multi,
+  }: {
+    label: string;
+    value: string;
+    onChange: (v: string) => void;
+    placeholder?: string;
+    multi?: boolean;
+  }) => (
+    <div>
+      <label className={ui.label}>{label}</label>
+      {multi ? (
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={ui.textarea}
+          placeholder={placeholder}
+        />
+      ) : (
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={ui.input}
+          placeholder={placeholder}
+        />
+      )}
+    </div>
+  );
+
+  const ImageField = ({
+    label,
+    value,
+    onChange,
+    accept = "image/*",
+  }: {
+    label: string;
+    value: string;
+    onChange: (url: string) => void;
+    accept?: string;
+  }) => {
+    const [busy, setBusy] = useState(false);
+    return (
+      <div>
+        <label className={ui.label}>{label}</label>
+        <div className="flex items-start gap-3">
+          {value ? (
+            accept.startsWith("video") ? (
+              <video src={value} className="w-24 h-24 object-cover rounded bg-black" muted />
+            ) : (
+              <img src={value} alt="" className="w-24 h-24 object-cover rounded bg-[#1a1a1a]" />
+            )
+          ) : (
+            <div className="w-24 h-24 rounded bg-[#1a1a1a] flex items-center justify-center text-[#555]">
+              <ImageIcon size={28} />
+            </div>
+          )}
+          <div className="flex-1 grid gap-2">
+            <input
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              className={ui.input}
+              placeholder="URL или загрузите файл ниже"
+            />
+            <label className={`${ui.btn} ${ui.btnSecondary} cursor-pointer self-start ${busy ? "opacity-50" : ""}`}>
+              <Upload size={16} /> {busy ? "Загрузка…" : "Загрузить файл"}
+              <input
+                type="file"
+                accept={accept}
+                hidden
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  setBusy(true);
+                  try {
+                    const url = await uploadImage(f);
+                    onChange(url);
+                  } catch (err: any) {
+                    toast.error(err?.message ?? "Не удалось загрузить");
+                  }
+                  setBusy(false);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            {value && (
+              <button
+                onClick={() => onChange("")}
+                className={`${ui.btn} ${ui.btnDanger} self-start`}
+                type="button"
+              >
+                <X size={16} /> Очистить (вернуть значение по умолчанию)
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  if (loading) return <p className="text-[#888]">Загрузка главной…</p>;
+
+  const setHero = (k: string, v: string) =>
+    setData({ ...data, hero: { ...data.hero, [k]: v } });
+  const setContact = (k: string, v: string) =>
+    setData({ ...data, contact: { ...data.contact, [k]: v } });
+  const setFooter = (k: string, v: string) =>
+    setData({ ...data, footer: { ...data.footer, [k]: v } });
+  const setPopularItem = (i: number, k: string, v: string) => {
+    const items = [...data.popular.items];
+    items[i] = { ...items[i], [k]: v };
+    setData({ ...data, popular: { items } });
+  };
+  const setCategoriesItem = (i: number, k: string, v: string) => {
+    const items = [...data.categories.items];
+    items[i] = { ...items[i], [k]: v };
+    setData({ ...data, categories: { ...data.categories, items } });
+  };
+  const setAdvantagesItem = (i: number, k: string, v: string) => {
+    const items = [...data.advantages.items];
+    items[i] = { ...items[i], [k]: v };
+    setData({ ...data, advantages: { ...data.advantages, items } });
+  };
+
+  const defaultPopular = ["Панно", "Зеркала"];
+  const defaultCategories = [
+    "Мебель",
+    "Кухонные принадлежности",
+    "Системы хранения",
+    "Предметы интерьера",
+    "Заготовки для творчества",
+    "Двери",
+  ];
+  const defaultAdvantages = [
+    "Ручная работа",
+    "Натуральные материалы",
+    "Индивидуальный подход",
+    "Быстрая доставка",
+  ];
+
+  return (
+    <div className={ui.card}>
+      <h2 className={`${ui.h2} mb-2`}>Главная страница</h2>
+      <p className="text-[14px] text-[#888] mb-6">
+        Изменяйте тексты и изображения главной. Пустое поле = значение по умолчанию.
+      </p>
+
+      <div className="grid gap-6">
+        <details open className="border border-[#3a3a3a] rounded-lg p-4">
+          <summary className={`${ui.h3} cursor-pointer`}>Hero (главный экран)</summary>
+          <div className="grid gap-4 mt-4">
+            <TextField
+              label="Бегущая строка"
+              value={data.hero.marqueeText}
+              onChange={(v) => setHero("marqueeText", v)}
+              placeholder="FAKTURA — изделия из натурального дерева…"
+              multi
+            />
+            <ImageField
+              label="Фоновое видео (mp4)"
+              value={data.hero.videoUrl}
+              onChange={(v) => setHero("videoUrl", v)}
+              accept="video/mp4,video/*"
+            />
+          </div>
+        </details>
+
+        <details className="border border-[#3a3a3a] rounded-lg p-4">
+          <summary className={`${ui.h3} cursor-pointer`}>Слайдер «Популярное»</summary>
+          <div className="grid gap-6 mt-4">
+            {data.popular.items.map((it: any, i: number) => (
+              <div key={i} className="border border-[#3a3a3a] rounded-lg p-4 grid gap-3">
+                <p className="text-[#888] text-sm">
+                  Слайд {i + 1} (по умолчанию: <b>{defaultPopular[i]}</b>)
+                </p>
+                <div className="grid md:grid-cols-2 gap-3">
+                  <TextField label="Заголовок" value={it.title} onChange={(v) => setPopularItem(i, "title", v)} />
+                  <TextField label="Подзаголовок (tagline)" value={it.tagline} onChange={(v) => setPopularItem(i, "tagline", v)} />
+                </div>
+                <TextField label="Описание" value={it.description} onChange={(v) => setPopularItem(i, "description", v)} multi />
+                <TextField label="Текст кнопки" value={it.cta} onChange={(v) => setPopularItem(i, "cta", v)} />
+                <ImageField label="Изображение" value={it.image} onChange={(v) => setPopularItem(i, "image", v)} />
+              </div>
+            ))}
+          </div>
+        </details>
+
+        <details className="border border-[#3a3a3a] rounded-lg p-4">
+          <summary className={`${ui.h3} cursor-pointer`}>Категории</summary>
+          <div className="grid gap-4 mt-4">
+            <TextField
+              label="Заголовок секции"
+              value={data.categories.title}
+              onChange={(v) => setData({ ...data, categories: { ...data.categories, title: v } })}
+              placeholder="Категории каталога"
+            />
+            <div className="grid md:grid-cols-2 gap-4">
+              {data.categories.items.map((it: any, i: number) => (
+                <div key={i} className="border border-[#3a3a3a] rounded-lg p-4 grid gap-3">
+                  <p className="text-[#888] text-sm">
+                    Категория {i + 1} (по умолчанию: <b>{defaultCategories[i]}</b>)
+                  </p>
+                  <TextField label="Название" value={it.name} onChange={(v) => setCategoriesItem(i, "name", v)} />
+                  <ImageField label="Изображение" value={it.image} onChange={(v) => setCategoriesItem(i, "image", v)} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </details>
+
+        <details className="border border-[#3a3a3a] rounded-lg p-4">
+          <summary className={`${ui.h3} cursor-pointer`}>Преимущества</summary>
+          <div className="grid gap-4 mt-4">
+            <TextField
+              label="Заголовок секции"
+              value={data.advantages.title}
+              onChange={(v) => setData({ ...data, advantages: { ...data.advantages, title: v } })}
+              placeholder="Почему выбирают нас"
+            />
+            <div className="grid md:grid-cols-2 gap-4">
+              {data.advantages.items.map((it: any, i: number) => (
+                <div key={i} className="border border-[#3a3a3a] rounded-lg p-4 grid gap-3">
+                  <p className="text-[#888] text-sm">
+                    Пункт {i + 1} (по умолчанию: <b>{defaultAdvantages[i]}</b>)
+                  </p>
+                  <TextField label="Заголовок" value={it.title} onChange={(v) => setAdvantagesItem(i, "title", v)} />
+                  <TextField label="Описание" value={it.desc} onChange={(v) => setAdvantagesItem(i, "desc", v)} multi />
+                </div>
+              ))}
+            </div>
+          </div>
+        </details>
+
+        <details className="border border-[#3a3a3a] rounded-lg p-4">
+          <summary className={`${ui.h3} cursor-pointer`}>Форма «Оставить заявку»</summary>
+          <div className="grid md:grid-cols-2 gap-4 mt-4">
+            <TextField label="Заголовок" value={data.contact.title} onChange={(v) => setContact("title", v)} placeholder="Оставить заявку" />
+            <TextField label="Подзаголовок" value={data.contact.subtitle} onChange={(v) => setContact("subtitle", v)} multi />
+            <TextField label="Текст кнопки" value={data.contact.submitLabel} onChange={(v) => setContact("submitLabel", v)} placeholder="Отправить заявку" />
+            <TextField label="Строка о согласии" value={data.contact.consent} onChange={(v) => setContact("consent", v)} multi />
+          </div>
+        </details>
+
+        <details className="border border-[#3a3a3a] rounded-lg p-4">
+          <summary className={`${ui.h3} cursor-pointer`}>Подвал (футер)</summary>
+          <div className="grid md:grid-cols-2 gap-4 mt-4">
+            <TextField label="Описание под логотипом" value={data.footer.tagline} onChange={(v) => setFooter("tagline", v)} />
+            <TextField label="Телефон" value={data.footer.phone} onChange={(v) => setFooter("phone", v)} />
+            <TextField label="Email" value={data.footer.email} onChange={(v) => setFooter("email", v)} />
+            <TextField label="Копирайт" value={data.footer.copyright} onChange={(v) => setFooter("copyright", v)} />
+          </div>
+        </details>
+      </div>
+
+      <div className="flex gap-3 mt-6 pt-6 border-t border-[#3a3a3a]">
+        <button
+          onClick={save}
+          disabled={saving}
+          className={`${ui.btn} ${ui.btnPrimary} ${saving ? "opacity-50" : ""}`}
+        >
+          <Check size={18} /> {saving ? "Сохранение…" : "Сохранить главную"}
+        </button>
+      </div>
     </div>
   );
 };
