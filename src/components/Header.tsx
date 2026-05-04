@@ -24,7 +24,7 @@ const categories = [
   { name: "Двери", slug: "doors", image: categoryDoors },
 ];
 
-const navItems = [
+const defaultNavItems = [
   { name: "Главная", url: "/" },
   { name: "Каталог", url: "/catalog" },
   { name: "Услуги", url: "/services" },
@@ -38,6 +38,7 @@ const Header = () => {
   const location = useLocation();
   const isMobile = useIsMobile();
   const { totalItems } = useCart();
+  const navItems = useNavMenu(defaultNavItems);
   const [activeTab, setActiveTab] = useState(
     navItems.find((item) => item.url === location.pathname)?.name || navItems[0].name
   );
