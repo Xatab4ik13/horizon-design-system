@@ -22,7 +22,7 @@ const HeroSection = () => {
         playsInline
         preload="auto"
         className="absolute inset-0 w-full h-full object-cover"
-        src={heroVideo}
+        src={videoSrc}
       />
       <div className="absolute inset-0 bg-black/30" />
       <div className="absolute inset-0 flex items-center justify-center">
