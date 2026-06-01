@@ -34,6 +34,27 @@ function safeEqual(a: string, b: string) {
   return r === 0;
 }
 
+async function sha256Hex(s: string) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+// Получить текущий пароль: сначала из БД (app_settings.admin_password_hash), иначе env.
+// Возвращает { hash, source } где source = 'db' | 'env'.
+async function getActivePasswordHash(): Promise<{ hash: string; source: "db" | "env" }> {
+  const { data } = await admin.from("app_settings").select("value").eq("key", "admin_password_hash").maybeSingle();
+  const v = (data?.value as { hash?: string } | null) ?? null;
+  if (v?.hash) return { hash: v.hash, source: "db" };
+  return { hash: await sha256Hex(ADMIN_PASSWORD), source: "env" };
+}
+
+async function verifyPassword(password: string): Promise<boolean> {
+  if (!password) return false;
+  const { hash } = await getActivePasswordHash();
+  const incoming = await sha256Hex(password);
+  return safeEqual(incoming, hash);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -50,12 +71,20 @@ Deno.serve(async (req) => {
 
     // Логин — отдельная ветка без авторизации внутри
     if (action === "login") {
-      const ok = typeof password === "string" && safeEqual(password, ADMIN_PASSWORD);
+      const ok = await verifyPassword(String(password));
       return json({ ok }, ok ? 200 : 401);
     }
 
+    // Сброс пароля по env (для случая «забыл пароль»). Принимает env-пароль.
+    if (action === "auth.resetWithEnv") {
+      const envOk = typeof password === "string" && safeEqual(password, ADMIN_PASSWORD);
+      if (!envOk) return json({ error: "Неверный мастер-пароль (из настроек сервера)" }, 401);
+      await admin.from("app_settings").delete().eq("key", "admin_password_hash");
+      return json({ ok: true });
+    }
+
     // Все остальные действия — требуют пароль
-    if (!safeEqual(String(password), ADMIN_PASSWORD)) {
+    if (!(await verifyPassword(String(password)))) {
       return json({ error: "Unauthorized" }, 401);
     }
 
