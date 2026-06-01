@@ -69,16 +69,28 @@ export async function adminCall<T = any>(
 }
 
 export async function adminLogin(password: string): Promise<boolean> {
-  try {
-    const res = await adminCall<{ ok: boolean }>("login", undefined, password);
-    if (res?.ok) {
-      adminAuth.set(password);
-      return true;
+  // 2 захода: на холодный старт edge функции первый вызов часто отваливается
+  // сетевой ошибкой даже после внутренних ретраев adminCall.
+  let lastErr: any = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await adminCall<{ ok: boolean }>("login", undefined, password);
+      if (res?.ok) {
+        adminAuth.set(password);
+        return true;
+      }
+      return false;
+    } catch (e: any) {
+      lastErr = e;
+      const msg = String(e?.message ?? "");
+      const isNetwork = /Failed to send|Failed to fetch|NetworkError|timeout|aborted/i.test(msg);
+      // Если 4xx (неверный пароль) — сразу false
+      if (!isNetwork) return false;
+      if (attempt === 0) await new Promise((r) => setTimeout(r, 600));
     }
-    return false;
-  } catch {
-    return false;
   }
+  // Все попытки сетевые — пробрасываем, чтобы UI показал реальную причину
+  throw lastErr ?? new Error("Сеть недоступна");
 }
 
 /**
