@@ -1612,6 +1612,94 @@ const SettingsPanel = () => {
       <HomepageEditor />
       <ServicesDocsEditor />
       <AboutPageEditor />
+      <PasswordPanel />
+    </div>
+  );
+};
+
+// ===================================================================
+// PASSWORD PANEL — смена и сброс пароля админа
+// ===================================================================
+const PasswordPanel = () => {
+  const [cur, setCur] = useState("");
+  const [next, setNext] = useState("");
+  const [next2, setNext2] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [resetPwd, setResetPwd] = useState("");
+  const [resetting, setResetting] = useState(false);
+
+  const change = async () => {
+    if (next.length < 6) { toast.error("Новый пароль — минимум 6 символов"); return; }
+    if (next !== next2) { toast.error("Пароли не совпадают"); return; }
+    setSaving(true);
+    try {
+      await adminCall("auth.changePassword", { currentPassword: cur, newPassword: next });
+      adminAuth.set(next);
+      toast.success("Пароль изменён");
+      setCur(""); setNext(""); setNext2("");
+    } catch (e: any) {
+      toast.error(e.message ?? "Не удалось сменить пароль");
+    }
+    setSaving(false);
+  };
+
+  const reset = async () => {
+    if (!resetPwd) { toast.error("Введите мастер-пароль из настроек сервера"); return; }
+    if (!confirm("Сбросить пароль к серверному (ADMIN_PASSWORD)? После этого войдите им.")) return;
+    setResetting(true);
+    try {
+      // отдельный вызов с master-паролем (не текущим из sessionStorage)
+      await adminCall("auth.resetWithEnv", undefined, resetPwd);
+      adminAuth.clear();
+      toast.success("Пароль сброшен. Войдите серверным паролем.");
+      setTimeout(() => window.location.reload(), 800);
+    } catch (e: any) {
+      toast.error(e.message ?? "Не удалось сбросить");
+    }
+    setResetting(false);
+  };
+
+  return (
+    <div className={ui.card}>
+      <h2 className={`${ui.h2} mb-2`}>Пароль администратора</h2>
+      <p className="text-[14px] text-[#888] mb-6">
+        Смените пароль или сбросьте его к серверному (если забыли).
+      </p>
+
+      <div className="grid md:grid-cols-3 gap-3 mb-4">
+        <div>
+          <label className={ui.label}>Текущий пароль</label>
+          <input type="password" value={cur} onChange={(e) => setCur(e.target.value)} className={ui.input} />
+        </div>
+        <div>
+          <label className={ui.label}>Новый пароль</label>
+          <input type="password" value={next} onChange={(e) => setNext(e.target.value)} className={ui.input} />
+        </div>
+        <div>
+          <label className={ui.label}>Повторите новый</label>
+          <input type="password" value={next2} onChange={(e) => setNext2(e.target.value)} className={ui.input} />
+        </div>
+      </div>
+      <button onClick={change} disabled={saving || !cur || !next} className={`${ui.btn} ${ui.btnPrimary} ${saving || !cur || !next ? "opacity-50" : ""}`}>
+        <Check size={18} /> {saving ? "Сохранение…" : "Сменить пароль"}
+      </button>
+
+      <div className="mt-8 pt-6 border-t border-[#3a3a3a]">
+        <h3 className={`${ui.h3} mb-2`}>Забыли пароль? Сбросьте его</h3>
+        <p className="text-[13px] text-[#888] mb-3">
+          Введите мастер-пароль <code className="text-[#aaa]">ADMIN_PASSWORD</code> из настроек сервера —
+          текущий пароль будет сброшен, после чего войдите им и при желании смените на новый.
+        </p>
+        <div className="flex gap-3 flex-wrap items-end">
+          <div className="flex-1 min-w-[220px]">
+            <label className={ui.label}>Мастер-пароль (серверный)</label>
+            <input type="password" value={resetPwd} onChange={(e) => setResetPwd(e.target.value)} className={ui.input} />
+          </div>
+          <button onClick={reset} disabled={resetting || !resetPwd} className={`${ui.btn} ${ui.btnDanger} ${resetting || !resetPwd ? "opacity-50" : ""}`}>
+            {resetting ? "Сброс…" : "Сбросить пароль"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
