@@ -127,7 +127,8 @@ const AuthPage = () => {
                     required
                     type="tel"
                     value={form.phone}
-                    onChange={update("phone")}
+                    onFocus={(e) => { if (!e.target.value) setForm((f) => ({ ...f, phone: "+7 " })); }}
+                    onChange={(e) => setForm((f) => ({ ...f, phone: normalizePhone(e.target.value) }))}
                     className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground focus:border-primary focus:outline-none transition-colors"
                     placeholder="+7 (900) 123-45-67"
                   />
