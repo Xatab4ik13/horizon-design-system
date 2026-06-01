@@ -151,7 +151,7 @@ const BlogPage = () => {
                       </Link>
                     </div>
                   </div>
-                </motion.article>
+                </article>
               ))}
             </div>
           )}
