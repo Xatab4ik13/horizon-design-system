@@ -77,11 +77,11 @@ const Header = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 pt-10">
+    <header className="fixed top-0 left-0 right-0 z-50 pt-6">
       <div className="container mx-auto px-4 flex items-center justify-center">
         {/* Desktop navbar */}
         {!isMobile ? (
-          <div className="flex items-center gap-4 bg-background/3 border border-border/30 backdrop-blur-lg py-3.5 px-3 rounded-full shadow-lg shadow-black/20 relative">
+          <div className="flex items-center gap-4 bg-black/85 border border-white/10 backdrop-blur-xl py-3.5 px-3 rounded-full shadow-lg shadow-black/40 relative">
             <div className="pl-3 pr-2 border-r border-border/40 mr-1">
               <Logo size="sm" />
             </div>
@@ -97,8 +97,8 @@ const Header = () => {
                     onClick={() => setActiveTab(item.name)}
                     className={cn(
                       "relative cursor-pointer text-base font-medium px-6 py-2.5 rounded-full transition-colors",
-                      "text-foreground/80 hover:text-primary",
-                      isActive && "bg-foreground/[0.04] text-primary"
+                      "text-white/90 hover:text-primary",
+                      isActive && "bg-white/5 text-primary"
                     )}
                   >
                     <span>{item.name}</span>
@@ -173,14 +173,14 @@ const Header = () => {
             </nav>
 
             {/* Action icons */}
-            <div className="flex items-center gap-1.5 border-l border-border/40 pl-3 ml-2">
-              <button onClick={() => setSearchOpen(true)} className="p-2.5 rounded-full text-foreground/80 hover:text-primary hover:bg-muted transition-colors" aria-label="Поиск">
+            <div className="flex items-center gap-1.5 border-l border-white/10 pl-3 ml-2">
+              <button onClick={() => setSearchOpen(true)} className="p-2.5 rounded-full text-white/90 hover:text-primary hover:bg-white/5 transition-colors" aria-label="Поиск">
                 <Search className="h-5 w-5" />
               </button>
-              <Link to="/account" className="p-2.5 rounded-full text-foreground/80 hover:text-primary hover:bg-muted transition-colors" aria-label="Личный кабинет">
+              <Link to="/account" className="p-2.5 rounded-full text-white/90 hover:text-primary hover:bg-white/5 transition-colors" aria-label="Личный кабинет">
                 <User className="h-5 w-5" />
               </Link>
-              <Link to="/cart" className="relative p-2.5 rounded-full text-foreground/80 hover:text-primary hover:bg-muted transition-colors" aria-label="Корзина">
+              <Link to="/cart" className="relative p-2.5 rounded-full text-white/90 hover:text-primary hover:bg-white/5 transition-colors" aria-label="Корзина">
                 <ShoppingCart className="h-5 w-5" />
                 {totalItems > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold">
@@ -192,11 +192,11 @@ const Header = () => {
           </div>
         ) : (
           /* Mobile / Tablet navbar */
-          <div className="flex items-center justify-between w-full bg-background/5 border border-border/40 backdrop-blur-lg py-2.5 px-4 rounded-full shadow-lg shadow-black/20">
+          <div className="flex items-center justify-between w-full bg-black/85 border border-white/10 backdrop-blur-xl py-2.5 px-4 rounded-full shadow-lg shadow-black/40">
             <Logo size="sm" />
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-full text-foreground/80 hover:text-primary transition-colors"
+              className="p-2 rounded-full text-white/90 hover:text-primary transition-colors"
               aria-label="Меню"
             >
               <Menu className="h-5 w-5" />
