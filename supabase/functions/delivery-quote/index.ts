@@ -86,19 +86,64 @@ async function quoteYandex(sender: Record<string, any>, city: string, address: s
 }
 
 // ===== ПЭК =====
+// Документация: https://kabinet.pecom.ru/api/v1/
+// Сначала ищем receiverCityId по названию города, затем считаем стоимость.
+async function getPekCityId(cityName: string): Promise<number | null> {
+  try {
+    const auth = btoa(`${PEK_LOGIN}:${PEK_KEY}`);
+    const r = await fetch("https://kabinet.pecom.ru/api/v1/branches/branchesfilter", {
+      method: "POST",
+      headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ filter: cityName }),
+    });
+    if (!r.ok) return null;
+    const j = await r.json();
+    // Ответ: { branches: [{ id, title, ... }] }
+    const branches: any[] = j?.branches ?? j?.items ?? [];
+    if (!branches.length) return null;
+    const exact = branches.find(
+      (b) => String(b.title ?? b.name ?? "").toLowerCase() === cityName.toLowerCase(),
+    );
+    const pick = exact ?? branches[0];
+    const id = Number(pick?.id ?? pick?.branchId);
+    return Number.isFinite(id) && id > 0 ? id : null;
+  } catch {
+    return null;
+  }
+}
+
 async function quotePek(sender: Record<string, any>, city: string, items: Item[]) {
   if (!PEK_LOGIN || !PEK_KEY) return { ok: false, error: "ПЭК ключи не настроены" };
   try {
-    const totalWeight = items.reduce((s, i) => s + (i.weight_kg ?? 1) * i.quantity, 0);
-    const totalVolume = items.reduce((s, i) => {
-      const v = ((i.width_cm ?? 30) * (i.height_cm ?? 30) * (i.depth_cm ?? 30)) / 1_000_000;
-      return s + v * i.quantity;
-    }, 0);
+    const senderCityId = Number(sender.pek_city_id) || null;
+    if (!senderCityId) {
+      return { ok: false, error: "Не указан город отправителя ПЭК в настройках" };
+    }
+    const receiverCityId = await getPekCityId(city);
+    if (!receiverCityId) {
+      return { ok: false, error: `ПЭК: город «${city}» не найден` };
+    }
+    const cargos = items.flatMap((i) =>
+      Array.from({ length: i.quantity }, () => ({
+        length: Math.max(0.01, (i.depth_cm ?? 30) / 100),
+        width: Math.max(0.01, (i.width_cm ?? 30) / 100),
+        height: Math.max(0.01, (i.height_cm ?? 30) / 100),
+        volume:
+          Math.max(0.001, ((i.width_cm ?? 30) * (i.height_cm ?? 30) * (i.depth_cm ?? 30)) / 1_000_000),
+        weight: Math.max(0.1, i.weight_kg ?? 1),
+        sealingPositionsCount: 1,
+        overSize: false,
+      })),
+    );
     const body = {
-      senderCityId: sender.pek_city_id || "",
-      receiverCityName: city,
-      cargo: { weight: Math.max(0.5, totalWeight), volume: Math.max(0.01, totalVolume) },
-      transferType: "auto",
+      senderCityId,
+      receiverCityId,
+      isOpenCarSender: false,
+      isOpenCarReceiver: false,
+      senderDistanceType: 1,
+      receiverDistanceType: 1,
+      isHigherThirdFloor: false,
+      Cargos: cargos,
     };
     const auth = btoa(`${PEK_LOGIN}:${PEK_KEY}`);
     const r = await fetch("https://kabinet.pecom.ru/api/v1/calculator/calculateprice", {
@@ -109,8 +154,13 @@ async function quotePek(sender: Record<string, any>, city: string, items: Item[]
     const text = await r.text();
     if (!r.ok) return { ok: false, error: `ПЭК ${r.status}: ${text.slice(0, 200)}` };
     const j = JSON.parse(text);
-    const cost = Number(j?.total ?? j?.transfer ?? j?.price ?? j?.totalSum ?? 0) || 0;
-    const days = j?.periodMin && j?.periodMax ? `${j.periodMin}–${j.periodMax} дней` : "3–7 дней";
+    // Ответ обычно: { transfers: { auto: { ndsCost, costWithNds, periodMin, periodMax } } }
+    const auto = j?.transfers?.auto ?? j?.auto ?? {};
+    const cost =
+      Number(auto.costWithNds ?? auto.cost ?? j?.total ?? j?.totalSum ?? j?.price ?? 0) || 0;
+    const dayMin = auto.periodMin ?? j?.periodMin;
+    const dayMax = auto.periodMax ?? j?.periodMax;
+    const days = dayMin && dayMax ? `${dayMin}–${dayMax} дней` : "3–7 дней";
     return {
       ok: cost > 0,
       cost: Math.round(cost),
@@ -126,7 +176,8 @@ async function quotePek(sender: Record<string, any>, city: string, items: Item[]
 // ===== СДЭК =====
 // Документация: https://api-docs.cdek.ru/63345430.html
 // 1) OAuth2 client_credentials → токен
-// 2) /calculator/tariff (тариф 137 — «склад–дверь», самый частый для ИМ)
+// 2) /location/cities → получить code города (адрес для тарифа недостаточно надёжен)
+// 3) /calculator/tariff (тариф 137 — «склад–дверь», самый частый для ИМ)
 async function getCdekToken() {
   const r = await fetch("https://api.cdek.ru/v2/oauth/token?parameters", {
     method: "POST",
@@ -144,12 +195,42 @@ async function getCdekToken() {
   return j.access_token as string;
 }
 
+async function getCdekCityCode(token: string, cityName: string): Promise<number | null> {
+  try {
+    const url = new URL("https://api.cdek.ru/v2/location/cities");
+    url.searchParams.set("city", cityName);
+    url.searchParams.set("country_codes", "RU");
+    url.searchParams.set("size", "10");
+    const r = await fetch(url.toString(), {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!r.ok) return null;
+    const j = await r.json();
+    if (!Array.isArray(j) || j.length === 0) return null;
+    const exact = j.find(
+      (c: any) => String(c.city ?? "").toLowerCase() === cityName.toLowerCase(),
+    );
+    const pick = exact ?? j[0];
+    const code = Number(pick?.code);
+    return Number.isFinite(code) && code > 0 ? code : null;
+  } catch {
+    return null;
+  }
+}
+
 async function quoteCdek(sender: Record<string, any>, city: string, items: Item[]) {
   if (!CDEK_ACCOUNT || !CDEK_PASSWORD) {
     return { ok: false, error: "СДЭК ключи не настроены" };
   }
   try {
     const token = await getCdekToken();
+    const fromCode =
+      Number(sender.cdek_city_code) ||
+      (await getCdekCityCode(token, String(sender.city ?? "Москва")));
+    const toCode = await getCdekCityCode(token, city);
+    if (!fromCode) return { ok: false, error: "Не определён город отправителя СДЭК" };
+    if (!toCode) return { ok: false, error: `СДЭК: город «${city}» не найден` };
+
     const packages = items.flatMap((i) =>
       Array.from({ length: i.quantity }, () => ({
         weight: Math.max(100, Math.round((i.weight_kg ?? 1) * 1000)), // граммы
@@ -160,8 +241,8 @@ async function quoteCdek(sender: Record<string, any>, city: string, items: Item[
     );
     const body = {
       tariff_code: 137, // склад-дверь
-      from_location: { address: sender.address || sender.city || "Москва" },
-      to_location: { address: city },
+      from_location: { code: fromCode },
+      to_location: { code: toCode },
       packages,
     };
     const r = await fetch("https://api.cdek.ru/v2/calculator/tariff", {
