@@ -111,14 +111,10 @@ const BlogPage = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {posts.map((post, i) => (
-                <motion.article
+              {posts.map((post) => (
+                <article
                   key={post.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: Math.min(i, 5) * 0.06 }}
-                  className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl overflow-hidden hover:border-primary/30 transition-all duration-300 group flex flex-col"
+                  className="bg-card/60 border border-border rounded-2xl overflow-hidden hover:border-primary/30 transition-colors duration-300 group flex flex-col"
                 >
                   {post.cover_image && (
                     <Link to={`/blog/${post.slug}`} className="block aspect-[16/9] overflow-hidden">
@@ -155,7 +151,7 @@ const BlogPage = () => {
                       </Link>
                     </div>
                   </div>
-                </motion.article>
+                </article>
               ))}
             </div>
           )}

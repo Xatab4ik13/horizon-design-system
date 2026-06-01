@@ -61,13 +61,10 @@ const CartPage = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Items */}
               <div className="lg:col-span-2 space-y-4">
-                {items.map((item, i) => (
-                  <motion.div
+                {items.map((item) => (
+                  <div
                     key={item.productId}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-4 md:p-6 flex gap-4 md:gap-6"
+                    className="bg-card/60 border border-border rounded-2xl p-4 md:p-6 flex gap-4 md:gap-6"
                   >
                     <Link to={`/product/${item.productId}`} className="shrink-0">
                       <img
@@ -124,13 +121,13 @@ const CartPage = () => {
                         </button>
                       </div>
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
 
               {/* Summary */}
               <div>
-                <div className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-6 sticky top-36">
+                <div className="bg-card/60 border border-border rounded-2xl p-6 sticky top-36">
                   <h3 className="text-lg font-bold text-foreground mb-4">Итого</h3>
 
                   {(() => {
