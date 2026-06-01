@@ -1946,20 +1946,18 @@ const HomepageEditor = () => {
       .then((r) => {
         const v = r.data ?? {};
         // Глубокий мерж с пустым шаблоном, чтобы все поля присутствовали
+        const popularItems = Array.isArray(v.popular?.items) && v.popular.items.length > 0
+          ? v.popular.items.map((it: any, i: number) => ({ ...(emptyHomepage.popular.items[i] ?? {}), ...it }))
+          : emptyHomepage.popular.items.map((d) => ({ ...d }));
+        const categoryItems = Array.isArray(v.categories?.items) && v.categories.items.length > 0
+          ? v.categories.items.map((it: any, i: number) => ({ ...(emptyHomepage.categories.items[i] ?? {}), ...it }))
+          : emptyHomepage.categories.items.map((d) => ({ ...d }));
         setData({
           hero: { ...emptyHomepage.hero, ...(v.hero ?? {}) },
-          popular: {
-            items: emptyHomepage.popular.items.map((d, i) => ({
-              ...d,
-              ...(v.popular?.items?.[i] ?? {}),
-            })),
-          },
+          popular: { items: popularItems },
           categories: {
             title: v.categories?.title ?? "",
-            items: emptyHomepage.categories.items.map((d, i) => ({
-              ...d,
-              ...(v.categories?.items?.[i] ?? {}),
-            })),
+            items: categoryItems,
           },
           advantages: {
             title: v.advantages?.title ?? "",
@@ -2009,9 +2007,25 @@ const HomepageEditor = () => {
     items[i] = { ...items[i], [k]: v };
     setData({ ...data, popular: { items } });
   };
+  const addPopularItem = () => {
+    const items = [...data.popular.items, { title: "", tagline: "", description: "", cta: "Выбрать", image: "", enabled: true }];
+    setData({ ...data, popular: { items } });
+  };
+  const removePopularItem = (i: number) => {
+    const items = data.popular.items.filter((_: any, idx: number) => idx !== i);
+    setData({ ...data, popular: { items } });
+  };
   const setCategoriesItem = (i: number, k: string, v: string) => {
     const items = [...data.categories.items];
     items[i] = { ...items[i], [k]: v };
+    setData({ ...data, categories: { ...data.categories, items } });
+  };
+  const addCategoryItem = () => {
+    const items = [...data.categories.items, { name: "", image: "", enabled: true }];
+    setData({ ...data, categories: { ...data.categories, items } });
+  };
+  const removeCategoryItem = (i: number) => {
+    const items = data.categories.items.filter((_: any, idx: number) => idx !== i);
     setData({ ...data, categories: { ...data.categories, items } });
   };
   const setAdvantagesItem = (i: number, k: string, v: string) => {
@@ -2091,7 +2105,12 @@ const HomepageEditor = () => {
                   <p className="text-[#888] text-sm">
                     Слайд {i + 1}{defaultPopular[i] ? <> (по умолчанию: <b>{defaultPopular[i]}</b>)</> : null}
                   </p>
-                  <EnabledToggle checked={it.enabled !== false} onChange={(v) => setPopularItem(i, "enabled", v as any)} />
+                  <div className="flex items-center gap-3">
+                    <EnabledToggle checked={it.enabled !== false} onChange={(v) => setPopularItem(i, "enabled", v as any)} />
+                    <button type="button" onClick={() => removePopularItem(i)} className={`${ui.btn} ${ui.btnDanger}`}>
+                      <X size={14} /> Удалить
+                    </button>
+                  </div>
                 </div>
                 <div className="grid md:grid-cols-2 gap-3">
                   <TextField label="Заголовок" value={it.title} onChange={(v) => setPopularItem(i, "title", v)} />
@@ -2102,6 +2121,9 @@ const HomepageEditor = () => {
                 <ImageField label="Изображение" value={it.image} onChange={(v) => setPopularItem(i, "image", v)} upload={uploadImage} />
               </div>
             ))}
+            <button type="button" onClick={addPopularItem} className={`${ui.btn} ${ui.btnSecondary} w-fit`}>
+              + Добавить слайд
+            </button>
           </div>
         </details>
 
@@ -2121,13 +2143,21 @@ const HomepageEditor = () => {
                     <p className="text-[#888] text-sm">
                       Категория {i + 1}{defaultCategories[i] ? <> (по умолчанию: <b>{defaultCategories[i]}</b>)</> : null}
                     </p>
-                    <EnabledToggle checked={it.enabled !== false} onChange={(v) => setCategoriesItem(i, "enabled", v as any)} />
+                    <div className="flex items-center gap-3">
+                      <EnabledToggle checked={it.enabled !== false} onChange={(v) => setCategoriesItem(i, "enabled", v as any)} />
+                      <button type="button" onClick={() => removeCategoryItem(i)} className={`${ui.btn} ${ui.btnDanger}`}>
+                        <X size={14} /> Удалить
+                      </button>
+                    </div>
                   </div>
                   <TextField label="Название" value={it.name} onChange={(v) => setCategoriesItem(i, "name", v)} />
                   <ImageField label="Изображение" value={it.image} onChange={(v) => setCategoriesItem(i, "image", v)} upload={uploadImage} />
                 </div>
               ))}
             </div>
+            <button type="button" onClick={addCategoryItem} className={`${ui.btn} ${ui.btnSecondary} w-fit`}>
+              + Добавить категорию
+            </button>
           </div>
         </details>
 
@@ -2260,8 +2290,8 @@ const NavMenuEditor = () => {
         {items.map((it, i) => (
           <div key={i} className="flex gap-2 items-center">
             <div className="flex flex-col gap-1">
-              <button onClick={() => move(i, -1)} className="px-2 py-0.5 bg-[#3a3a3a] rounded text-xs hover:bg-[#4a4a4a]">↑</button>
-              <button onClick={() => move(i, 1)} className="px-2 py-0.5 bg-[#3a3a3a] rounded text-xs hover:bg-[#4a4a4a]">↓</button>
+              <button type="button" onClick={() => move(i, -1)} className="px-2 py-0.5 bg-[#3a3a3a] rounded text-xs hover:bg-[#4a4a4a]">↑</button>
+              <button type="button" onClick={() => move(i, 1)} className="px-2 py-0.5 bg-[#3a3a3a] rounded text-xs hover:bg-[#4a4a4a]">↓</button>
             </div>
             <input
               value={it.name}
@@ -2275,14 +2305,14 @@ const NavMenuEditor = () => {
               placeholder="/url"
               className={`${ui.input} flex-1`}
             />
-            <button onClick={() => remove(i)} className={`${ui.btn} ${ui.btnDanger}`}>×</button>
+            <button type="button" onClick={() => remove(i)} className={`${ui.btn} ${ui.btnDanger}`}>×</button>
           </div>
         ))}
       </div>
       <div className="flex gap-2 flex-wrap">
-        <button onClick={add} className={`${ui.btn} ${ui.btnSecondary}`}>+ Добавить пункт</button>
-        <button onClick={reset} className={`${ui.btn} ${ui.btnSecondary}`}>Сбросить к стандарту</button>
-        <button onClick={save} disabled={saving} className={`${ui.btn} ${ui.btnPrimary} ${saving ? "opacity-50" : ""}`}>
+        <button type="button" onClick={add} className={`${ui.btn} ${ui.btnSecondary}`}>+ Добавить пункт</button>
+        <button type="button" onClick={reset} className={`${ui.btn} ${ui.btnSecondary}`}>Сбросить к стандарту</button>
+        <button type="button" onClick={save} disabled={saving} className={`${ui.btn} ${ui.btnPrimary} ${saving ? "opacity-50" : ""}`}>
           <Check size={18} /> {saving ? "Сохранение…" : "Сохранить меню"}
         </button>
       </div>
