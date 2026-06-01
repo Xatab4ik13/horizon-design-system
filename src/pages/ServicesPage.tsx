@@ -10,6 +10,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
+import { usePageHeader } from "@/hooks/useSiteContent";
 
 type ServiceDoc = { name: string; desc: string; url?: string; format?: string };
 
@@ -59,6 +60,7 @@ const defaultDownloadFiles: ServiceDoc[] = [
 ];
 
 const ServicesPage = () => {
+  const header = usePageHeader("services", { title: "Наши услуги", subtitle: "Полный цикл работ — от замера и проектирования до изготовления, доставки и монтажа" });
   const [downloadFiles, setDownloadFiles] = useState<ServiceDoc[]>(defaultDownloadFiles);
 
   useEffect(() => {
@@ -100,9 +102,9 @@ const ServicesPage = () => {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">Наши услуги</h1>
+            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">{header.title}</h1>
             <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
-              Полный цикл работ — от замера и проектирования до изготовления, доставки и монтажа
+              {header.subtitle}
             </p>
           </motion.div>
 
