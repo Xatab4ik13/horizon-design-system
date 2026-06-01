@@ -254,6 +254,23 @@ const ProductPage = () => {
     return product.dimensions;
   }, [product, selectedVariations]);
 
+  // Подмена основного фото при выборе варианта (например, по породе)
+  const displayImages = useMemo(() => {
+    if (!product) return [];
+    const map = product.imagesByVariation;
+    if (!map) return product.images;
+    for (const [type, val] of Object.entries(selectedVariations)) {
+      if (!val) continue;
+      const key = `${type}:${val}`;
+      const url = map[key];
+      if (url) {
+        const rest = product.images.filter((i) => i !== url);
+        return [url, ...rest];
+      }
+    }
+    return product.images;
+  }, [product, selectedVariations]);
+
   // Build variation labels for cart
   const variationLabels = useMemo(() => {
     if (!product) return {};
@@ -360,7 +377,7 @@ const ProductPage = () => {
                 </div>
               ) : (
                 <ProductGallery
-                  images={product.images}
+                  images={displayImages}
                   name={product.name}
                   isNew={product.isNew}
                   oldPrice={product.oldPrice}
