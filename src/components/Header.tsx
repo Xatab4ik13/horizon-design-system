@@ -81,7 +81,7 @@ const Header = () => {
       <div className="container mx-auto px-4 flex items-center justify-center">
         {/* Desktop navbar */}
         {!isMobile ? (
-          <div className="flex items-center gap-4 bg-black/85 border border-white/10 backdrop-blur-xl py-3.5 px-3 rounded-full shadow-lg shadow-black/40 relative">
+          <div className="flex items-center gap-4 bg-black/95 border border-white/15 backdrop-blur-2xl py-3.5 px-3 rounded-full shadow-xl shadow-black/60 relative">
             <div className="pl-3 pr-2 border-r border-border/40 mr-1">
               <Logo size="sm" />
             </div>
@@ -192,7 +192,7 @@ const Header = () => {
           </div>
         ) : (
           /* Mobile / Tablet navbar */
-          <div className="flex items-center justify-between w-full bg-black/85 border border-white/10 backdrop-blur-xl py-2.5 px-4 rounded-full shadow-lg shadow-black/40">
+          <div className="flex items-center justify-between w-full bg-black/95 border border-white/15 backdrop-blur-2xl py-2.5 px-4 rounded-full shadow-xl shadow-black/60">
             <Logo size="sm" />
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
