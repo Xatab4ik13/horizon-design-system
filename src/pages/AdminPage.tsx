@@ -1501,6 +1501,7 @@ const emptySender = {
   contact_name: "",
   contact_phone: "",
   pek_city_id: "",
+  cdek_city_code: "",
 };
 
 const SettingsPanel = () => {
