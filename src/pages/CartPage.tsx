@@ -121,7 +121,7 @@ const CartPage = () => {
                         </button>
                       </div>
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
 
