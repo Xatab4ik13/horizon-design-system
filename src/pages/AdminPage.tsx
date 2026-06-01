@@ -1840,6 +1840,7 @@ const HomepageEditor = () => {
               value={data.hero.videoUrl}
               onChange={(v) => setHero("videoUrl", v)}
               accept="video/mp4,video/*"
+              upload={uploadImage}
             />
           </div>
         </details>
@@ -1858,7 +1859,7 @@ const HomepageEditor = () => {
                 </div>
                 <TextField label="Описание" value={it.description} onChange={(v) => setPopularItem(i, "description", v)} multi />
                 <TextField label="Текст кнопки" value={it.cta} onChange={(v) => setPopularItem(i, "cta", v)} />
-                <ImageField label="Изображение" value={it.image} onChange={(v) => setPopularItem(i, "image", v)} />
+                <ImageField label="Изображение" value={it.image} onChange={(v) => setPopularItem(i, "image", v)} upload={uploadImage} />
               </div>
             ))}
           </div>
@@ -1880,7 +1881,7 @@ const HomepageEditor = () => {
                     Категория {i + 1} (по умолчанию: <b>{defaultCategories[i]}</b>)
                   </p>
                   <TextField label="Название" value={it.name} onChange={(v) => setCategoriesItem(i, "name", v)} />
-                  <ImageField label="Изображение" value={it.image} onChange={(v) => setCategoriesItem(i, "image", v)} />
+                  <ImageField label="Изображение" value={it.image} onChange={(v) => setCategoriesItem(i, "image", v)} upload={uploadImage} />
                 </div>
               ))}
             </div>
