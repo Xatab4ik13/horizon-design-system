@@ -1578,6 +1578,8 @@ const SettingsPanel = () => {
       <NavMenuEditor />
       <BlocksOrderEditor />
       <HomepageEditor />
+      <ServicesDocsEditor />
+      <AboutPageEditor />
     </div>
   );
 };
