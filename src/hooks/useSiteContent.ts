@@ -7,15 +7,15 @@ export type HomepageContent = {
     videoUrl?: string;
   };
   popular?: {
-    items?: { title?: string; tagline?: string; description?: string; cta?: string; image?: string }[];
+    items?: { title?: string; tagline?: string; description?: string; cta?: string; image?: string; enabled?: boolean }[];
   };
   categories?: {
     title?: string;
-    items?: { name?: string; image?: string }[];
+    items?: { name?: string; image?: string; enabled?: boolean }[];
   };
   advantages?: {
     title?: string;
-    items?: { title?: string; desc?: string }[];
+    items?: { title?: string; desc?: string; enabled?: boolean }[];
   };
   contact?: {
     title?: string;
