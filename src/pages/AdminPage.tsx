@@ -1847,8 +1847,15 @@ const HomepageEditor = () => {
         <details open className="border border-[#3a3a3a] rounded-lg p-4">
           <summary className={`${ui.h3} cursor-pointer`}>Hero (главный экран)</summary>
           <div className="grid gap-4 mt-4">
+            <div className="flex items-center justify-between gap-3">
+              <label className={ui.label}>Бегущая строка</label>
+              <EnabledToggle
+                checked={data.hero.marqueeEnabled !== false}
+                onChange={(v) => setHero("marqueeEnabled", v as any)}
+              />
+            </div>
             <TextField
-              label="Бегущая строка"
+              label=""
               value={data.hero.marqueeText}
               onChange={(v) => setHero("marqueeText", v)}
               placeholder="FAKTURA — изделия из натурального дерева…"
