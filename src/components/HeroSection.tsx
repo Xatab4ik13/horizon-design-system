@@ -37,18 +37,20 @@ const HeroSection = () => {
       </div>
 
       {/* Marquee / бегущая строка */}
-      <div className="absolute bottom-12 left-0 right-0 z-10 overflow-hidden pointer-events-none">
-        <div className="flex animate-marquee whitespace-nowrap">
-          {[...Array(4)].map((_, i) => (
-            <span
-              key={i}
-              className="text-white/40 text-sm md:text-base font-light tracking-[0.15em] uppercase mx-4"
-            >
-              {marqueeText}
-            </span>
-          ))}
+      {marqueeEnabled && (
+        <div className="absolute bottom-12 left-0 right-0 z-10 overflow-hidden pointer-events-none">
+          <div className="flex animate-marquee whitespace-nowrap">
+            {[...Array(4)].map((_, i) => (
+              <span
+                key={i}
+                className="text-white/40 text-sm md:text-base font-light tracking-[0.15em] uppercase mx-4"
+              >
+                {marqueeText}
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-black pointer-events-none" />
     </section>
