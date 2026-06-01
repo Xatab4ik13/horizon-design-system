@@ -1694,8 +1694,8 @@ const ImageField = ({
             className={ui.input}
             placeholder="URL или загрузите файл ниже"
           />
-          {fileName && (
-            <p className="text-[12px] text-[#888] truncate">Загружен: {fileName}</p>
+          {derivedName && (
+            <p className="text-[12px] text-[#888] truncate">Файл: {derivedName}</p>
           )}
           <label className={`${ui.btn} ${ui.btnSecondary} cursor-pointer self-start ${busy ? "opacity-50" : ""}`}>
             <Upload size={16} /> {busy ? "Загрузка…" : "Загрузить файл"}
