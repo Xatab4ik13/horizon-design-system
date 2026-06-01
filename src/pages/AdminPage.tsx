@@ -1594,7 +1594,7 @@ const SettingsPanel = () => {
 // HOMEPAGE EDITOR — тексты и изображения главной страницы
 // ===================================================================
 const emptyHomepage = {
-  hero: { marqueeText: "", videoUrl: "" },
+  hero: { marqueeText: "", marqueeEnabled: true, videoUrl: "" },
   popular: {
     items: Array.from({ length: 10 }, () => ({
       title: "", tagline: "", description: "", cta: "", image: "", enabled: true,
