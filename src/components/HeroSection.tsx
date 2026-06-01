@@ -10,6 +10,7 @@ const HeroSection = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const content = useHomepageContent();
   const marqueeText = content.hero?.marqueeText || DEFAULT_MARQUEE;
+  const marqueeEnabled = content.hero?.marqueeEnabled !== false;
   const videoSrc = content.hero?.videoUrl || heroVideo;
 
   return (
