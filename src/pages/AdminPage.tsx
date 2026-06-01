@@ -1607,6 +1607,7 @@ const SettingsPanel = () => {
         </div>
       </div>
 
+      <NotificationsEditor />
       <NavMenuEditor />
       <BlocksOrderEditor />
       <HomepageEditor />
@@ -2520,6 +2521,54 @@ const AboutPageEditor = () => {
         className={ui.textarea}
         rows={14}
         placeholder="FAKTURA — мастерская изделий из натурального дерева…"
+      />
+      <div className="flex gap-2 mt-4">
+        <button onClick={save} disabled={saving} className={`${ui.btn} ${ui.btnPrimary} ${saving ? "opacity-50" : ""}`}>
+          <Check size={18} /> {saving ? "Сохранение…" : "Сохранить"}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ===================================================================
+// NOTIFICATIONS EDITOR — email для уведомлений о заявках/заказах
+// ===================================================================
+const NotificationsEditor = () => {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    adminCall("settings.get", { key: "notifications" })
+      .then((r) => { setEmail(r.data?.email ?? ""); setLoading(false); })
+      .catch((e) => { toast.error(e.message); setLoading(false); });
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await adminCall("settings.set", { key: "notifications", value: { email } });
+      toast.success("Email для уведомлений сохранён");
+    } catch (e: any) { toast.error(e.message); }
+    setSaving(false);
+  };
+
+  if (loading) return <p className="text-[#888]">Загрузка…</p>;
+
+  return (
+    <div className={ui.card}>
+      <h2 className={`${ui.h2} mb-2`}>Email для уведомлений</h2>
+      <p className="text-[14px] text-[#888] mb-4">
+        Адрес, на который будут приходить уведомления о новых заявках и заказах.
+        Заявки и заказы в любом случае сохраняются в админ-панели на вкладках «Заявки» и «Заказы».
+      </p>
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        className={ui.input}
+        placeholder="info@faktura.example"
       />
       <div className="flex gap-2 mt-4">
         <button onClick={save} disabled={saving} className={`${ui.btn} ${ui.btnPrimary} ${saving ? "opacity-50" : ""}`}>
