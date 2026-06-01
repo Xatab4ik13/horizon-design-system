@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
+import { usePageHeader } from "@/hooks/useSiteContent";
 
 import gallery1 from "@/assets/gallery-1.jpg";
 import gallery2 from "@/assets/gallery-2.jpg";
@@ -26,6 +27,7 @@ const galleryItems = [
 
 const GalleryPage = () => {
   const [lightbox, setLightbox] = useState<number | null>(null);
+  const header = usePageHeader("gallery", { title: "Галерея", subtitle: "Наши изделия в интерьерах — вдохновляйтесь реальными примерами" });
 
   return (
     <div
@@ -49,10 +51,10 @@ const GalleryPage = () => {
             className="text-center mb-16"
           >
             <h1 className="text-4xl md:text-5xl lg:text-6xl text-foreground mb-4">
-              Галерея
+              {header.title}
             </h1>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto font-light">
-              Наши изделия в интерьерах — вдохновляйтесь реальными примерами
+              {header.subtitle}
             </p>
           </motion.div>
 
@@ -73,6 +75,7 @@ const GalleryPage = () => {
                   alt={item.title}
                   className="w-full object-cover transition-transform duration-700 group-hover:scale-110"
                   loading="lazy"
+                  decoding="async"
                 />
                 {/* Hover overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6">
