@@ -192,7 +192,7 @@ const Header = () => {
           </div>
         ) : (
           /* Mobile / Tablet navbar */
-          <div className="flex items-center justify-between w-full bg-black/85 border border-white/10 backdrop-blur-xl py-2.5 px-4 rounded-full shadow-lg shadow-black/40">
+          <div className="flex items-center justify-between w-full bg-black/95 border border-white/15 backdrop-blur-2xl py-2.5 px-4 rounded-full shadow-xl shadow-black/60">
             <Logo size="sm" />
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
