@@ -144,3 +144,48 @@ export function useHomepageBlocks(fallback: HomeBlockId[]): HomeBlockId[] {
   }, []);
   return order;
 }
+
+// ─── Page headers (catalog/services/gallery/delivery/contacts) ───
+export type PageKey = "catalog" | "services" | "gallery" | "delivery" | "contacts";
+export type PageHeader = { title?: string; subtitle?: string };
+export type PagesContent = Partial<Record<PageKey, PageHeader>>;
+
+let pagesCache: PagesContent | null = null;
+let pagesInflight: Promise<PagesContent> | null = null;
+
+export async function fetchPagesContent(): Promise<PagesContent> {
+  if (pagesCache) return pagesCache;
+  if (pagesInflight) return pagesInflight;
+  pagesInflight = (async () => {
+    const { data } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "pages")
+      .maybeSingle();
+    pagesCache = ((data?.value as PagesContent) ?? {}) as PagesContent;
+    return pagesCache;
+  })();
+  return pagesInflight;
+}
+
+export function invalidatePagesContent() {
+  pagesCache = null;
+  pagesInflight = null;
+}
+
+export function usePageHeader(key: PageKey, fallback: PageHeader): PageHeader {
+  const [h, setH] = useState<PageHeader>(pagesCache?.[key] ?? fallback);
+  useEffect(() => {
+    let alive = true;
+    fetchPagesContent().then((c) => {
+      if (!alive) return;
+      const v = c?.[key];
+      setH({
+        title: v?.title?.trim() || fallback.title,
+        subtitle: v?.subtitle?.trim() || fallback.subtitle,
+      });
+    });
+    return () => { alive = false; };
+  }, [key]);
+  return h;
+}
