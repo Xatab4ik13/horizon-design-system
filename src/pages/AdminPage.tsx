@@ -1765,6 +1765,7 @@ const HomepageEditor = () => {
     setSaving(true);
     try {
       await adminCall("settings.set", { key: "homepage", value: data });
+      invalidateHomepageContent();
       toast.success("Главная сохранена. Обновите вкладку сайта.");
     } catch (e: any) {
       toast.error(e.message);
@@ -1996,6 +1997,7 @@ const NavMenuEditor = () => {
     setSaving(true);
     try {
       await adminCall("settings.set", { key: "nav_menu", value: { items: cleaned } });
+      invalidateNavMenu();
       toast.success("Меню сохранено. Обновите вкладку сайта.");
     } catch (e: any) { toast.error(e.message); }
     setSaving(false);
@@ -2084,6 +2086,7 @@ const BlocksOrderEditor = () => {
     setSaving(true);
     try {
       await adminCall("settings.set", { key: "homepage_blocks", value: { order } });
+      invalidateHomepageBlocks();
       toast.success("Порядок блоков сохранён. Обновите главную страницу.");
     } catch (e: any) { toast.error(e.message); }
     setSaving(false);
