@@ -89,6 +89,8 @@ const CatalogPage = () => {
   const [showSort, setShowSort] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
   const [sortBy, setSortBy] = useState<"default" | "price-asc" | "price-desc" | "material">("default");
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 24;
 
   // Close sort dropdown on outside click
   useEffect(() => {
