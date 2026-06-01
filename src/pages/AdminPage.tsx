@@ -121,10 +121,15 @@ const LoginScreen = ({ onSuccess }: { onSuccess: () => void }) => {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const ok = await adminLogin(pwd);
-    setLoading(false);
-    if (ok) onSuccess();
-    else toast.error("Неверный пароль");
+    try {
+      const ok = await adminLogin(pwd);
+      if (ok) onSuccess();
+      else toast.error("Неверный пароль");
+    } catch (err: any) {
+      toast.error("Сеть недоступна, попробуйте ещё раз");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
