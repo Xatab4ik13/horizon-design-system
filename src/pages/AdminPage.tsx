@@ -1588,18 +1588,17 @@ const SettingsPanel = () => {
 const emptyHomepage = {
   hero: { marqueeText: "", videoUrl: "" },
   popular: {
-    items: [
-      { title: "", tagline: "", description: "", cta: "", image: "" },
-      { title: "", tagline: "", description: "", cta: "", image: "" },
-    ],
+    items: Array.from({ length: 10 }, () => ({
+      title: "", tagline: "", description: "", cta: "", image: "", enabled: true,
+    })),
   },
   categories: {
     title: "",
-    items: Array.from({ length: 6 }, () => ({ name: "", image: "" })),
+    items: Array.from({ length: 12 }, () => ({ name: "", image: "", enabled: true })),
   },
   advantages: {
     title: "",
-    items: Array.from({ length: 4 }, () => ({ title: "", desc: "" })),
+    items: Array.from({ length: 8 }, () => ({ title: "", desc: "", enabled: true })),
   },
   contact: { title: "", subtitle: "", consent: "", submitLabel: "" },
   footer: { tagline: "", phone: "", email: "", copyright: "" },
