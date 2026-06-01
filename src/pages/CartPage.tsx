@@ -127,7 +127,7 @@ const CartPage = () => {
 
               {/* Summary */}
               <div>
-                <div className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-6 sticky top-36">
+                <div className="bg-card/60 border border-border rounded-2xl p-6 sticky top-36">
                   <h3 className="text-lg font-bold text-foreground mb-4">Итого</h3>
 
                   {(() => {
