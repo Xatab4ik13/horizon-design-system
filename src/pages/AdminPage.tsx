@@ -1661,6 +1661,17 @@ const ImageField = ({
 }) => {
   const [busy, setBusy] = useState(false);
   const [fileName, setFileName] = useState<string>("");
+  const derivedName = (() => {
+    if (fileName) return fileName;
+    if (!value) return "";
+    try {
+      const url = new URL(value, window.location.origin);
+      const last = url.pathname.split("/").filter(Boolean).pop() || "";
+      return decodeURIComponent(last);
+    } catch {
+      return value.split("/").pop() || "";
+    }
+  })();
   return (
     <div>
       <label className={ui.label}>{label}</label>
