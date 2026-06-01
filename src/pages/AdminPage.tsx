@@ -1578,6 +1578,8 @@ const SettingsPanel = () => {
       <NavMenuEditor />
       <BlocksOrderEditor />
       <HomepageEditor />
+      <ServicesDocsEditor />
+      <AboutPageEditor />
     </div>
   );
 };
@@ -2135,6 +2137,170 @@ const BlocksOrderEditor = () => {
         <button onClick={reset} className={`${ui.btn} ${ui.btnSecondary}`}>Сбросить к стандарту</button>
         <button onClick={save} disabled={saving} className={`${ui.btn} ${ui.btnPrimary} ${saving ? "opacity-50" : ""}`}>
           <Check size={18} /> {saving ? "Сохранение…" : "Сохранить порядок"}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ===================================================================
+// SERVICES DOCS EDITOR — документы для скачивания на странице «Услуги»
+// ===================================================================
+const ServicesDocsEditor = () => {
+  const [docs, setDocs] = useState<Array<{ name: string; desc: string; url: string; format: string }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    adminCall("settings.get", { key: "services_docs" })
+      .then((r) => {
+        const items = Array.isArray(r.data?.items) ? r.data.items : [];
+        setDocs(items);
+        setLoading(false);
+      })
+      .catch((e) => { toast.error(e.message); setLoading(false); });
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await adminCall("settings.set", { key: "services_docs", value: { items: docs } });
+      toast.success("Документы сохранены");
+    } catch (e: any) { toast.error(e.message); }
+    setSaving(false);
+  };
+
+  const addDoc = () => setDocs([...docs, { name: "", desc: "", url: "", format: "" }]);
+  const removeDoc = (i: number) => setDocs(docs.filter((_, idx) => idx !== i));
+  const updateDoc = (i: number, k: string, v: string) =>
+    setDocs(docs.map((d, idx) => (idx === i ? { ...d, [k]: v } : d)));
+
+  const uploadDoc = async (i: number, file: File) => {
+    try {
+      const url = await adminUploadFile("site-documents", file, { prefix: "services/" });
+      const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+      const ext = (file.name.split(".").pop() || "FILE").toUpperCase();
+      setDocs((prev) =>
+        prev.map((d, idx) =>
+          idx === i ? { ...d, url, format: `${ext}, ${sizeMb} МБ`, name: d.name || file.name } : d,
+        ),
+      );
+      toast.success(`Загружено: ${file.name}`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Не удалось загрузить");
+    }
+  };
+
+  if (loading) return <p className="text-[#888]">Загрузка документов…</p>;
+
+  return (
+    <div className={ui.card}>
+      <h2 className={`${ui.h2} mb-2`}>Документы для скачивания (Услуги)</h2>
+      <p className="text-[14px] text-[#888] mb-6">
+        Прайс-листы, каталоги, брифы и т.п. Появятся на странице /services в блоке «Скачать документы».
+      </p>
+
+      <div className="grid gap-4 mb-4">
+        {docs.map((d, i) => (
+          <div key={i} className="border border-[#3a3a3a] rounded-lg p-4 grid gap-3">
+            <div className="flex items-center justify-between">
+              <p className="text-[#888] text-sm">Документ {i + 1}</p>
+              <button onClick={() => removeDoc(i)} className={`${ui.btn} ${ui.btnDanger}`} type="button">
+                <X size={16} /> Удалить
+              </button>
+            </div>
+            <div className="grid md:grid-cols-2 gap-3">
+              <TextField label="Название" value={d.name} onChange={(v) => updateDoc(i, "name", v)} placeholder="Прайс-лист 2026" />
+              <TextField label="Формат / размер" value={d.format} onChange={(v) => updateDoc(i, "format", v)} placeholder="PDF, 1.2 МБ" />
+            </div>
+            <TextField label="Описание" value={d.desc} onChange={(v) => updateDoc(i, "desc", v)} placeholder="Актуальные цены на все виды работ" />
+            <div>
+              <label className={ui.label}>Файл</label>
+              <div className="flex items-start gap-3">
+                <input
+                  value={d.url}
+                  onChange={(e) => updateDoc(i, "url", e.target.value)}
+                  className={ui.input}
+                  placeholder="URL файла"
+                />
+              </div>
+              <div className="flex gap-2 mt-2">
+                <label className={`${ui.btn} ${ui.btnSecondary} cursor-pointer`}>
+                  <Upload size={16} /> Загрузить файл
+                  <input
+                    type="file"
+                    hidden
+                    onChange={async (e) => {
+                      const f = e.target.files?.[0];
+                      if (f) await uploadDoc(i, f);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+                {d.url && (
+                  <a href={d.url} target="_blank" rel="noreferrer" className={`${ui.btn} ${ui.btnSecondary}`}>
+                    Открыть
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex gap-2 flex-wrap">
+        <button onClick={addDoc} className={`${ui.btn} ${ui.btnSecondary}`} type="button">
+          + Добавить документ
+        </button>
+        <button onClick={save} disabled={saving} className={`${ui.btn} ${ui.btnPrimary} ${saving ? "opacity-50" : ""}`}>
+          <Check size={18} /> {saving ? "Сохранение…" : "Сохранить документы"}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ===================================================================
+// ABOUT PAGE EDITOR — текст страницы «О компании»
+// ===================================================================
+const AboutPageEditor = () => {
+  const [text, setText] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    adminCall("settings.get", { key: "about_page" })
+      .then((r) => { setText(r.data?.text ?? ""); setLoading(false); })
+      .catch((e) => { toast.error(e.message); setLoading(false); });
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await adminCall("settings.set", { key: "about_page", value: { text } });
+      toast.success("Страница «О компании» сохранена");
+    } catch (e: any) { toast.error(e.message); }
+    setSaving(false);
+  };
+
+  if (loading) return <p className="text-[#888]">Загрузка «О компании»…</p>;
+
+  return (
+    <div className={ui.card}>
+      <h2 className={`${ui.h2} mb-2`}>Страница «О компании»</h2>
+      <p className="text-[14px] text-[#888] mb-4">
+        Текст со страницы /about. Пустые строки — разделители абзацев.
+      </p>
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        className={ui.textarea}
+        rows={14}
+        placeholder="FAKTURA — мастерская изделий из натурального дерева…"
+      />
+      <div className="flex gap-2 mt-4">
+        <button onClick={save} disabled={saving} className={`${ui.btn} ${ui.btnPrimary} ${saving ? "opacity-50" : ""}`}>
+          <Check size={18} /> {saving ? "Сохранение…" : "Сохранить"}
         </button>
       </div>
     </div>

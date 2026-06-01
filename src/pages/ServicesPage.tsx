@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import {
   ChevronRight, Hammer, Ruler, PaintBucket, Wrench,
   FileDown, ArrowRight, CheckCircle2, Clock, Phone,
@@ -8,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
+import { supabase } from "@/integrations/supabase/client";
+
+type ServiceDoc = { name: string; desc: string; url?: string; format?: string };
 
 const services = [
   {
@@ -48,13 +52,26 @@ const services = [
   },
 ];
 
-const downloadFiles = [
+const defaultDownloadFiles: ServiceDoc[] = [
   { name: "Прайс-лист 2026", desc: "Актуальные цены на все виды работ", format: "PDF, 1.2 МБ" },
   { name: "Каталог материалов", desc: "Породы дерева, покрытия, фурнитура", format: "PDF, 3.8 МБ" },
   { name: "Бриф на заказ мебели", desc: "Заполните и отправьте нам для быстрого расчёта", format: "PDF, 0.5 МБ" },
 ];
 
 const ServicesPage = () => {
+  const [downloadFiles, setDownloadFiles] = useState<ServiceDoc[]>(defaultDownloadFiles);
+
+  useEffect(() => {
+    supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "services_docs")
+      .maybeSingle()
+      .then(({ data }) => {
+        const items = (data?.value as { items?: ServiceDoc[] } | null)?.items;
+        if (Array.isArray(items) && items.length > 0) setDownloadFiles(items);
+      });
+  }, []);
   return (
     <div
       className="min-h-screen"
@@ -151,9 +168,9 @@ const ServicesPage = () => {
               Скачать документы
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-              {downloadFiles.map((file) => (
+              {downloadFiles.map((file, idx) => (
                 <div
-                  key={file.name}
+                  key={file.url || file.name || idx}
                   className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-6 hover:border-primary/30 transition-all duration-300 group"
                 >
                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
@@ -161,10 +178,16 @@ const ServicesPage = () => {
                   </div>
                   <h3 className="text-foreground font-semibold mb-1">{file.name}</h3>
                   <p className="text-foreground/60 text-sm mb-3">{file.desc}</p>
-                  <p className="text-xs text-muted-foreground mb-4">{file.format}</p>
-                  <Button variant="outline" size="sm" className="rounded-full w-full">
-                    Скачать
-                  </Button>
+                  {file.format && <p className="text-xs text-muted-foreground mb-4">{file.format}</p>}
+                  {file.url ? (
+                    <Button asChild variant="outline" size="sm" className="rounded-full w-full">
+                      <a href={file.url} target="_blank" rel="noreferrer" download>Скачать</a>
+                    </Button>
+                  ) : (
+                    <Button variant="outline" size="sm" className="rounded-full w-full" disabled>
+                      Скоро
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
