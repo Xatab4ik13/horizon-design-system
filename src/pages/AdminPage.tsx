@@ -1861,9 +1861,12 @@ const HomepageEditor = () => {
           <div className="grid gap-6 mt-4">
             {data.popular.items.map((it: any, i: number) => (
               <div key={i} className="border border-[#3a3a3a] rounded-lg p-4 grid gap-3">
-                <p className="text-[#888] text-sm">
-                  Слайд {i + 1} (по умолчанию: <b>{defaultPopular[i]}</b>)
-                </p>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[#888] text-sm">
+                    Слайд {i + 1}{defaultPopular[i] ? <> (по умолчанию: <b>{defaultPopular[i]}</b>)</> : null}
+                  </p>
+                  <EnabledToggle checked={it.enabled !== false} onChange={(v) => setPopularItem(i, "enabled", v as any)} />
+                </div>
                 <div className="grid md:grid-cols-2 gap-3">
                   <TextField label="Заголовок" value={it.title} onChange={(v) => setPopularItem(i, "title", v)} />
                   <TextField label="Подзаголовок (tagline)" value={it.tagline} onChange={(v) => setPopularItem(i, "tagline", v)} />
@@ -1888,9 +1891,12 @@ const HomepageEditor = () => {
             <div className="grid md:grid-cols-2 gap-4">
               {data.categories.items.map((it: any, i: number) => (
                 <div key={i} className="border border-[#3a3a3a] rounded-lg p-4 grid gap-3">
-                  <p className="text-[#888] text-sm">
-                    Категория {i + 1} (по умолчанию: <b>{defaultCategories[i]}</b>)
-                  </p>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-[#888] text-sm">
+                      Категория {i + 1}{defaultCategories[i] ? <> (по умолчанию: <b>{defaultCategories[i]}</b>)</> : null}
+                    </p>
+                    <EnabledToggle checked={it.enabled !== false} onChange={(v) => setCategoriesItem(i, "enabled", v as any)} />
+                  </div>
                   <TextField label="Название" value={it.name} onChange={(v) => setCategoriesItem(i, "name", v)} />
                   <ImageField label="Изображение" value={it.image} onChange={(v) => setCategoriesItem(i, "image", v)} upload={uploadImage} />
                 </div>
@@ -1911,9 +1917,12 @@ const HomepageEditor = () => {
             <div className="grid md:grid-cols-2 gap-4">
               {data.advantages.items.map((it: any, i: number) => (
                 <div key={i} className="border border-[#3a3a3a] rounded-lg p-4 grid gap-3">
-                  <p className="text-[#888] text-sm">
-                    Пункт {i + 1} (по умолчанию: <b>{defaultAdvantages[i]}</b>)
-                  </p>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-[#888] text-sm">
+                      Пункт {i + 1}{defaultAdvantages[i] ? <> (по умолчанию: <b>{defaultAdvantages[i]}</b>)</> : null}
+                    </p>
+                    <EnabledToggle checked={it.enabled !== false} onChange={(v) => setAdvantagesItem(i, "enabled", v as any)} />
+                  </div>
                   <TextField label="Заголовок" value={it.title} onChange={(v) => setAdvantagesItem(i, "title", v)} />
                   <TextField label="Описание" value={it.desc} onChange={(v) => setAdvantagesItem(i, "desc", v)} multi />
                 </div>
