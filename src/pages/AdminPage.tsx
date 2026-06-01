@@ -1816,6 +1816,17 @@ const HomepageEditor = () => {
     "Индивидуальный подход",
     "Быстрая доставка",
   ];
+  const EnabledToggle = ({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) => (
+    <label className="flex items-center gap-2 text-[13px] text-[#aaa] cursor-pointer select-none">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="accent-amber-500 w-4 h-4"
+      />
+      Показывать на сайте
+    </label>
+  );
 
   return (
     <div className={ui.card}>
