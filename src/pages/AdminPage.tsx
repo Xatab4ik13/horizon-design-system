@@ -1946,20 +1946,18 @@ const HomepageEditor = () => {
       .then((r) => {
         const v = r.data ?? {};
         // Глубокий мерж с пустым шаблоном, чтобы все поля присутствовали
+        const popularItems = Array.isArray(v.popular?.items) && v.popular.items.length > 0
+          ? v.popular.items.map((it: any, i: number) => ({ ...(emptyHomepage.popular.items[i] ?? {}), ...it }))
+          : emptyHomepage.popular.items.map((d) => ({ ...d }));
+        const categoryItems = Array.isArray(v.categories?.items) && v.categories.items.length > 0
+          ? v.categories.items.map((it: any, i: number) => ({ ...(emptyHomepage.categories.items[i] ?? {}), ...it }))
+          : emptyHomepage.categories.items.map((d) => ({ ...d }));
         setData({
           hero: { ...emptyHomepage.hero, ...(v.hero ?? {}) },
-          popular: {
-            items: emptyHomepage.popular.items.map((d, i) => ({
-              ...d,
-              ...(v.popular?.items?.[i] ?? {}),
-            })),
-          },
+          popular: { items: popularItems },
           categories: {
             title: v.categories?.title ?? "",
-            items: emptyHomepage.categories.items.map((d, i) => ({
-              ...d,
-              ...(v.categories?.items?.[i] ?? {}),
-            })),
+            items: categoryItems,
           },
           advantages: {
             title: v.advantages?.title ?? "",
