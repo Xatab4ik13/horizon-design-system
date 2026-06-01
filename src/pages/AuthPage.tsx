@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { normalizePhone } from "@/lib/phone";
 
 const AuthPage = () => {
   const { user, signIn, signUp } = useAuth();
