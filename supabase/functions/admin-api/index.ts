@@ -91,6 +91,23 @@ Deno.serve(async (req) => {
     const payload = body?.payload ?? {};
 
     switch (action) {
+      // ===== AUTH =====
+      case "auth.changePassword": {
+        const { currentPassword, newPassword } = payload ?? {};
+        if (typeof newPassword !== "string" || newPassword.length < 6) {
+          return json({ error: "Новый пароль должен быть не короче 6 символов" }, 400);
+        }
+        if (!(await verifyPassword(String(currentPassword ?? "")))) {
+          return json({ error: "Текущий пароль неверный" }, 401);
+        }
+        const hash = await sha256Hex(newPassword);
+        const { error } = await admin
+          .from("app_settings")
+          .upsert({ key: "admin_password_hash", value: { hash } }, { onConflict: "key" });
+        if (error) throw error;
+        return json({ ok: true });
+      }
+
       // ===== PRODUCTS =====
       case "products.list": {
         const { data, error } = await admin
