@@ -1594,7 +1594,7 @@ const SettingsPanel = () => {
 // HOMEPAGE EDITOR — тексты и изображения главной страницы
 // ===================================================================
 const emptyHomepage = {
-  hero: { marqueeText: "", videoUrl: "" },
+  hero: { marqueeText: "", marqueeEnabled: true, videoUrl: "" },
   popular: {
     items: Array.from({ length: 10 }, () => ({
       title: "", tagline: "", description: "", cta: "", image: "", enabled: true,
@@ -1661,6 +1661,17 @@ const ImageField = ({
 }) => {
   const [busy, setBusy] = useState(false);
   const [fileName, setFileName] = useState<string>("");
+  const derivedName = (() => {
+    if (fileName) return fileName;
+    if (!value) return "";
+    try {
+      const url = new URL(value, window.location.origin);
+      const last = url.pathname.split("/").filter(Boolean).pop() || "";
+      return decodeURIComponent(last);
+    } catch {
+      return value.split("/").pop() || "";
+    }
+  })();
   return (
     <div>
       <label className={ui.label}>{label}</label>
@@ -1683,8 +1694,8 @@ const ImageField = ({
             className={ui.input}
             placeholder="URL или загрузите файл ниже"
           />
-          {fileName && (
-            <p className="text-[12px] text-[#888] truncate">Загружен: {fileName}</p>
+          {derivedName && (
+            <p className="text-[12px] text-[#888] truncate">Файл: {derivedName}</p>
           )}
           <label className={`${ui.btn} ${ui.btnSecondary} cursor-pointer self-start ${busy ? "opacity-50" : ""}`}>
             <Upload size={16} /> {busy ? "Загрузка…" : "Загрузить файл"}
@@ -1847,8 +1858,15 @@ const HomepageEditor = () => {
         <details open className="border border-[#3a3a3a] rounded-lg p-4">
           <summary className={`${ui.h3} cursor-pointer`}>Hero (главный экран)</summary>
           <div className="grid gap-4 mt-4">
+            <div className="flex items-center justify-between gap-3">
+              <label className={ui.label}>Бегущая строка</label>
+              <EnabledToggle
+                checked={data.hero.marqueeEnabled !== false}
+                onChange={(v) => setHero("marqueeEnabled", v as any)}
+              />
+            </div>
             <TextField
-              label="Бегущая строка"
+              label=""
               value={data.hero.marqueeText}
               onChange={(v) => setHero("marqueeText", v)}
               placeholder="FAKTURA — изделия из натурального дерева…"

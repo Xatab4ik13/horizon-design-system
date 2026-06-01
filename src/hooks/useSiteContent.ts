@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 export type HomepageContent = {
   hero?: {
     marqueeText?: string;
+    marqueeEnabled?: boolean;
     videoUrl?: string;
   };
   popular?: {
