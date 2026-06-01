@@ -82,6 +82,14 @@ export const dbToUiProduct = (row: DbProductRow): Product => {
   const finalPrice = discount > 0 ? Math.round(basePrice * (1 - discount / 100)) : basePrice;
   const oldPrice = discount > 0 ? basePrice : undefined;
 
+  // Вариации и карта картинок по варианту (из products.options)
+  const rawVariations = Array.isArray((opts as any).variations) ? (opts as any).variations : undefined;
+  const variations = rawVariations as Product["variations"] | undefined;
+  const imagesByVariation =
+    (opts as any).imagesByVariation && typeof (opts as any).imagesByVariation === "object"
+      ? ((opts as any).imagesByVariation as Record<string, string>)
+      : undefined;
+
   return {
     id: row.id,
     sku: row.sku ?? row.id.slice(0, 8).toUpperCase(),
@@ -99,6 +107,8 @@ export const dbToUiProduct = (row: DbProductRow): Product => {
     images: row.images && row.images.length > 0 ? row.images : ["/placeholder.svg"],
     inStock: isInStockStatus(row.stock_status),
     arModel,
+    variations,
+    imagesByVariation,
     reviews: [],
     qa: [],
     rating: 0,
