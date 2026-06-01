@@ -414,13 +414,14 @@ const CatalogPage = () => {
               </p>
             </div>
           ) : (
+          <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredProducts.map((product, i) => (
+            {visibleProducts.map((product, i) => (
               <motion.div
                 key={product.id}
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: i * 0.1 }}
+                transition={{ duration: 0.35, delay: Math.min(i % PAGE_SIZE, 8) * 0.04 }}
               >
                 <Link
                   to={`/product/${product.id}`}
@@ -503,6 +504,20 @@ const CatalogPage = () => {
               </motion.div>
             ))}
           </div>
+          {page < totalPages && (
+            <div className="flex justify-center mt-12">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => setPage((p) => p + 1)}
+                className="min-w-[200px]"
+              >
+                Показать ещё ({filteredProducts.length - visibleProducts.length})
+              </Button>
+            </div>
+          )}
+          </>
+          )}
           )}
 
         </div>
