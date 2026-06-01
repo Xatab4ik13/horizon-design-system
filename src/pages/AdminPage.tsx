@@ -368,33 +368,48 @@ const Import1CBlock = ({
         {parsed && (
           <div className="border border-[#3a3a3a] rounded-lg overflow-hidden">
             <div className="bg-[#1a1a1a] px-4 py-2 text-[14px] text-[#aaa]">
-              Предпросмотр ({parsed.length})
+              Предпросмотр ({parsed.length}) — можно править ячейки или удалить строку
             </div>
-            <div className="max-h-72 overflow-auto">
-              <table className="w-full text-[14px]">
-                <thead className="text-[#888] text-left">
+            <div className="max-h-96 overflow-auto">
+              <table className="w-full text-[13px]">
+                <thead className="text-[#888] text-left sticky top-0 bg-[#1a1a1a]">
                   <tr>
-                    <th className="px-3 py-2">Артикул</th>
-                    <th className="px-3 py-2">Название</th>
-                    <th className="px-3 py-2">Цена</th>
-                    <th className="px-3 py-2">Размеры (Ш×В×Г)</th>
-                    <th className="px-3 py-2">Вес</th>
+                    <th className="px-2 py-2">Артикул</th>
+                    <th className="px-2 py-2">Название</th>
+                    <th className="px-2 py-2 w-24">Цена</th>
+                    <th className="px-2 py-2 w-20">Ш, см</th>
+                    <th className="px-2 py-2 w-20">В, см</th>
+                    <th className="px-2 py-2 w-20">Г, см</th>
+                    <th className="px-2 py-2 w-20">Вес, кг</th>
+                    <th className="px-2 py-2 w-10"></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {parsed.map((p, i) => (
-                    <tr key={i} className="border-t border-[#3a3a3a]">
-                      <td className="px-3 py-2 font-mono">{p.sku ?? "—"}</td>
-                      <td className="px-3 py-2">{p.name}</td>
-                      <td className="px-3 py-2">{Number(p.price).toLocaleString("ru-RU")} ₽</td>
-                      <td className="px-3 py-2">
-                        {[p.width_cm, p.height_cm, p.depth_cm]
-                          .map((v) => (v ?? "—"))
-                          .join(" × ")}
-                      </td>
-                      <td className="px-3 py-2">{p.weight_kg ?? "—"} кг</td>
-                    </tr>
-                  ))}
+                  {parsed.map((p, i) => {
+                    const upd = (k: string, v: any) =>
+                      setParsed((arr) => arr!.map((it, idx) => idx === i ? { ...it, [k]: v } : it));
+                    const num = (v: string) => v === "" ? null : Number(v);
+                    return (
+                      <tr key={i} className="border-t border-[#3a3a3a]">
+                        <td className="px-2 py-1"><input value={p.sku ?? ""} onChange={(e) => upd("sku", e.target.value || null)} className="bg-transparent border border-transparent hover:border-[#3a3a3a] focus:border-amber-500 rounded px-1 py-0.5 w-full font-mono text-[12px]" /></td>
+                        <td className="px-2 py-1"><input value={p.name ?? ""} onChange={(e) => upd("name", e.target.value)} className="bg-transparent border border-transparent hover:border-[#3a3a3a] focus:border-amber-500 rounded px-1 py-0.5 w-full" /></td>
+                        <td className="px-2 py-1"><input type="number" value={p.price ?? 0} onChange={(e) => upd("price", num(e.target.value) ?? 0)} className="bg-transparent border border-transparent hover:border-[#3a3a3a] focus:border-amber-500 rounded px-1 py-0.5 w-full" /></td>
+                        <td className="px-2 py-1"><input type="number" value={p.width_cm ?? ""} onChange={(e) => upd("width_cm", num(e.target.value))} className="bg-transparent border border-transparent hover:border-[#3a3a3a] focus:border-amber-500 rounded px-1 py-0.5 w-full" /></td>
+                        <td className="px-2 py-1"><input type="number" value={p.height_cm ?? ""} onChange={(e) => upd("height_cm", num(e.target.value))} className="bg-transparent border border-transparent hover:border-[#3a3a3a] focus:border-amber-500 rounded px-1 py-0.5 w-full" /></td>
+                        <td className="px-2 py-1"><input type="number" value={p.depth_cm ?? ""} onChange={(e) => upd("depth_cm", num(e.target.value))} className="bg-transparent border border-transparent hover:border-[#3a3a3a] focus:border-amber-500 rounded px-1 py-0.5 w-full" /></td>
+                        <td className="px-2 py-1"><input type="number" value={p.weight_kg ?? ""} onChange={(e) => upd("weight_kg", num(e.target.value))} className="bg-transparent border border-transparent hover:border-[#3a3a3a] focus:border-amber-500 rounded px-1 py-0.5 w-full" /></td>
+                        <td className="px-2 py-1 text-center">
+                          <button
+                            onClick={() => setParsed((arr) => arr!.filter((_, idx) => idx !== i))}
+                            className="text-[#888] hover:text-red-400 transition-colors"
+                            title="Удалить строку"
+                          >
+                            <X size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
