@@ -518,7 +518,6 @@ const CatalogPage = () => {
           )}
           </>
           )}
-          )}
 
         </div>
       </main>
