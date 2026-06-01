@@ -254,6 +254,23 @@ const ProductPage = () => {
     return product.dimensions;
   }, [product, selectedVariations]);
 
+  // Подмена основного фото при выборе варианта (например, по породе)
+  const displayImages = useMemo(() => {
+    if (!product) return [];
+    const map = product.imagesByVariation;
+    if (!map) return product.images;
+    for (const [type, val] of Object.entries(selectedVariations)) {
+      if (!val) continue;
+      const key = `${type}:${val}`;
+      const url = map[key];
+      if (url) {
+        const rest = product.images.filter((i) => i !== url);
+        return [url, ...rest];
+      }
+    }
+    return product.images;
+  }, [product, selectedVariations]);
+
   // Build variation labels for cart
   const variationLabels = useMemo(() => {
     if (!product) return {};
@@ -360,7 +377,7 @@ const ProductPage = () => {
                 </div>
               ) : (
                 <ProductGallery
-                  images={product.images}
+                  images={displayImages}
                   name={product.name}
                   isNew={product.isNew}
                   oldPrice={product.oldPrice}
@@ -403,38 +420,32 @@ const ProductPage = () => {
               {/* Description */}
               <p className="text-foreground/80 leading-relaxed mb-6">{product.description}</p>
 
-              {/* ─── Variations ─── */}
+              {/* ─── Variations (dropdowns) ─── */}
               {product.variations && product.variations.length > 0 && (
-                <div className="space-y-5 mb-8">
-                  {product.variations.map((v) => (
-                    <div key={v.type}>
-                      <p className="text-sm font-medium text-foreground mb-2">{v.label}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {v.options.map((opt) => {
-                          const isSelected = selectedVariations[v.type] === opt.value;
-                          return (
-                            <button
-                              key={opt.value}
-                              onClick={() =>
-                                setSelectedVariations((prev) => ({
-                                  ...prev,
-                                  [v.type]: isSelected ? "" : opt.value,
-                                }))
-                              }
-                              className={cn(
-                                "px-4 py-2 rounded-xl text-sm border transition-all duration-300",
-                                isSelected
-                                  ? "border-primary bg-primary/10 text-primary"
-                                  : "border-border text-foreground/70 hover:border-primary/40"
-                              )}
-                            >
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                  {product.variations.map((v) => {
+                    const selected = selectedVariations[v.type] ?? "";
+                    return (
+                      <div key={v.type}>
+                        <label className="text-sm font-medium text-foreground mb-2 block">{v.label}</label>
+                        <select
+                          value={selected}
+                          onChange={(e) =>
+                            setSelectedVariations((prev) => ({ ...prev, [v.type]: e.target.value }))
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-background/60 border border-border text-foreground focus:border-primary focus:outline-none transition-colors text-sm appearance-none cursor-pointer bg-[url('data:image/svg+xml;utf8,<svg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%23999%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27><polyline%20points=%276%209%2012%2015%2018%209%27/></svg>')] bg-no-repeat bg-[right_14px_center] pr-10"
+                        >
+                          <option value="">— выберите —</option>
+                          {v.options.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
                               {opt.label}
-                            </button>
-                          );
-                        })}
+                              {opt.priceModifier ? ` (${opt.priceModifier > 0 ? "+" : ""}${opt.priceModifier.toLocaleString("ru-RU")} ₽)` : ""}
+                            </option>
+                          ))}
+                        </select>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
@@ -464,7 +475,7 @@ const ProductPage = () => {
                     productId: product.id,
                     name: product.name,
                     price: computedPrice,
-                    image: product.images[0],
+                    image: displayImages[0] ?? product.images[0],
                     variations: Object.keys(selectedVariations).length > 0 ? selectedVariations : undefined,
                     variationLabels: Object.keys(variationLabels).length > 0 ? variationLabels : undefined,
                     dimensions: currentDimensions,
@@ -500,11 +511,13 @@ const ProductPage = () => {
                 </Button>
               )}
 
-              {/* Details */}
-              <div className="mt-8 pt-6 border-t border-border/50">
-                <h3 className="text-sm font-semibold text-foreground mb-2 uppercase tracking-wider">Подробности</h3>
-                <p className="text-foreground/70 leading-relaxed text-sm">{product.details}</p>
-              </div>
+              {/* Details — показываем только если отличается от описания */}
+              {product.details && product.details.trim() !== product.description.trim() && (
+                <div className="mt-8 pt-6 border-t border-border/50">
+                  <h3 className="text-sm font-semibold text-foreground mb-2 uppercase tracking-wider">Подробности</h3>
+                  <p className="text-foreground/70 leading-relaxed text-sm">{product.details}</p>
+                </div>
+              )}
             </motion.div>
           </div>
 

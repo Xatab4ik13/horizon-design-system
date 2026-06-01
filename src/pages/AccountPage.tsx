@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { normalizePhone } from "@/lib/phone";
 
 interface OrderRow {
   id: string;
@@ -280,8 +281,10 @@ const AccountPage = () => {
                     <div>
                       <label className="text-sm text-muted-foreground mb-1.5 block">Телефон</label>
                       <input
+                        type="tel"
                         value={profile.phone ?? ""}
-                        onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value }))}
+                        onFocus={(e) => { if (!e.target.value) setProfile((p) => ({ ...p, phone: "+7 " })); }}
+                        onChange={(e) => setProfile((p) => ({ ...p, phone: normalizePhone(e.target.value) }))}
                         className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground focus:border-primary focus:outline-none transition-colors"
                       />
                     </div>
