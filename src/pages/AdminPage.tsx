@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { parse1CFile } from "@/lib/import1c";
 import { exportProductsTo1CXlsx, downloadBlob } from "@/lib/export1c";
 import { toast } from "sonner";
+import { invalidateHomepageContent, invalidateNavMenu, invalidateHomepageBlocks } from "@/hooks/useSiteContent";
 import {
   Package,
   ShoppingBag,
@@ -1604,6 +1605,119 @@ const emptyHomepage = {
   footer: { tagline: "", phone: "", email: "", copyright: "" },
 };
 
+// Module-level — НЕ объявлять внутри родителя, иначе input теряет фокус на каждом keystroke
+const TextField = ({
+  label,
+  value,
+  onChange,
+  placeholder,
+  multi,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  multi?: boolean;
+}) => (
+  <div>
+    <label className={ui.label}>{label}</label>
+    {multi ? (
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={ui.textarea}
+        placeholder={placeholder}
+      />
+    ) : (
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={ui.input}
+        placeholder={placeholder}
+      />
+    )}
+  </div>
+);
+
+const ImageField = ({
+  label,
+  value,
+  onChange,
+  accept = "image/*",
+  upload,
+}: {
+  label: string;
+  value: string;
+  onChange: (url: string) => void;
+  accept?: string;
+  upload: (file: File) => Promise<string>;
+}) => {
+  const [busy, setBusy] = useState(false);
+  const [fileName, setFileName] = useState<string>("");
+  return (
+    <div>
+      <label className={ui.label}>{label}</label>
+      <div className="flex items-start gap-3">
+        {value ? (
+          accept.startsWith("video") ? (
+            <video src={value} className="w-24 h-24 object-cover rounded bg-black" muted />
+          ) : (
+            <img src={value} alt="" className="w-24 h-24 object-cover rounded bg-[#1a1a1a]" />
+          )
+        ) : (
+          <div className="w-24 h-24 rounded bg-[#1a1a1a] flex items-center justify-center text-[#555]">
+            <ImageIcon size={28} />
+          </div>
+        )}
+        <div className="flex-1 grid gap-2">
+          <input
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className={ui.input}
+            placeholder="URL или загрузите файл ниже"
+          />
+          {fileName && (
+            <p className="text-[12px] text-[#888] truncate">Загружен: {fileName}</p>
+          )}
+          <label className={`${ui.btn} ${ui.btnSecondary} cursor-pointer self-start ${busy ? "opacity-50" : ""}`}>
+            <Upload size={16} /> {busy ? "Загрузка…" : "Загрузить файл"}
+            <input
+              type="file"
+              accept={accept}
+              hidden
+              onChange={async (e) => {
+                const f = e.target.files?.[0];
+                if (!f) return;
+                setBusy(true);
+                setFileName(f.name);
+                try {
+                  const url = await upload(f);
+                  onChange(url);
+                  toast.success(`Файл загружен: ${f.name}`);
+                } catch (err: any) {
+                  toast.error(err?.message ?? "Не удалось загрузить");
+                  setFileName("");
+                }
+                setBusy(false);
+                e.target.value = "";
+              }}
+            />
+          </label>
+          {value && (
+            <button
+              onClick={() => { onChange(""); setFileName(""); }}
+              className={`${ui.btn} ${ui.btnDanger} self-start`}
+              type="button"
+            >
+              <X size={16} /> Удалить / сбросить
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const HomepageEditor = () => {
   const [data, setData] = useState<any>(emptyHomepage);
   const [loading, setLoading] = useState(true);
@@ -1651,6 +1765,7 @@ const HomepageEditor = () => {
     setSaving(true);
     try {
       await adminCall("settings.set", { key: "homepage", value: data });
+      invalidateHomepageContent();
       toast.success("Главная сохранена. Обновите вкладку сайта.");
     } catch (e: any) {
       toast.error(e.message);
@@ -1662,110 +1777,8 @@ const HomepageEditor = () => {
     return await adminUploadFile("site-images", file, { prefix: "homepage/" });
   };
 
-  const TextField = ({
-    label,
-    value,
-    onChange,
-    placeholder,
-    multi,
-  }: {
-    label: string;
-    value: string;
-    onChange: (v: string) => void;
-    placeholder?: string;
-    multi?: boolean;
-  }) => (
-    <div>
-      <label className={ui.label}>{label}</label>
-      {multi ? (
-        <textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className={ui.textarea}
-          placeholder={placeholder}
-        />
-      ) : (
-        <input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className={ui.input}
-          placeholder={placeholder}
-        />
-      )}
-    </div>
-  );
-
-  const ImageField = ({
-    label,
-    value,
-    onChange,
-    accept = "image/*",
-  }: {
-    label: string;
-    value: string;
-    onChange: (url: string) => void;
-    accept?: string;
-  }) => {
-    const [busy, setBusy] = useState(false);
-    return (
-      <div>
-        <label className={ui.label}>{label}</label>
-        <div className="flex items-start gap-3">
-          {value ? (
-            accept.startsWith("video") ? (
-              <video src={value} className="w-24 h-24 object-cover rounded bg-black" muted />
-            ) : (
-              <img src={value} alt="" className="w-24 h-24 object-cover rounded bg-[#1a1a1a]" />
-            )
-          ) : (
-            <div className="w-24 h-24 rounded bg-[#1a1a1a] flex items-center justify-center text-[#555]">
-              <ImageIcon size={28} />
-            </div>
-          )}
-          <div className="flex-1 grid gap-2">
-            <input
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              className={ui.input}
-              placeholder="URL или загрузите файл ниже"
-            />
-            <label className={`${ui.btn} ${ui.btnSecondary} cursor-pointer self-start ${busy ? "opacity-50" : ""}`}>
-              <Upload size={16} /> {busy ? "Загрузка…" : "Загрузить файл"}
-              <input
-                type="file"
-                accept={accept}
-                hidden
-                onChange={async (e) => {
-                  const f = e.target.files?.[0];
-                  if (!f) return;
-                  setBusy(true);
-                  try {
-                    const url = await uploadImage(f);
-                    onChange(url);
-                  } catch (err: any) {
-                    toast.error(err?.message ?? "Не удалось загрузить");
-                  }
-                  setBusy(false);
-                  e.target.value = "";
-                }}
-              />
-            </label>
-            {value && (
-              <button
-                onClick={() => onChange("")}
-                className={`${ui.btn} ${ui.btnDanger} self-start`}
-                type="button"
-              >
-                <X size={16} /> Очистить (вернуть значение по умолчанию)
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   if (loading) return <p className="text-[#888]">Загрузка главной…</p>;
+
 
   const setHero = (k: string, v: string) =>
     setData({ ...data, hero: { ...data.hero, [k]: v } });
@@ -1828,6 +1841,7 @@ const HomepageEditor = () => {
               value={data.hero.videoUrl}
               onChange={(v) => setHero("videoUrl", v)}
               accept="video/mp4,video/*"
+              upload={uploadImage}
             />
           </div>
         </details>
@@ -1846,7 +1860,7 @@ const HomepageEditor = () => {
                 </div>
                 <TextField label="Описание" value={it.description} onChange={(v) => setPopularItem(i, "description", v)} multi />
                 <TextField label="Текст кнопки" value={it.cta} onChange={(v) => setPopularItem(i, "cta", v)} />
-                <ImageField label="Изображение" value={it.image} onChange={(v) => setPopularItem(i, "image", v)} />
+                <ImageField label="Изображение" value={it.image} onChange={(v) => setPopularItem(i, "image", v)} upload={uploadImage} />
               </div>
             ))}
           </div>
@@ -1868,7 +1882,7 @@ const HomepageEditor = () => {
                     Категория {i + 1} (по умолчанию: <b>{defaultCategories[i]}</b>)
                   </p>
                   <TextField label="Название" value={it.name} onChange={(v) => setCategoriesItem(i, "name", v)} />
-                  <ImageField label="Изображение" value={it.image} onChange={(v) => setCategoriesItem(i, "image", v)} />
+                  <ImageField label="Изображение" value={it.image} onChange={(v) => setCategoriesItem(i, "image", v)} upload={uploadImage} />
                 </div>
               ))}
             </div>
@@ -1983,6 +1997,7 @@ const NavMenuEditor = () => {
     setSaving(true);
     try {
       await adminCall("settings.set", { key: "nav_menu", value: { items: cleaned } });
+      invalidateNavMenu();
       toast.success("Меню сохранено. Обновите вкладку сайта.");
     } catch (e: any) { toast.error(e.message); }
     setSaving(false);
@@ -2071,6 +2086,7 @@ const BlocksOrderEditor = () => {
     setSaving(true);
     try {
       await adminCall("settings.set", { key: "homepage_blocks", value: { order } });
+      invalidateHomepageBlocks();
       toast.success("Порядок блоков сохранён. Обновите главную страницу.");
     } catch (e: any) { toast.error(e.message); }
     setSaving(false);

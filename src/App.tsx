@@ -25,6 +25,7 @@ const AccountPage = lazy(() => import("./pages/AccountPage"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AdminPage = lazy(() => import("./pages/AdminPage"));
+const AboutPage = lazy(() => import("./pages/AboutPage"));
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ const App = () => (
                   <Route path="/account" element={<AccountPage />} />
                   <Route path="/auth" element={<AuthPage />} />
                   <Route path="/admin" element={<AdminPage />} />
+                  <Route path="/about" element={<AboutPage />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
