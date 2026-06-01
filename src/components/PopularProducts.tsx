@@ -91,10 +91,14 @@ const PopularProducts = () => {
   }, [current]);
 
   useEffect(() => {
-    if (paused) return;
+    if (current >= showcaseItems.length) setCurrent(0);
+  }, [showcaseItems.length, current]);
+
+  useEffect(() => {
+    if (paused || showcaseItems.length < 2) return;
     const timer = setInterval(() => paginate(1), 3000);
     return () => clearInterval(timer);
-  }, [paused, paginate, current]);
+  }, [paused, paginate, current, showcaseItems.length]);
 
   const handleDragEnd = (_: any, info: PanInfo) => {
     const threshold = 40;
@@ -103,7 +107,8 @@ const PopularProducts = () => {
     else if (info.offset.x > threshold || velocity > 300) paginate(-1);
   };
 
-  const item = showcaseItems[current];
+  if (showcaseItems.length === 0) return null;
+  const item = showcaseItems[current] ?? showcaseItems[0];
 
   return (
     <section
