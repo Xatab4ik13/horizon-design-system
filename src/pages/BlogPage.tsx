@@ -117,7 +117,7 @@ const BlogPage = () => {
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: i * 0.08 }}
+                  transition={{ delay: Math.min(i, 5) * 0.06 }}
                   className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl overflow-hidden hover:border-primary/30 transition-all duration-300 group flex flex-col"
                 >
                   {post.cover_image && (
