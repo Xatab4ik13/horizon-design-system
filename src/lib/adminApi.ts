@@ -23,26 +23,49 @@ export async function adminCall<T = any>(
   passwordOverride?: string,
 ): Promise<T> {
   const password = passwordOverride ?? adminAuth.password ?? "";
-  const { data, error } = await supabase.functions.invoke("admin-api", {
-    body: { action, payload, password },
-    headers: { "x-admin-password": password },
-  });
-  if (error) {
-    // FunctionsHttpError содержит response в context
-    const ctx: any = (error as any).context;
-    let message = error.message;
-    if (ctx?.json) {
-      try {
-        const j = await ctx.json();
-        message = j.error ?? message;
-      } catch {
-        // ignore
+
+  // Ретрай для cold-start edge function: первый запрос часто отваливается
+  // с "Failed to send a request to the Edge Function" — повторяем до 2 раз.
+  let lastErr: any = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-api", {
+        body: { action, payload, password },
+        headers: { "x-admin-password": password },
+      });
+      if (error) {
+        const ctx: any = (error as any).context;
+        let message = error.message;
+        let status = ctx?.status;
+        if (ctx?.json) {
+          try {
+            const j = await ctx.json();
+            message = j.error ?? message;
+          } catch {
+            // ignore
+          }
+        }
+        // 401/400/403 — не ретраим, реальная ошибка
+        if (status && status >= 400 && status < 500) throw new Error(message);
+        lastErr = new Error(message);
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+          continue;
+        }
+        throw lastErr;
       }
+      if (data?.error) throw new Error(data.error);
+      return data;
+    } catch (e: any) {
+      lastErr = e;
+      // Сетевые / cold-start ошибки — ретраим
+      const msg = String(e?.message ?? "");
+      const isNetwork = /Failed to send|Failed to fetch|NetworkError|timeout|aborted/i.test(msg);
+      if (!isNetwork || attempt >= 2) throw e;
+      await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
     }
-    throw new Error(message);
   }
-  if (data?.error) throw new Error(data.error);
-  return data;
+  throw lastErr ?? new Error("Unknown error");
 }
 
 export async function adminLogin(password: string): Promise<boolean> {
