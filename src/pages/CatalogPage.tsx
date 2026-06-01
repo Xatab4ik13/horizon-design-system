@@ -11,6 +11,7 @@ import CatalogFilters from "@/components/CatalogFilters";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEO, { buildBreadcrumbJsonLd } from "@/components/SEO";
+import { usePageHeader } from "@/hooks/useSiteContent";
 import { cn } from "@/lib/utils";
 import categoryTable from "@/assets/category-table.png";
 import categoryChairs from "@/assets/category-chairs.png";
