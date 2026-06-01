@@ -67,6 +67,7 @@ const ProductGallery = ({
           <img
             src={images[active]}
             alt={name}
+            decoding="async"
             className="w-full h-full object-cover"
           />
           {isNew && (
@@ -116,7 +117,7 @@ const ProductGallery = ({
                 active === i ? "border-primary shadow-[0_0_12px_hsl(var(--primary)/0.3)]" : "border-border hover:border-primary/40"
               )}
             >
-              <img src={img} alt="" className="w-full h-full object-cover" />
+              <img src={img} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
             </button>
           ))}
           {hasAR && (

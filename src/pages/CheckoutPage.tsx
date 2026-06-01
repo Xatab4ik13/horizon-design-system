@@ -529,7 +529,7 @@ const CheckoutPage = () => {
                   <div className="space-y-3 mb-4 max-h-60 overflow-y-auto">
                     {items.map((item) => (
                       <div key={item.productId} className="flex gap-3">
-                        <img src={item.image} alt={item.name} className="w-14 h-14 object-cover rounded-lg shrink-0" />
+                        <img src={item.image} alt={item.name} loading="lazy" decoding="async" className="w-14 h-14 object-cover rounded-lg shrink-0" />
                         <div className="min-w-0">
                           <p className="text-foreground text-sm font-medium line-clamp-1">{item.name}</p>
                           {item.variationLabels && Object.keys(item.variationLabels).length > 0 && (

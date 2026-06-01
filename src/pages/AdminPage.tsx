@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { parse1CFile } from "@/lib/import1c";
 import { exportProductsTo1CXlsx, downloadBlob } from "@/lib/export1c";
 import { toast } from "sonner";
-import { invalidateHomepageContent, invalidateNavMenu, invalidateHomepageBlocks } from "@/hooks/useSiteContent";
+import { invalidateHomepageContent, invalidateNavMenu, invalidateHomepageBlocks, invalidatePagesContent, type PageKey } from "@/hooks/useSiteContent";
 import {
   Package,
   ShoppingBag,
@@ -1612,7 +1612,92 @@ const SettingsPanel = () => {
       <HomepageEditor />
       <ServicesDocsEditor />
       <AboutPageEditor />
+      <PagesHeadersEditor />
       <PasswordPanel />
+    </div>
+  );
+};
+
+// ===================================================================
+// PAGES HEADERS EDITOR — заголовок + подзаголовок для 5 страниц
+// ===================================================================
+const PAGES_META: { key: PageKey; label: string; defTitle: string; defSubtitle: string }[] = [
+  { key: "catalog",  label: "Каталог",            defTitle: "Каталог", defSubtitle: "" },
+  { key: "services", label: "Услуги",             defTitle: "Наши услуги", defSubtitle: "Полный цикл работ — от замера и проектирования до изготовления, доставки и монтажа" },
+  { key: "gallery",  label: "Галерея",            defTitle: "Галерея", defSubtitle: "Наши изделия в интерьерах — вдохновляйтесь реальными примерами" },
+  { key: "delivery", label: "Доставка и оплата",  defTitle: "Доставка и оплата", defSubtitle: "Мы работаем с надёжными транспортными компаниями и обеспечиваем безопасную упаковку каждого изделия ручной работы." },
+  { key: "contacts", label: "Контакты",           defTitle: "Контакты", defSubtitle: "Свяжитесь с нами любым удобным способом — мы всегда на связи" },
+];
+
+const PagesHeadersEditor = () => {
+  const [val, setVal] = useState<Record<string, { title: string; subtitle: string }>>({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    adminCall("settings.get", { key: "pages" })
+      .then((r) => {
+        const data = (r.data ?? {}) as Record<string, { title?: string; subtitle?: string }>;
+        const next: Record<string, { title: string; subtitle: string }> = {};
+        for (const p of PAGES_META) {
+          next[p.key] = {
+            title: data[p.key]?.title ?? "",
+            subtitle: data[p.key]?.subtitle ?? "",
+          };
+        }
+        setVal(next);
+        setLoading(false);
+      })
+      .catch((e) => { toast.error(e.message); setLoading(false); });
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await adminCall("settings.set", { key: "pages", value: val });
+      invalidatePagesContent();
+      toast.success("Заголовки страниц сохранены");
+    } catch (e: any) { toast.error(e.message); }
+    setSaving(false);
+  };
+
+  if (loading) return null;
+
+  return (
+    <div className={ui.card}>
+      <h2 className={`${ui.h2} mb-2`}>Заголовки страниц</h2>
+      <p className="text-[14px] text-[#888] mb-6">
+        Заголовок и подзаголовок в шапке каждой страницы. Пусто — используется значение по умолчанию.
+      </p>
+      <div className="grid gap-6">
+        {PAGES_META.map((p) => (
+          <div key={p.key} className="grid md:grid-cols-2 gap-4 pb-6 border-b border-[#3a3a3a] last:border-0 last:pb-0">
+            <div>
+              <label className={ui.label}>{p.label} — заголовок</label>
+              <input
+                value={val[p.key]?.title ?? ""}
+                onChange={(e) => setVal({ ...val, [p.key]: { ...val[p.key], title: e.target.value } })}
+                className={ui.input}
+                placeholder={p.defTitle}
+              />
+            </div>
+            <div>
+              <label className={ui.label}>{p.label} — подзаголовок</label>
+              <input
+                value={val[p.key]?.subtitle ?? ""}
+                onChange={(e) => setVal({ ...val, [p.key]: { ...val[p.key], subtitle: e.target.value } })}
+                className={ui.input}
+                placeholder={p.defSubtitle}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-3 mt-6 pt-6 border-t border-[#3a3a3a]">
+        <button onClick={save} disabled={saving} className={`${ui.btn} ${ui.btnPrimary} ${saving ? "opacity-50" : ""}`}>
+          <Check size={18} /> {saving ? "Сохранение…" : "Сохранить"}
+        </button>
+      </div>
     </div>
   );
 };

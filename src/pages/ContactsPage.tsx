@@ -10,6 +10,7 @@ import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import ContactForm from "@/components/ContactForm";
 import { supabase } from "@/integrations/supabase/client";
+import { usePageHeader } from "@/hooks/useSiteContent";
 
 interface Vacancy {
   id: string;
@@ -51,6 +52,7 @@ const contactInfo = [
 ];
 
 const ContactsPage = () => {
+  const header = usePageHeader("contacts", { title: "Контакты", subtitle: "Свяжитесь с нами любым удобным способом — мы всегда на связи" });
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
   const [vacanciesLoading, setVacanciesLoading] = useState(true);
 
@@ -100,9 +102,9 @@ const ContactsPage = () => {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">Контакты</h1>
+            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">{header.title}</h1>
             <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
-              Свяжитесь с нами любым удобным способом — мы всегда на связи
+              {header.subtitle}
             </p>
           </motion.div>
 

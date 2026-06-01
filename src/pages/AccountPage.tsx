@@ -225,7 +225,7 @@ const AccountPage = () => {
                               {items.map((it, i) => (
                                 <div key={i} className="flex gap-3 items-center">
                                   {it.image && (
-                                    <img src={it.image} alt={it.name} className="w-12 h-12 object-cover rounded-lg shrink-0" />
+                                    <img src={it.image} alt={it.name} loading="lazy" decoding="async" className="w-12 h-12 object-cover rounded-lg shrink-0" />
                                   )}
                                   <div className="flex-1 min-w-0">
                                     <p className="text-sm text-foreground line-clamp-1">{it.name}</p>

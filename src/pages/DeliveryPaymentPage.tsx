@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEO, { buildFAQJsonLd } from "@/components/SEO";
+import { usePageHeader } from "@/hooks/useSiteContent";
 import { Link } from "react-router-dom";
 
 
@@ -88,6 +89,7 @@ const paymentMethods = [
 
 // ─── Page ───
 const DeliveryPaymentPage = () => {
+  const header = usePageHeader("delivery", { title: "Доставка и оплата", subtitle: "Мы работаем с надёжными транспортными компаниями и обеспечиваем безопасную упаковку каждого изделия ручной работы." });
   return (
     <div
       className="min-h-screen"
@@ -122,11 +124,10 @@ const DeliveryPaymentPage = () => {
             className="text-center mb-16"
           >
             <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-              Доставка и оплата
+              {header.title}
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
-              Мы работаем с надёжными транспортными компаниями и обеспечиваем безопасную упаковку
-              каждого изделия ручной работы.
+              {header.subtitle}
             </p>
           </motion.div>
 

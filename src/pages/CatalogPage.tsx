@@ -11,6 +11,7 @@ import CatalogFilters from "@/components/CatalogFilters";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEO, { buildBreadcrumbJsonLd } from "@/components/SEO";
+import { usePageHeader } from "@/hooks/useSiteContent";
 import { cn } from "@/lib/utils";
 import categoryTable from "@/assets/category-table.png";
 import categoryChairs from "@/assets/category-chairs.png";
@@ -70,6 +71,7 @@ const categoryImages: Record<string, string> = {
 };
 
 const CatalogPage = () => {
+  const header = usePageHeader("catalog", { title: "Категории каталога", subtitle: "" });
   const [searchParams, setSearchParams] = useSearchParams();
   const { addItem } = useCart();
   const { products, loading: productsLoading } = useDbProducts();
@@ -202,10 +204,16 @@ const CatalogPage = () => {
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-4xl md:text-5xl text-center text-foreground mb-16"
+                className="text-4xl md:text-5xl text-center text-foreground mb-4"
               >
-                Категории каталога
+                {header.title || "Категории каталога"}
               </motion.h1>
+              {header.subtitle && (
+                <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12 text-lg">
+                  {header.subtitle}
+                </p>
+              )}
+
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {categories.map((cat, i) => (
