@@ -2105,7 +2105,12 @@ const HomepageEditor = () => {
                   <p className="text-[#888] text-sm">
                     Слайд {i + 1}{defaultPopular[i] ? <> (по умолчанию: <b>{defaultPopular[i]}</b>)</> : null}
                   </p>
-                  <EnabledToggle checked={it.enabled !== false} onChange={(v) => setPopularItem(i, "enabled", v as any)} />
+                  <div className="flex items-center gap-3">
+                    <EnabledToggle checked={it.enabled !== false} onChange={(v) => setPopularItem(i, "enabled", v as any)} />
+                    <button type="button" onClick={() => removePopularItem(i)} className={`${ui.btn} ${ui.btnDanger}`}>
+                      <X size={14} /> Удалить
+                    </button>
+                  </div>
                 </div>
                 <div className="grid md:grid-cols-2 gap-3">
                   <TextField label="Заголовок" value={it.title} onChange={(v) => setPopularItem(i, "title", v)} />
@@ -2116,6 +2121,9 @@ const HomepageEditor = () => {
                 <ImageField label="Изображение" value={it.image} onChange={(v) => setPopularItem(i, "image", v)} upload={uploadImage} />
               </div>
             ))}
+            <button type="button" onClick={addPopularItem} className={`${ui.btn} ${ui.btnSecondary} w-fit`}>
+              + Добавить слайд
+            </button>
           </div>
         </details>
 
@@ -2127,6 +2135,31 @@ const HomepageEditor = () => {
               value={data.categories.title}
               onChange={(v) => setData({ ...data, categories: { ...data.categories, title: v } })}
               placeholder="Категории каталога"
+            />
+            <div className="grid md:grid-cols-2 gap-4">
+              {data.categories.items.map((it: any, i: number) => (
+                <div key={i} className="border border-[#3a3a3a] rounded-lg p-4 grid gap-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-[#888] text-sm">
+                      Категория {i + 1}{defaultCategories[i] ? <> (по умолчанию: <b>{defaultCategories[i]}</b>)</> : null}
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <EnabledToggle checked={it.enabled !== false} onChange={(v) => setCategoriesItem(i, "enabled", v as any)} />
+                      <button type="button" onClick={() => removeCategoryItem(i)} className={`${ui.btn} ${ui.btnDanger}`}>
+                        <X size={14} /> Удалить
+                      </button>
+                    </div>
+                  </div>
+                  <TextField label="Название" value={it.name} onChange={(v) => setCategoriesItem(i, "name", v)} />
+                  <ImageField label="Изображение" value={it.image} onChange={(v) => setCategoriesItem(i, "image", v)} upload={uploadImage} />
+                </div>
+              ))}
+            </div>
+            <button type="button" onClick={addCategoryItem} className={`${ui.btn} ${ui.btnSecondary} w-fit`}>
+              + Добавить категорию
+            </button>
+          </div>
+        </details>
             />
             <div className="grid md:grid-cols-2 gap-4">
               {data.categories.items.map((it: any, i: number) => (
