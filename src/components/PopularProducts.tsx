@@ -61,14 +61,24 @@ const PopularProducts = () => {
   const [paused, setPaused] = useState(false);
   const content = useHomepageContent();
   const overrides = content.popular?.items ?? [];
-  const showcaseItems = defaultShowcaseItems.map((it, i) => ({
-    ...it,
-    title: overrides[i]?.title?.trim() || it.title,
-    tagline: overrides[i]?.tagline?.trim() || it.tagline,
-    description: overrides[i]?.description?.trim() || it.description,
-    cta: overrides[i]?.cta?.trim() || it.cta,
-    image: overrides[i]?.image?.trim() || it.image,
-  }));
+  const total = Math.max(defaultShowcaseItems.length, overrides.length);
+  const showcaseItems = Array.from({ length: total }, (_, i) => {
+    const def = defaultShowcaseItems[i];
+    const ov = overrides[i];
+    const base = def ?? {
+      title: "", tagline: "", description: "", cta: "Выбрать", image: "",
+      link: "/catalog", bg: "radial-gradient(ellipse at 50% 50%, hsl(25 40% 12%) 0%, hsl(20 20% 6%) 50%, hsl(0 0% 2%) 100%)",
+    };
+    return {
+      ...base,
+      title: ov?.title?.trim() || base.title,
+      tagline: ov?.tagline?.trim() || base.tagline,
+      description: ov?.description?.trim() || base.description,
+      cta: ov?.cta?.trim() || base.cta,
+      image: ov?.image?.trim() || base.image,
+      enabled: ov?.enabled !== false,
+    };
+  }).filter((it) => it.enabled && it.title);
 
   const paginate = useCallback((dir: number) => {
     setDirection(dir);

@@ -20,11 +20,17 @@ const defaultCategories = [
 const CategoriesSection = () => {
   const content = useHomepageContent();
   const overrides = content.categories?.items ?? [];
-  const categories = defaultCategories.map((c, i) => ({
-    ...c,
-    name: overrides[i]?.name?.trim() || c.name,
-    image: overrides[i]?.image?.trim() || c.image,
-  }));
+  const total = Math.max(defaultCategories.length, overrides.length);
+  const categories = Array.from({ length: total }, (_, i) => {
+    const def = defaultCategories[i];
+    const ov = overrides[i];
+    return {
+      name: ov?.name?.trim() || def?.name || "",
+      slug: def?.slug || `extra-${i}`,
+      image: ov?.image?.trim() || def?.image || "",
+      enabled: ov?.enabled !== false,
+    };
+  }).filter((c) => c.enabled && c.name);
   const title = content.categories?.title?.trim() || "Категории каталога";
 
   return (
