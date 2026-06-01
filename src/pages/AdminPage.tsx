@@ -2160,23 +2160,6 @@ const HomepageEditor = () => {
             </button>
           </div>
         </details>
-            />
-            <div className="grid md:grid-cols-2 gap-4">
-              {data.categories.items.map((it: any, i: number) => (
-                <div key={i} className="border border-[#3a3a3a] rounded-lg p-4 grid gap-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-[#888] text-sm">
-                      Категория {i + 1}{defaultCategories[i] ? <> (по умолчанию: <b>{defaultCategories[i]}</b>)</> : null}
-                    </p>
-                    <EnabledToggle checked={it.enabled !== false} onChange={(v) => setCategoriesItem(i, "enabled", v as any)} />
-                  </div>
-                  <TextField label="Название" value={it.name} onChange={(v) => setCategoriesItem(i, "name", v)} />
-                  <ImageField label="Изображение" value={it.image} onChange={(v) => setCategoriesItem(i, "image", v)} upload={uploadImage} />
-                </div>
-              ))}
-            </div>
-          </div>
-        </details>
 
         <details className="border border-[#3a3a3a] rounded-lg p-4">
           <summary className={`${ui.h3} cursor-pointer`}>Преимущества</summary>
