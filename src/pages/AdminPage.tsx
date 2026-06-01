@@ -1564,6 +1564,11 @@ const SettingsPanel = () => {
             "ID города-отправителя в ПЭК",
             "из ЛК ПЭК (например, 50001)",
           )}
+          {field(
+            "cdek_city_code",
+            "Код города-отправителя в СДЭК",
+            "необяз., иначе по названию города (напр. 44)",
+          )}
         </div>
         <div className="flex gap-3 mt-6 pt-6 border-t border-[#3a3a3a]">
           <button
