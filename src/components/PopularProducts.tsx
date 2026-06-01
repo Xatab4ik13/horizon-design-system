@@ -61,14 +61,24 @@ const PopularProducts = () => {
   const [paused, setPaused] = useState(false);
   const content = useHomepageContent();
   const overrides = content.popular?.items ?? [];
-  const showcaseItems = defaultShowcaseItems.map((it, i) => ({
-    ...it,
-    title: overrides[i]?.title?.trim() || it.title,
-    tagline: overrides[i]?.tagline?.trim() || it.tagline,
-    description: overrides[i]?.description?.trim() || it.description,
-    cta: overrides[i]?.cta?.trim() || it.cta,
-    image: overrides[i]?.image?.trim() || it.image,
-  }));
+  const total = Math.max(defaultShowcaseItems.length, overrides.length);
+  const showcaseItems = Array.from({ length: total }, (_, i) => {
+    const def = defaultShowcaseItems[i];
+    const ov = overrides[i];
+    const base = def ?? {
+      title: "", tagline: "", description: "", cta: "Выбрать", image: "",
+      link: "/catalog", bg: "radial-gradient(ellipse at 50% 50%, hsl(25 40% 12%) 0%, hsl(20 20% 6%) 50%, hsl(0 0% 2%) 100%)",
+    };
+    return {
+      ...base,
+      title: ov?.title?.trim() || base.title,
+      tagline: ov?.tagline?.trim() || base.tagline,
+      description: ov?.description?.trim() || base.description,
+      cta: ov?.cta?.trim() || base.cta,
+      image: ov?.image?.trim() || base.image,
+      enabled: ov?.enabled !== false,
+    };
+  }).filter((it) => it.enabled && it.title);
 
   const paginate = useCallback((dir: number) => {
     setDirection(dir);
@@ -81,10 +91,14 @@ const PopularProducts = () => {
   }, [current]);
 
   useEffect(() => {
-    if (paused) return;
+    if (current >= showcaseItems.length) setCurrent(0);
+  }, [showcaseItems.length, current]);
+
+  useEffect(() => {
+    if (paused || showcaseItems.length < 2) return;
     const timer = setInterval(() => paginate(1), 3000);
     return () => clearInterval(timer);
-  }, [paused, paginate, current]);
+  }, [paused, paginate, current, showcaseItems.length]);
 
   const handleDragEnd = (_: any, info: PanInfo) => {
     const threshold = 40;
@@ -93,7 +107,8 @@ const PopularProducts = () => {
     else if (info.offset.x > threshold || velocity > 300) paginate(-1);
   };
 
-  const item = showcaseItems[current];
+  if (showcaseItems.length === 0) return null;
+  const item = showcaseItems[current] ?? showcaseItems[0];
 
   return (
     <section

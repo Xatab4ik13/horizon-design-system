@@ -1588,18 +1588,17 @@ const SettingsPanel = () => {
 const emptyHomepage = {
   hero: { marqueeText: "", videoUrl: "" },
   popular: {
-    items: [
-      { title: "", tagline: "", description: "", cta: "", image: "" },
-      { title: "", tagline: "", description: "", cta: "", image: "" },
-    ],
+    items: Array.from({ length: 10 }, () => ({
+      title: "", tagline: "", description: "", cta: "", image: "", enabled: true,
+    })),
   },
   categories: {
     title: "",
-    items: Array.from({ length: 6 }, () => ({ name: "", image: "" })),
+    items: Array.from({ length: 12 }, () => ({ name: "", image: "", enabled: true })),
   },
   advantages: {
     title: "",
-    items: Array.from({ length: 4 }, () => ({ title: "", desc: "" })),
+    items: Array.from({ length: 8 }, () => ({ title: "", desc: "", enabled: true })),
   },
   contact: { title: "", subtitle: "", consent: "", submitLabel: "" },
   footer: { tagline: "", phone: "", email: "", copyright: "" },
@@ -1817,6 +1816,17 @@ const HomepageEditor = () => {
     "Индивидуальный подход",
     "Быстрая доставка",
   ];
+  const EnabledToggle = ({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) => (
+    <label className="flex items-center gap-2 text-[13px] text-[#aaa] cursor-pointer select-none">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="accent-amber-500 w-4 h-4"
+      />
+      Показывать на сайте
+    </label>
+  );
 
   return (
     <div className={ui.card}>
@@ -1851,9 +1861,12 @@ const HomepageEditor = () => {
           <div className="grid gap-6 mt-4">
             {data.popular.items.map((it: any, i: number) => (
               <div key={i} className="border border-[#3a3a3a] rounded-lg p-4 grid gap-3">
-                <p className="text-[#888] text-sm">
-                  Слайд {i + 1} (по умолчанию: <b>{defaultPopular[i]}</b>)
-                </p>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[#888] text-sm">
+                    Слайд {i + 1}{defaultPopular[i] ? <> (по умолчанию: <b>{defaultPopular[i]}</b>)</> : null}
+                  </p>
+                  <EnabledToggle checked={it.enabled !== false} onChange={(v) => setPopularItem(i, "enabled", v as any)} />
+                </div>
                 <div className="grid md:grid-cols-2 gap-3">
                   <TextField label="Заголовок" value={it.title} onChange={(v) => setPopularItem(i, "title", v)} />
                   <TextField label="Подзаголовок (tagline)" value={it.tagline} onChange={(v) => setPopularItem(i, "tagline", v)} />
@@ -1878,9 +1891,12 @@ const HomepageEditor = () => {
             <div className="grid md:grid-cols-2 gap-4">
               {data.categories.items.map((it: any, i: number) => (
                 <div key={i} className="border border-[#3a3a3a] rounded-lg p-4 grid gap-3">
-                  <p className="text-[#888] text-sm">
-                    Категория {i + 1} (по умолчанию: <b>{defaultCategories[i]}</b>)
-                  </p>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-[#888] text-sm">
+                      Категория {i + 1}{defaultCategories[i] ? <> (по умолчанию: <b>{defaultCategories[i]}</b>)</> : null}
+                    </p>
+                    <EnabledToggle checked={it.enabled !== false} onChange={(v) => setCategoriesItem(i, "enabled", v as any)} />
+                  </div>
                   <TextField label="Название" value={it.name} onChange={(v) => setCategoriesItem(i, "name", v)} />
                   <ImageField label="Изображение" value={it.image} onChange={(v) => setCategoriesItem(i, "image", v)} upload={uploadImage} />
                 </div>
@@ -1901,9 +1917,12 @@ const HomepageEditor = () => {
             <div className="grid md:grid-cols-2 gap-4">
               {data.advantages.items.map((it: any, i: number) => (
                 <div key={i} className="border border-[#3a3a3a] rounded-lg p-4 grid gap-3">
-                  <p className="text-[#888] text-sm">
-                    Пункт {i + 1} (по умолчанию: <b>{defaultAdvantages[i]}</b>)
-                  </p>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-[#888] text-sm">
+                      Пункт {i + 1}{defaultAdvantages[i] ? <> (по умолчанию: <b>{defaultAdvantages[i]}</b>)</> : null}
+                    </p>
+                    <EnabledToggle checked={it.enabled !== false} onChange={(v) => setAdvantagesItem(i, "enabled", v as any)} />
+                  </div>
                   <TextField label="Заголовок" value={it.title} onChange={(v) => setAdvantagesItem(i, "title", v)} />
                   <TextField label="Описание" value={it.desc} onChange={(v) => setAdvantagesItem(i, "desc", v)} multi />
                 </div>

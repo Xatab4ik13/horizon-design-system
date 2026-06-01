@@ -26,11 +26,17 @@ const cardVariants = {
 const AdvantagesSection = () => {
   const content = useHomepageContent();
   const overrides = content.advantages?.items ?? [];
-  const advantages = defaultAdvantages.map((a, i) => ({
-    ...a,
-    title: overrides[i]?.title?.trim() || a.title,
-    desc: overrides[i]?.desc?.trim() || a.desc,
-  }));
+  const total = Math.max(defaultAdvantages.length, overrides.length);
+  const advantages = Array.from({ length: total }, (_, i) => {
+    const def = defaultAdvantages[i];
+    const ov = overrides[i];
+    return {
+      icon: def?.icon ?? Hand,
+      title: ov?.title?.trim() || def?.title || "",
+      desc: ov?.desc?.trim() || def?.desc || "",
+      enabled: ov?.enabled !== false,
+    };
+  }).filter((a) => a.enabled && a.title);
   const sectionTitle = content.advantages?.title?.trim() || "Почему выбирают нас";
 
   return (
