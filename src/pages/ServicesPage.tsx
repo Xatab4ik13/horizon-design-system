@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import {
   ChevronRight, Hammer, Ruler, PaintBucket, Wrench,
   FileDown, ArrowRight, CheckCircle2, Clock, Phone,
@@ -8,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
+import { supabase } from "@/integrations/supabase/client";
+
+type ServiceDoc = { name: string; desc: string; url?: string; format?: string };
 
 const services = [
   {
@@ -48,13 +52,26 @@ const services = [
   },
 ];
 
-const downloadFiles = [
+const defaultDownloadFiles: ServiceDoc[] = [
   { name: "Прайс-лист 2026", desc: "Актуальные цены на все виды работ", format: "PDF, 1.2 МБ" },
   { name: "Каталог материалов", desc: "Породы дерева, покрытия, фурнитура", format: "PDF, 3.8 МБ" },
   { name: "Бриф на заказ мебели", desc: "Заполните и отправьте нам для быстрого расчёта", format: "PDF, 0.5 МБ" },
 ];
 
 const ServicesPage = () => {
+  const [downloadFiles, setDownloadFiles] = useState<ServiceDoc[]>(defaultDownloadFiles);
+
+  useEffect(() => {
+    supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "services_docs")
+      .maybeSingle()
+      .then(({ data }) => {
+        const items = (data?.value as { items?: ServiceDoc[] } | null)?.items;
+        if (Array.isArray(items) && items.length > 0) setDownloadFiles(items);
+      });
+  }, []);
   return (
     <div
       className="min-h-screen"
