@@ -475,7 +475,7 @@ const ProductPage = () => {
                     productId: product.id,
                     name: product.name,
                     price: computedPrice,
-                    image: product.images[0],
+                    image: displayImages[0] ?? product.images[0],
                     variations: Object.keys(selectedVariations).length > 0 ? selectedVariations : undefined,
                     variationLabels: Object.keys(variationLabels).length > 0 ? variationLabels : undefined,
                     dimensions: currentDimensions,
