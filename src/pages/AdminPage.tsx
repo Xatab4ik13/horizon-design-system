@@ -2007,9 +2007,25 @@ const HomepageEditor = () => {
     items[i] = { ...items[i], [k]: v };
     setData({ ...data, popular: { items } });
   };
+  const addPopularItem = () => {
+    const items = [...data.popular.items, { title: "", tagline: "", description: "", cta: "Выбрать", image: "", enabled: true }];
+    setData({ ...data, popular: { items } });
+  };
+  const removePopularItem = (i: number) => {
+    const items = data.popular.items.filter((_: any, idx: number) => idx !== i);
+    setData({ ...data, popular: { items } });
+  };
   const setCategoriesItem = (i: number, k: string, v: string) => {
     const items = [...data.categories.items];
     items[i] = { ...items[i], [k]: v };
+    setData({ ...data, categories: { ...data.categories, items } });
+  };
+  const addCategoryItem = () => {
+    const items = [...data.categories.items, { name: "", image: "", enabled: true }];
+    setData({ ...data, categories: { ...data.categories, items } });
+  };
+  const removeCategoryItem = (i: number) => {
+    const items = data.categories.items.filter((_: any, idx: number) => idx !== i);
     setData({ ...data, categories: { ...data.categories, items } });
   };
   const setAdvantagesItem = (i: number, k: string, v: string) => {
