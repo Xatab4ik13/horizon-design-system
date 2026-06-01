@@ -130,6 +130,19 @@ const CatalogPage = () => {
     return result;
   }, [products, activeCategory, activeSubcategory, selectedWoods, priceRange, inStockOnly, sortBy]);
 
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [activeCategory, activeSubcategory, selectedWoods, priceRange, inStockOnly, sortBy]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
+  const visibleProducts = useMemo(
+    () => filteredProducts.slice(0, page * PAGE_SIZE),
+    [filteredProducts, page]
+  );
+
+
+
   const toggleWood = (wood: string) => {
     setSelectedWoods((prev) =>
       prev.includes(wood) ? prev.filter((w) => w !== wood) : [...prev, wood]
