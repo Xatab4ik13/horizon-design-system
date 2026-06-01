@@ -458,15 +458,34 @@ const ProductPage = () => {
                   { icon: Droplets, label: "Покрытие", value: currentCoating },
                   { icon: Weight, label: "Вес", value: product.weight },
                   { icon: Check, label: "Наличие", value: product.inStock ? "В наличии" : "Под заказ (2–3 нед.)" },
-                ].map((spec) => (
-                  <div key={spec.label} className="flex items-center gap-3 p-3 bg-card/50 rounded-xl border border-border/50">
-                    <spec.icon className="h-4 w-4 text-primary shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-[11px] text-muted-foreground">{spec.label}</p>
-                      <p className="text-sm font-medium text-foreground truncate">{spec.value}</p>
+                ].map((spec) => {
+                  const isWood = spec.label === "Порода";
+                  return (
+                    <div
+                      key={spec.label}
+                      className={`flex items-center gap-3 p-3 rounded-xl border ${
+                        isWood
+                          ? "border-amber-900/40"
+                          : "bg-card/50 border-border/50"
+                      }`}
+                      style={
+                        isWood
+                          ? {
+                              background:
+                                "linear-gradient(135deg, hsl(28 45% 22%) 0%, hsl(25 35% 14%) 40%, hsl(22 28% 10%) 100%)",
+                              boxShadow: "inset 0 0 30px hsl(20 30% 5% / 0.6)",
+                            }
+                          : undefined
+                      }
+                    >
+                      <spec.icon className={`h-4 w-4 shrink-0 ${isWood ? "text-amber-200" : "text-primary"}`} />
+                      <div className="min-w-0">
+                        <p className={`text-[11px] ${isWood ? "text-amber-100/70" : "text-muted-foreground"}`}>{spec.label}</p>
+                        <p className={`text-sm font-medium truncate ${isWood ? "text-amber-50" : "text-foreground"}`}>{spec.value}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* ─── Actions ─── */}

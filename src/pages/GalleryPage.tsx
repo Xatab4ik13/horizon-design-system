@@ -58,8 +58,8 @@ const GalleryPage = () => {
             </p>
           </motion.div>
 
-          {/* Masonry grid */}
-          <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
+          {/* Uniform grid — выровненные ряды */}
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
             {galleryItems.map((item, i) => (
               <motion.div
                 key={i}
@@ -67,13 +67,13 @@ const GalleryPage = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-80px" }}
                 transition={{ duration: 0.5, delay: Math.min(i, 5) * 0.06, ease: [0.25, 0.1, 0.25, 1] }}
-                className="break-inside-avoid group cursor-pointer relative overflow-hidden rounded-2xl"
+                className="group cursor-pointer relative overflow-hidden rounded-2xl aspect-[4/3]"
                 onClick={() => setLightbox(i)}
               >
                 <img
                   src={item.src}
                   alt={item.title}
-                  className="w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   loading="lazy"
                   decoding="async"
                 />
