@@ -133,6 +133,7 @@ const BlogPostPage = () => {
                 <img
                   src={post.cover_image}
                   alt={post.title}
+                  decoding="async"
                   className="w-full rounded-2xl mb-8 object-cover"
                 />
               )}

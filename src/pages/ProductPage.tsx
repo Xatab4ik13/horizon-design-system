@@ -67,6 +67,7 @@ const ProductGallery = ({
           <img
             src={images[active]}
             alt={name}
+            decoding="async"
             className="w-full h-full object-cover"
           />
           {isNew && (
