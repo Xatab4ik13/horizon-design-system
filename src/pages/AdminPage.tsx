@@ -470,9 +470,15 @@ const ProductsPanel = () => {
 
   const remove = async (id: string) => {
     if (!confirm("Удалить товар?")) return;
-    await adminCall("products.delete", { id });
-    toast.success("Удалено");
-    load();
+    const prev = items;
+    setItems((arr) => arr.filter((x) => x.id !== id));
+    try {
+      await adminCall("products.delete", { id });
+      toast.success("Удалено");
+    } catch (e: any) {
+      setItems(prev);
+      toast.error(e.message ?? "Не удалось удалить");
+    }
   };
 
   if (editing) {
