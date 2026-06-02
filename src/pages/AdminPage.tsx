@@ -24,6 +24,7 @@ import {
   Settings,
   ExternalLink,
   ImageIcon,
+  Layout,
 } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 
