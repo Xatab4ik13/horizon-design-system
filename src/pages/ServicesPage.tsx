@@ -71,7 +71,7 @@ const ServicesPage = () => {
   const [downloadFiles, setDownloadFiles] = useState<ServiceDoc[]>(defaultDownloadFiles);
 
   const services = (cms.items?.length ? cms.items : defaultServices)
-    .filter((s) => s.enabled !== false)
+    .filter((s) => (s as { enabled?: boolean }).enabled !== false)
     .map((s, i) => ({
       ...defaultServices[i],
       ...s,
