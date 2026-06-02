@@ -1582,33 +1582,39 @@ const BlogPanel = () => {
           Новая статья
         </button>
       </div>
-      <div className="grid gap-3">
-        {items.map((p) => (
-          <div key={p.id} className={`${ui.card} flex items-start gap-4`}>
-            {p.cover_image && (
-              <img src={p.cover_image} alt="" className="w-24 h-24 object-cover rounded-lg" />
-            )}
-            <div className="flex-1">
-              <div className="font-bold text-[18px]">{p.title}</div>
-              <div className="text-[14px] text-[#888] mt-1">/{p.slug}</div>
-              {p.excerpt && <div className="text-[15px] text-[#bbb] mt-2">{p.excerpt}</div>}
-              <div className="text-[13px] mt-2">
-                {p.is_published ? (
-                  <span className="text-[#7ad07a]">● Опубликовано</span>
-                ) : (
-                  <span className="text-[#888]">○ Черновик</span>
-                )}
+      {loading ? (
+        <p className="text-[#888] py-8 text-center">Загрузка статей…</p>
+      ) : items.length === 0 ? (
+        <p className="text-[#888] py-8 text-center">Статей пока нет. Создайте первую — кнопка «Новая статья» сверху.</p>
+      ) : (
+        <div className="grid gap-3">
+          {items.map((p) => (
+            <div key={p.id} className={`${ui.card} flex items-start gap-4`}>
+              {p.cover_image && (
+                <img src={p.cover_image} alt="" className="w-24 h-24 object-cover rounded-lg" />
+              )}
+              <div className="flex-1">
+                <div className="font-bold text-[18px]">{p.title}</div>
+                <div className="text-[14px] text-[#888] mt-1">/{p.slug}</div>
+                {p.excerpt && <div className="text-[15px] text-[#bbb] mt-2">{p.excerpt}</div>}
+                <div className="text-[13px] mt-2">
+                  {p.is_published ? (
+                    <span className="text-[#7ad07a]">● Опубликовано</span>
+                  ) : (
+                    <span className="text-[#888]">○ Черновик</span>
+                  )}
+                </div>
               </div>
+              <button onClick={() => setEditing(p)} className={`${ui.btn} ${ui.btnSecondary}`}>
+                <Pencil size={16} />
+              </button>
+              <button onClick={() => remove(p.id)} className={`${ui.btn} ${ui.btnDanger}`}>
+                <Trash2 size={16} />
+              </button>
             </div>
-            <button onClick={() => setEditing(p)} className={`${ui.btn} ${ui.btnSecondary}`}>
-              <Pencil size={16} />
-            </button>
-            <button onClick={() => remove(p.id)} className={`${ui.btn} ${ui.btnDanger}`}>
-              <Trash2 size={16} />
-            </button>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
