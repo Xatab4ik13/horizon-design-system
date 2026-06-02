@@ -410,6 +410,7 @@ const Import1CBlock = ({
                     <th className="px-2 py-2 w-20">В, см</th>
                     <th className="px-2 py-2 w-20">Г, см</th>
                     <th className="px-2 py-2 w-20">Вес, кг</th>
+                    <th className="px-2 py-2 w-16" title="Фото из 1С">Фото</th>
                     <th className="px-2 py-2 w-10"></th>
                   </tr>
                 </thead>
