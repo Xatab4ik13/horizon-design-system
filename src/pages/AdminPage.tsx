@@ -107,6 +107,7 @@ const AdminPage = () => {
         {tab === "requests" && <RequestsPanel />}
         {tab === "vacancies" && <VacanciesPanel />}
         {tab === "blog" && <BlogPanel />}
+        {tab === "content" && <ContentPanel />}
         {tab === "settings" && <SettingsPanel />}
       </div>
     </div>
