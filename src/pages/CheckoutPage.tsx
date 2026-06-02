@@ -451,12 +451,32 @@ const CheckoutPage = () => {
                       </label>
                     </div>
 
-                    {!canProceedToPayment && !isPickup && (
+                    {isPickup ? (
+                      <div className="flex items-start gap-2 text-xs text-primary/90 bg-primary/5 border border-primary/20 rounded-xl p-3 mb-4">
+                        <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
+                        <span>Самовывоз выбран. Можно переходить к оплате.</span>
+                      </div>
+                    ) : !quotes ? (
+                      <div className="flex items-start gap-2 text-xs text-foreground/80 bg-amber-500/5 border border-amber-500/30 rounded-xl p-3 mb-4">
+                        <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-amber-500" />
+                        <div>
+                          <p className="font-medium text-foreground mb-1">Что дальше:</p>
+                          <ol className="list-decimal list-inside space-y-0.5 text-muted-foreground">
+                            <li>Введите город и адрес</li>
+                            <li>Нажмите «Рассчитать стоимость»</li>
+                            <li>Выберите тариф — кнопка «Далее» станет активной</li>
+                          </ol>
+                          <p className="mt-2 text-muted-foreground">
+                            Заказ будет оформлен после уточнения стоимости доставки.
+                          </p>
+                        </div>
+                      </div>
+                    ) : !selectedQuote?.ok ? (
                       <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
                         <AlertCircle className="h-3.5 w-3.5 text-primary/60" />
-                        <span>Укажите адрес, рассчитайте и выберите способ доставки</span>
+                        <span>Выберите подходящий тариф доставки из списка выше.</span>
                       </div>
-                    )}
+                    ) : null}
 
                     <div className="flex gap-3">
                       <Button variant="outline" onClick={() => setStep(0)} className="rounded-xl">Назад</Button>
@@ -469,6 +489,7 @@ const CheckoutPage = () => {
                         Далее: Оплата
                       </Button>
                     </div>
+
                   </motion.div>
                 )}
 
