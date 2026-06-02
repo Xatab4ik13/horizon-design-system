@@ -26,13 +26,15 @@ export async function adminCall<T = any>(
 ): Promise<T> {
   const password = passwordOverride ?? adminAuth.password ?? "";
 
-  // Ретрай для cold-start edge function: первый запрос часто отваливается
-  // с "Failed to send a request to the Edge Function" — повторяем до 2 раз.
+  // Ретрай для cold-start edge function: первый запрос может отвалиться
+  // сетевой ошибкой — делаем 1 повтор. Таймаут на запрос укоротили до 15с,
+  // чтобы при массовых параллельных вызовах (Контент сайта / Настройки)
+  // суммарная задержка не уходила в минуты.
   let lastErr: any = null;
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), 30000);
+      const timeout = window.setTimeout(() => controller.abort(), 15000);
       const response = await fetch(ADMIN_FUNCTION_URL, {
         method: "POST",
         headers: {
@@ -50,11 +52,10 @@ export async function adminCall<T = any>(
       if (!response.ok) {
         const message = data?.error ?? `Ошибка админ API: ${response.status}`;
         const status = response.status;
-        // 401/400/403 — не ретраим, реальная ошибка
         if (status && status >= 400 && status < 500) throw new Error(message);
         lastErr = new Error(message);
-        if (attempt < 2) {
-          await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+        if (attempt < 1) {
+          await new Promise((r) => setTimeout(r, 400));
           continue;
         }
         throw lastErr;
@@ -63,11 +64,10 @@ export async function adminCall<T = any>(
       return data;
     } catch (e: any) {
       lastErr = e;
-      // Сетевые / cold-start ошибки — ретраим
       const msg = String(e?.message ?? "");
       const isNetwork = /Failed to send|Failed to fetch|NetworkError|timeout|aborted/i.test(msg);
-      if (!isNetwork || attempt >= 2) throw e;
-      await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+      if (!isNetwork || attempt >= 1) throw e;
+      await new Promise((r) => setTimeout(r, 400));
     }
   }
   throw lastErr ?? new Error("Unknown error");
@@ -120,6 +120,30 @@ export function invalidateAdminCache(actionPrefix?: string) {
   }
   for (const k of Array.from(swrCache.keys())) {
     if (k.startsWith(actionPrefix)) swrCache.delete(k);
+  }
+}
+
+// Кладёт значение в SWR-кэш в том виде, в каком его вернул бы adminCall.
+// Полезно для batch-префетча (settings.getMulti), чтобы последующие
+// adminCallSWR("settings.get", { key }) сразу отдавали данные.
+export function seedAdminCache(action: string, payload: any, value: any) {
+  const key = action + ":" + JSON.stringify(payload ?? null);
+  swrCache.set(key, value);
+}
+
+// Префетч группы настроек одним запросом. Результат раскладывается в кэш
+// под ключами отдельных settings.get-вызовов, поэтому редакторы получат
+// данные мгновенно через adminCallSWR.
+export async function prefetchAdminSettings(keys: string[]): Promise<void> {
+  if (!keys.length) return;
+  try {
+    const r = await adminCall<{ data: Record<string, any> }>("settings.getMulti", { keys });
+    const map = r?.data ?? {};
+    for (const k of keys) {
+      seedAdminCache("settings.get", { key: k }, { data: map[k] ?? {} });
+    }
+  } catch {
+    // тихо: редакторы откатятся к индивидуальным запросам
   }
 }
 

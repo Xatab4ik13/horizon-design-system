@@ -1,5 +1,5 @@
 import { useEffect, useState, FormEvent } from "react";
-import { adminAuth, adminCall, adminCallSWR, getCachedAdminCall, invalidateAdminCache, adminLogin, adminUploadFile } from "@/lib/adminApi";
+import { adminAuth, adminCall, adminCallSWR, getCachedAdminCall, invalidateAdminCache, adminLogin, adminUploadFile, prefetchAdminSettings } from "@/lib/adminApi";
 import { supabase } from "@/integrations/supabase/client";
 import { parse1CFile } from "@/lib/import1c";
 import { exportProductsTo1CXlsx, downloadBlob } from "@/lib/export1c";
@@ -1434,6 +1434,7 @@ const slugify = (s: string) =>
 const BlogPanel = () => {
   const cached = getCachedAdminCall<{ data: any[] }>("blog.list");
   const [items, setItems] = useState<any[]>(cached?.data ?? []);
+  const [loading, setLoading] = useState(!cached);
   const [editing, setEditing] = useState<any | null>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -1445,6 +1446,8 @@ const BlogPanel = () => {
       setItems(r.data ?? []);
     } catch (e: any) {
       toast.error(e.message);
+    } finally {
+      setLoading(false);
     }
   };
   useEffect(() => {
@@ -1579,33 +1582,39 @@ const BlogPanel = () => {
           Новая статья
         </button>
       </div>
-      <div className="grid gap-3">
-        {items.map((p) => (
-          <div key={p.id} className={`${ui.card} flex items-start gap-4`}>
-            {p.cover_image && (
-              <img src={p.cover_image} alt="" className="w-24 h-24 object-cover rounded-lg" />
-            )}
-            <div className="flex-1">
-              <div className="font-bold text-[18px]">{p.title}</div>
-              <div className="text-[14px] text-[#888] mt-1">/{p.slug}</div>
-              {p.excerpt && <div className="text-[15px] text-[#bbb] mt-2">{p.excerpt}</div>}
-              <div className="text-[13px] mt-2">
-                {p.is_published ? (
-                  <span className="text-[#7ad07a]">● Опубликовано</span>
-                ) : (
-                  <span className="text-[#888]">○ Черновик</span>
-                )}
+      {loading ? (
+        <p className="text-[#888] py-8 text-center">Загрузка статей…</p>
+      ) : items.length === 0 ? (
+        <p className="text-[#888] py-8 text-center">Статей пока нет. Создайте первую — кнопка «Новая статья» сверху.</p>
+      ) : (
+        <div className="grid gap-3">
+          {items.map((p) => (
+            <div key={p.id} className={`${ui.card} flex items-start gap-4`}>
+              {p.cover_image && (
+                <img src={p.cover_image} alt="" className="w-24 h-24 object-cover rounded-lg" />
+              )}
+              <div className="flex-1">
+                <div className="font-bold text-[18px]">{p.title}</div>
+                <div className="text-[14px] text-[#888] mt-1">/{p.slug}</div>
+                {p.excerpt && <div className="text-[15px] text-[#bbb] mt-2">{p.excerpt}</div>}
+                <div className="text-[13px] mt-2">
+                  {p.is_published ? (
+                    <span className="text-[#7ad07a]">● Опубликовано</span>
+                  ) : (
+                    <span className="text-[#888]">○ Черновик</span>
+                  )}
+                </div>
               </div>
+              <button onClick={() => setEditing(p)} className={`${ui.btn} ${ui.btnSecondary}`}>
+                <Pencil size={16} />
+              </button>
+              <button onClick={() => remove(p.id)} className={`${ui.btn} ${ui.btnDanger}`}>
+                <Trash2 size={16} />
+              </button>
             </div>
-            <button onClick={() => setEditing(p)} className={`${ui.btn} ${ui.btnSecondary}`}>
-              <Pencil size={16} />
-            </button>
-            <button onClick={() => remove(p.id)} className={`${ui.btn} ${ui.btnDanger}`}>
-              <Trash2 size={16} />
-            </button>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -1628,7 +1637,10 @@ const SettingsPanel = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    adminCall("settings.get", { key: "sender" })
+    // Один batch-вызов под обе панели (sender + notifications),
+    // чтобы первая отрисовка не упиралась в 2 параллельных холодных запроса.
+    prefetchAdminSettings(["sender", "notifications"]);
+    adminCallSWR("settings.get", { key: "sender" })
       .then((r) => {
         setSender({ ...emptySender, ...(r.data ?? {}) });
         setLoading(false);
@@ -1709,6 +1721,22 @@ const SettingsPanel = () => {
 // CONTENT PANEL — редактирование контента и страниц сайта
 // ===================================================================
 const ContentPanel = () => {
+  // Подтягиваем все ключи настроек одним запросом и кладём в SWR-кэш,
+  // чтобы дочерние редакторы получили данные мгновенно вместо 8 параллельных
+  // вызовов settings.get на холодном старте edge-функции.
+  useEffect(() => {
+    prefetchAdminSettings([
+      "homepage",
+      "pages",
+      "nav_menu",
+      "homepage_blocks",
+      "services_docs",
+      "about_page",
+      "contacts_page",
+      "services_page",
+    ]);
+  }, []);
+
   return (
     <div className="grid gap-6">
       <div className={ui.card}>
@@ -1747,7 +1775,7 @@ const PagesHeadersEditor = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    adminCall("settings.get", { key: "pages" })
+    adminCallSWR("settings.get", { key: "pages" })
       .then((r) => {
         const data = (r.data ?? {}) as Record<string, { title?: string; subtitle?: string }>;
         const next: Record<string, { title: string; subtitle: string }> = {};
@@ -2053,7 +2081,7 @@ const HomepageEditor = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    adminCall("settings.get", { key: "homepage" })
+    adminCallSWR("settings.get", { key: "homepage" })
       .then((r) => {
         const v = r.data ?? {};
         // Глубокий мерж с пустым шаблоном, чтобы все поля присутствовали
@@ -2351,7 +2379,7 @@ const NavMenuEditor = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    adminCall("settings.get", { key: "nav_menu" })
+    adminCallSWR("settings.get", { key: "nav_menu" })
       .then((r) => {
         const v = r.data;
         if (v?.items && Array.isArray(v.items) && v.items.length > 0) setItems(v.items);
@@ -2449,7 +2477,7 @@ const BlocksOrderEditor = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    adminCall("settings.get", { key: "homepage_blocks" })
+    adminCallSWR("settings.get", { key: "homepage_blocks" })
       .then((r) => {
         const v = r.data;
         if (v?.order && Array.isArray(v.order) && v.order.length > 0) setOrder(v.order);
@@ -2517,7 +2545,7 @@ const ServicesDocsEditor = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    adminCall("settings.get", { key: "services_docs" })
+    adminCallSWR("settings.get", { key: "services_docs" })
       .then((r) => {
         const items = Array.isArray(r.data?.items) ? r.data.items : [];
         setDocs(items);
@@ -2643,7 +2671,7 @@ const AboutPageEditor = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    adminCall("settings.get", { key: "about_page" })
+    adminCallSWR("settings.get", { key: "about_page" })
       .then((r) => { setText(r.data?.text ?? ""); setLoading(false); })
       .catch((e) => { toast.error(e.message); setLoading(false); });
   }, []);
@@ -2690,7 +2718,7 @@ const NotificationsEditor = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    adminCall("settings.get", { key: "notifications" })
+    adminCallSWR("settings.get", { key: "notifications" })
       .then((r) => { setEmail(r.data?.email ?? ""); setLoading(false); })
       .catch((e) => { toast.error(e.message); setLoading(false); });
   }, []);
@@ -2763,7 +2791,7 @@ const ContactsPageEditor = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    adminCall("settings.get", { key: "contacts_page" })
+    adminCallSWR("settings.get", { key: "contacts_page" })
       .then((r) => {
         const v = r.data ?? {};
         setData({
@@ -2918,7 +2946,7 @@ const ServicesPageEditor = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    adminCall("settings.get", { key: "services_page" })
+    adminCallSWR("settings.get", { key: "services_page" })
       .then((r) => {
         const v = r.data ?? {};
         setData({
