@@ -2479,24 +2479,33 @@ const ServicesDocsEditor = () => {
                 />
               </div>
               <div className="flex gap-2 mt-2">
-                <label className={`${ui.btn} ${ui.btnSecondary} cursor-pointer`}>
+                <input
+                  id={`doc-file-${i}`}
+                  type="file"
+                  className="hidden"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.jpg,.png"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (f) await uploadDoc(i, f);
+                    e.target.value = "";
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => document.getElementById(`doc-file-${i}`)?.click()}
+                  className={`${ui.btn} ${ui.btnSecondary}`}
+                >
                   <Upload size={16} /> Загрузить файл
-                  <input
-                    type="file"
-                    hidden
-                    onChange={async (e) => {
-                      const f = e.target.files?.[0];
-                      if (f) await uploadDoc(i, f);
-                      e.target.value = "";
-                    }}
-                  />
-                </label>
+                </button>
                 {d.url && (
                   <a href={d.url} target="_blank" rel="noreferrer" className={`${ui.btn} ${ui.btnSecondary}`}>
                     Открыть
                   </a>
                 )}
               </div>
+              <p className="text-[11px] text-[#666] mt-2">
+                Файл сохраняется в защищённом хранилище (bucket «site-documents»). После загрузки URL подставится автоматически.
+              </p>
             </div>
           </div>
         ))}
