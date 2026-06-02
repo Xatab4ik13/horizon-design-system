@@ -1628,7 +1628,7 @@ const SettingsPanel = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    adminCall("settings.get", { key: "sender" })
+    adminCallSWR("settings.get", { key: "sender" })
       .then((r) => {
         setSender({ ...emptySender, ...(r.data ?? {}) });
         setLoading(false);
@@ -1747,7 +1747,7 @@ const PagesHeadersEditor = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    adminCall("settings.get", { key: "pages" })
+    adminCallSWR("settings.get", { key: "pages" })
       .then((r) => {
         const data = (r.data ?? {}) as Record<string, { title?: string; subtitle?: string }>;
         const next: Record<string, { title: string; subtitle: string }> = {};
@@ -2053,7 +2053,7 @@ const HomepageEditor = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    adminCall("settings.get", { key: "homepage" })
+    adminCallSWR("settings.get", { key: "homepage" })
       .then((r) => {
         const v = r.data ?? {};
         // Глубокий мерж с пустым шаблоном, чтобы все поля присутствовали
@@ -2351,7 +2351,7 @@ const NavMenuEditor = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    adminCall("settings.get", { key: "nav_menu" })
+    adminCallSWR("settings.get", { key: "nav_menu" })
       .then((r) => {
         const v = r.data;
         if (v?.items && Array.isArray(v.items) && v.items.length > 0) setItems(v.items);
@@ -2449,7 +2449,7 @@ const BlocksOrderEditor = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    adminCall("settings.get", { key: "homepage_blocks" })
+    adminCallSWR("settings.get", { key: "homepage_blocks" })
       .then((r) => {
         const v = r.data;
         if (v?.order && Array.isArray(v.order) && v.order.length > 0) setOrder(v.order);
@@ -2517,7 +2517,7 @@ const ServicesDocsEditor = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    adminCall("settings.get", { key: "services_docs" })
+    adminCallSWR("settings.get", { key: "services_docs" })
       .then((r) => {
         const items = Array.isArray(r.data?.items) ? r.data.items : [];
         setDocs(items);
@@ -2643,7 +2643,7 @@ const AboutPageEditor = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    adminCall("settings.get", { key: "about_page" })
+    adminCallSWR("settings.get", { key: "about_page" })
       .then((r) => { setText(r.data?.text ?? ""); setLoading(false); })
       .catch((e) => { toast.error(e.message); setLoading(false); });
   }, []);
@@ -2690,7 +2690,7 @@ const NotificationsEditor = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    adminCall("settings.get", { key: "notifications" })
+    adminCallSWR("settings.get", { key: "notifications" })
       .then((r) => { setEmail(r.data?.email ?? ""); setLoading(false); })
       .catch((e) => { toast.error(e.message); setLoading(false); });
   }, []);
@@ -2763,7 +2763,7 @@ const ContactsPageEditor = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    adminCall("settings.get", { key: "contacts_page" })
+    adminCallSWR("settings.get", { key: "contacts_page" })
       .then((r) => {
         const v = r.data ?? {};
         setData({
@@ -2918,7 +2918,7 @@ const ServicesPageEditor = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    adminCall("settings.get", { key: "services_page" })
+    adminCallSWR("settings.get", { key: "services_page" })
       .then((r) => {
         const v = r.data ?? {};
         setData({
