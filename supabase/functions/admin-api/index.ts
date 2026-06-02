@@ -342,6 +342,21 @@ Deno.serve(async (req) => {
         if (error) throw error;
         return json({ data: data?.value ?? {} });
       }
+      case "settings.getMulti": {
+        const keys = Array.isArray(payload?.keys)
+          ? payload.keys.map((k: any) => String(k)).filter(Boolean)
+          : [];
+        if (!keys.length) return json({ data: {} });
+        const { data, error } = await admin
+          .from("app_settings")
+          .select("key, value")
+          .in("key", keys);
+        if (error) throw error;
+        const out: Record<string, unknown> = {};
+        for (const k of keys) out[k] = {};
+        for (const row of data ?? []) out[row.key] = row.value ?? {};
+        return json({ data: out });
+      }
       case "settings.set": {
         const key = String(payload?.key ?? "");
         const value = payload?.value ?? {};
