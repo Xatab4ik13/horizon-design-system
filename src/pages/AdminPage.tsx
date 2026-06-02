@@ -635,7 +635,9 @@ const ProductEditor = ({
       } else {
         await adminCall("products.create", form);
       }
+      invalidateAdminCache("products.");
       toast.success("Сохранено");
+
       onSaved();
     } catch (e: any) {
       toast.error(e.message);
