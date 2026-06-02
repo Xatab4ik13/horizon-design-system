@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart, ShoppingCart, ArrowLeft, Smartphone, Ruler, Weight,
@@ -7,10 +7,10 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { categories } from "@/data/products";
-import { useDbProduct } from "@/lib/dbProducts";
+import { useDbProduct, useDbProducts } from "@/lib/dbProducts";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/contexts/CartContext";
@@ -199,7 +199,9 @@ const MiniProductCard = ({ productId }: { productId: string }) => {
 // ─── Main page ───
 const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { product, loading: productLoading } = useDbProduct(id);
+  const { products: allProducts } = useDbProducts();
   const { addItem } = useCart();
   const [showAR, setShowAR] = useState(false);
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
@@ -207,6 +209,67 @@ const ProductPage = () => {
   const [isFavorite, setIsFavorite] = useState(false);
 
   const categoryData = useMemo(() => categories.find((c) => c.slug === product?.category), [product]);
+
+
+  // ─── Synthetic variations from siblings in the same category ───
+  const siblings = useMemo(() => {
+    if (!product) return [];
+    return allProducts.filter((p) => p.category === product.category);
+  }, [allProducts, product]);
+
+  const syntheticVariations = useMemo(() => {
+    if (!product) return [] as { type: string; label: string; options: { value: string; label: string }[] }[];
+    const uniq = (arr: string[]) => Array.from(new Set(arr.map((s) => s.trim()).filter(Boolean)));
+    const woods = uniq([product.material, ...siblings.map((p) => p.material)]);
+    const coatings = uniq([product.coating, ...siblings.map((p) => p.coating)]);
+    const sizes = uniq([product.dimensions, ...siblings.map((p) => p.dimensions)]);
+    const vars: { type: string; label: string; options: { value: string; label: string }[] }[] = [];
+    if (woods.length) vars.push({ type: "wood", label: "Порода", options: woods.map((v) => ({ value: v, label: v })) });
+    if (coatings.length) vars.push({ type: "coating", label: "Покрытие", options: coatings.map((v) => ({ value: v, label: v })) });
+    if (sizes.length) vars.push({ type: "size", label: "Размеры", options: sizes.map((v) => ({ value: v, label: v })) });
+    return vars;
+  }, [siblings, product]);
+
+  // Preselect current product attributes
+  useEffect(() => {
+    if (!product) return;
+    setSelectedVariations({
+      wood: product.material || "",
+      coating: product.coating || "",
+      size: product.dimensions || "",
+    });
+  }, [product?.id]);
+
+  const handleVariationChange = useCallback(
+    (type: string, value: string) => {
+      const next = { ...selectedVariations, [type]: value };
+      setSelectedVariations(next);
+      if (!product) return;
+      // Score siblings by how many selected attributes they match; prefer the requested one
+      const scored = siblings
+        .filter((s) => s.id !== product.id)
+        .map((s) => {
+          let score = 0;
+          if (next.wood && s.material === next.wood) score += type === "wood" ? 10 : 3;
+          if (next.coating && s.coating === next.coating) score += type === "coating" ? 10 : 2;
+          if (next.size && s.dimensions === next.size) score += type === "size" ? 10 : 1;
+          return { s, score };
+        })
+        .filter((x) => x.score > 0)
+        .sort((a, b) => b.score - a.score);
+      const best = scored[0]?.s;
+      // Navigate when the changed attribute is matched by a sibling
+      const matchedChanged =
+        (type === "wood" && best?.material === value) ||
+        (type === "coating" && best?.coating === value) ||
+        (type === "size" && best?.dimensions === value);
+      if (best && matchedChanged) {
+        navigate(`/product/${best.id}`);
+      }
+    },
+    [selectedVariations, siblings, product, navigate]
+  );
+
 
   const computedPrice = useMemo(() => {
     if (!product) return 0;
@@ -222,38 +285,19 @@ const ProductPage = () => {
   }, [product, selectedVariations]);
 
   // Compute dynamic specs based on variations
-  const currentMaterial = useMemo(() => {
-    if (!product) return "";
-    const woodVar = product.variations?.find(v => v.type === "wood");
-    const sel = selectedVariations["wood"];
-    if (woodVar && sel) {
-      const opt = woodVar.options.find(o => o.value === sel);
-      return opt?.label || product.material;
-    }
-    return product.material;
-  }, [product, selectedVariations]);
+  const currentMaterial = useMemo(
+    () => selectedVariations["wood"] || product?.material || "",
+    [selectedVariations, product]
+  );
+  const currentCoating = useMemo(
+    () => selectedVariations["coating"] || product?.coating || "",
+    [selectedVariations, product]
+  );
+  const currentDimensions = useMemo(
+    () => selectedVariations["size"] || product?.dimensions || "",
+    [selectedVariations, product]
+  );
 
-  const currentCoating = useMemo(() => {
-    if (!product) return "";
-    const coatVar = product.variations?.find(v => v.type === "coating");
-    const sel = selectedVariations["coating"];
-    if (coatVar && sel) {
-      const opt = coatVar.options.find(o => o.value === sel);
-      return opt?.label || product.coating;
-    }
-    return product.coating;
-  }, [product, selectedVariations]);
-
-  const currentDimensions = useMemo(() => {
-    if (!product) return "";
-    const sizeVar = product.variations?.find(v => v.type === "size");
-    const sel = selectedVariations["size"];
-    if (sizeVar && sel) {
-      const opt = sizeVar.options.find(o => o.value === sel);
-      return opt?.label || product.dimensions;
-    }
-    return product.dimensions;
-  }, [product, selectedVariations]);
 
   // Подмена основного фото при выборе варианта (например, по породе)
   const displayImages = useMemo(() => {
@@ -422,25 +466,21 @@ const ProductPage = () => {
               <p className="text-foreground/80 leading-relaxed mb-6">{product.description}</p>
 
               {/* ─── Variations (dropdowns) ─── */}
-              {product.variations && product.variations.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                  {product.variations.map((v) => {
+              {syntheticVariations.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                  {syntheticVariations.map((v) => {
                     const selected = selectedVariations[v.type] ?? "";
                     return (
                       <div key={v.type}>
                         <label className="text-sm font-medium text-foreground mb-2 block">{v.label}</label>
                         <select
                           value={selected}
-                          onChange={(e) =>
-                            setSelectedVariations((prev) => ({ ...prev, [v.type]: e.target.value }))
-                          }
+                          onChange={(e) => handleVariationChange(v.type, e.target.value)}
                           className="w-full px-4 py-2.5 rounded-xl bg-background/60 border border-border text-foreground focus:border-primary focus:outline-none transition-colors text-sm appearance-none cursor-pointer bg-[url('data:image/svg+xml;utf8,<svg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%23999%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27><polyline%20points=%276%209%2012%2015%2018%209%27/></svg>')] bg-no-repeat bg-[right_14px_center] pr-10"
                         >
-                          <option value="">— выберите —</option>
                           {v.options.map((opt) => (
                             <option key={opt.value} value={opt.value}>
                               {opt.label}
-                              {opt.priceModifier ? ` (${opt.priceModifier > 0 ? "+" : ""}${opt.priceModifier.toLocaleString("ru-RU")} ₽)` : ""}
                             </option>
                           ))}
                         </select>
@@ -449,6 +489,7 @@ const ProductPage = () => {
                   })}
                 </div>
               )}
+
 
               {/* ─── Specs grid (dynamic) ─── */}
               <div className="grid grid-cols-2 gap-3 mb-8">
