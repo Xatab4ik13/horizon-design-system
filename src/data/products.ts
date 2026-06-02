@@ -51,6 +51,7 @@ export interface Product {
   isNew?: boolean;
   arModel?: { glb: string; usdz: string };
   variations?: Variation[];
+  packageInfo?: string;
   imagesByVariation?: Record<string, string>;
   reviews: Review[];
   qa: QA[];
