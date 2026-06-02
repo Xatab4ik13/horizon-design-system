@@ -1,5 +1,5 @@
 import { useEffect, useState, FormEvent } from "react";
-import { adminAuth, adminCall, adminLogin, adminUploadFile } from "@/lib/adminApi";
+import { adminAuth, adminCall, adminCallSWR, getCachedAdminCall, invalidateAdminCache, adminLogin, adminUploadFile } from "@/lib/adminApi";
 import { supabase } from "@/integrations/supabase/client";
 import { parse1CFile } from "@/lib/import1c";
 import { exportProductsTo1CXlsx, downloadBlob } from "@/lib/export1c";
@@ -464,15 +464,18 @@ const QrModal = ({ product, onClose }: { product: any; onClose: () => void }) =>
 };
 
 const ProductsPanel = () => {
-  const [items, setItems] = useState<any[]>([]);
+  const cached = getCachedAdminCall<{ data: any[] }>("products.list");
+  const [items, setItems] = useState<any[]>(cached?.data ?? []);
   const [editing, setEditing] = useState<any | null>(null);
   const [qrFor, setQrFor] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cached);
 
   const load = async () => {
-    setLoading(true);
+    if (!getCachedAdminCall("products.list")) setLoading(true);
     try {
-      const r = await adminCall("products.list");
+      const r = await adminCallSWR<{ data: any[] }>("products.list", undefined, (fresh) => {
+        setItems(fresh.data ?? []);
+      });
       setItems(r.data ?? []);
     } catch (e: any) {
       toast.error(e.message);
@@ -489,12 +492,14 @@ const ProductsPanel = () => {
     setItems((arr) => arr.filter((x) => x.id !== id));
     try {
       await adminCall("products.delete", { id });
+      invalidateAdminCache("products.");
       toast.success("Удалено");
     } catch (e: any) {
       setItems(prev);
       toast.error(e.message ?? "Не удалось удалить");
     }
   };
+
 
   if (editing) {
     return (
@@ -630,7 +635,9 @@ const ProductEditor = ({
       } else {
         await adminCall("products.create", form);
       }
+      invalidateAdminCache("products.");
       toast.success("Сохранено");
+
       onSaved();
     } catch (e: any) {
       toast.error(e.message);
@@ -997,29 +1004,35 @@ const orderStatuses = [
 ];
 
 const OrdersPanel = () => {
-  const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cached = getCachedAdminCall<{ data: any[] }>("orders.list");
+  const [items, setItems] = useState<any[]>(cached?.data ?? []);
+  const [loading, setLoading] = useState(!cached);
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  const load = async () => {
-    setLoading(true);
+  const load = async (silent = false) => {
+    if (!silent && !getCachedAdminCall("orders.list")) setLoading(true);
     try {
-      const r = await adminCall("orders.list");
+      const r = await adminCallSWR<{ data: any[] }>("orders.list", undefined, (fresh) => {
+        setItems(fresh.data ?? []);
+      });
       setItems(r.data ?? []);
     } catch (e: any) {
-      toast.error(e.message);
+      if (!silent) toast.error(e.message);
     }
     setLoading(false);
   };
   useEffect(() => {
     load();
-    // Polling: realtime требует RLS-доступа, у анонимов его нет. 10 сек — компромисс.
-    const t = setInterval(load, 10000);
+    const t = setInterval(() => {
+      invalidateAdminCache("orders.");
+      load(true);
+    }, 10000);
     return () => clearInterval(t);
   }, []);
 
   const setStatus = async (id: string, status: string) => {
     await adminCall("orders.updateStatus", { id, status });
+    invalidateAdminCache("orders.");
     toast.success("Статус обновлён");
     load();
   };
@@ -1027,8 +1040,10 @@ const OrdersPanel = () => {
   const remove = async (id: string) => {
     if (!confirm("Удалить заказ?")) return;
     await adminCall("orders.delete", { id });
+    invalidateAdminCache("orders.");
     load();
   };
+
 
   return (
     <div>
@@ -1119,13 +1134,16 @@ const OrdersPanel = () => {
 // ЗАЯВКИ
 // ===================================================================
 const RequestsPanel = () => {
-  const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cached = getCachedAdminCall<{ data: any[] }>("requests.list");
+  const [items, setItems] = useState<any[]>(cached?.data ?? []);
+  const [loading, setLoading] = useState(!cached);
 
   const load = async () => {
-    setLoading(true);
+    if (!getCachedAdminCall("requests.list")) setLoading(true);
     try {
-      const r = await adminCall("requests.list");
+      const r = await adminCallSWR<{ data: any[] }>("requests.list", undefined, (fresh) => {
+        setItems(fresh.data ?? []);
+      });
       setItems(r.data ?? []);
     } catch (e: any) {
       toast.error(e.message);
@@ -1138,13 +1156,16 @@ const RequestsPanel = () => {
 
   const toggleRead = async (it: any) => {
     await adminCall("requests.markRead", { id: it.id, is_read: !it.is_read });
+    invalidateAdminCache("requests.");
     load();
   };
   const remove = async (id: string) => {
     if (!confirm("Удалить заявку?")) return;
     await adminCall("requests.delete", { id });
+    invalidateAdminCache("requests.");
     load();
   };
+
 
   return (
     <div>
@@ -1200,12 +1221,15 @@ const emptyVacancy = {
 };
 
 const VacanciesPanel = () => {
-  const [items, setItems] = useState<any[]>([]);
+  const cached = getCachedAdminCall<{ data: any[] }>("vacancies.list");
+  const [items, setItems] = useState<any[]>(cached?.data ?? []);
   const [editing, setEditing] = useState<any | null>(null);
 
   const load = async () => {
     try {
-      const r = await adminCall("vacancies.list");
+      const r = await adminCallSWR<{ data: any[] }>("vacancies.list", undefined, (fresh) => {
+        setItems(fresh.data ?? []);
+      });
       setItems(r.data ?? []);
     } catch (e: any) {
       toast.error(e.message);
@@ -1219,6 +1243,7 @@ const VacanciesPanel = () => {
     try {
       if (editing.id) await adminCall("vacancies.update", editing);
       else await adminCall("vacancies.create", editing);
+      invalidateAdminCache("vacancies.");
       toast.success("Сохранено");
       setEditing(null);
       load();
@@ -1229,8 +1254,10 @@ const VacanciesPanel = () => {
   const remove = async (id: string) => {
     if (!confirm("Удалить вакансию?")) return;
     await adminCall("vacancies.delete", { id });
+    invalidateAdminCache("vacancies.");
     load();
   };
+
 
   if (editing) {
     return (
@@ -1346,13 +1373,16 @@ const slugify = (s: string) =>
     .slice(0, 80);
 
 const BlogPanel = () => {
-  const [items, setItems] = useState<any[]>([]);
+  const cached = getCachedAdminCall<{ data: any[] }>("blog.list");
+  const [items, setItems] = useState<any[]>(cached?.data ?? []);
   const [editing, setEditing] = useState<any | null>(null);
   const [uploading, setUploading] = useState(false);
 
   const load = async () => {
     try {
-      const r = await adminCall("blog.list");
+      const r = await adminCallSWR<{ data: any[] }>("blog.list", undefined, (fresh) => {
+        setItems(fresh.data ?? []);
+      });
       setItems(r.data ?? []);
     } catch (e: any) {
       toast.error(e.message);
@@ -1371,6 +1401,7 @@ const BlogPanel = () => {
       };
       if (editing.id) await adminCall("blog.update", payload);
       else await adminCall("blog.create", payload);
+      invalidateAdminCache("blog.");
       toast.success("Сохранено");
       setEditing(null);
       load();
@@ -1381,8 +1412,10 @@ const BlogPanel = () => {
   const remove = async (id: string) => {
     if (!confirm("Удалить статью?")) return;
     await adminCall("blog.delete", { id });
+    invalidateAdminCache("blog.");
     load();
   };
+
 
   const uploadCover = async (file: File) => {
     setUploading(true);

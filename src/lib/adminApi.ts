@@ -68,6 +68,57 @@ export async function adminCall<T = any>(
   throw lastErr ?? new Error("Unknown error");
 }
 
+// ─── Stale-while-revalidate cache for read-only admin calls ───
+const swrCache = new Map<string, any>();
+const swrInflight = new Map<string, Promise<any>>();
+
+export function getCachedAdminCall<T = any>(action: string, payload?: any): T | null {
+  const key = action + ":" + JSON.stringify(payload ?? null);
+  return (swrCache.get(key) as T) ?? null;
+}
+
+export async function adminCallSWR<T = any>(
+  action: string,
+  payload?: any,
+  onUpdate?: (data: T) => void,
+): Promise<T> {
+  const key = action + ":" + JSON.stringify(payload ?? null);
+  const cached = swrCache.get(key) as T | undefined;
+  const refresh = () => {
+    if (swrInflight.has(key)) return swrInflight.get(key)!;
+    const p = adminCall<T>(action, payload)
+      .then((data) => {
+        swrCache.set(key, data);
+        swrInflight.delete(key);
+        if (cached && onUpdate) onUpdate(data);
+        return data;
+      })
+      .catch((e) => {
+        swrInflight.delete(key);
+        throw e;
+      });
+    swrInflight.set(key, p);
+    return p;
+  };
+  if (cached !== undefined) {
+    // fire-and-forget revalidate
+    refresh().catch(() => {});
+    return cached;
+  }
+  return refresh();
+}
+
+export function invalidateAdminCache(actionPrefix?: string) {
+  if (!actionPrefix) {
+    swrCache.clear();
+    return;
+  }
+  for (const k of Array.from(swrCache.keys())) {
+    if (k.startsWith(actionPrefix)) swrCache.delete(k);
+  }
+}
+
+
 export async function adminLogin(password: string): Promise<boolean> {
   // 2 захода: на холодный старт edge функции первый вызов часто отваливается
   // сетевой ошибкой даже после внутренних ретраев adminCall.
