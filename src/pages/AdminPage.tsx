@@ -1221,12 +1221,15 @@ const emptyVacancy = {
 };
 
 const VacanciesPanel = () => {
-  const [items, setItems] = useState<any[]>([]);
+  const cached = getCachedAdminCall<{ data: any[] }>("vacancies.list");
+  const [items, setItems] = useState<any[]>(cached?.data ?? []);
   const [editing, setEditing] = useState<any | null>(null);
 
   const load = async () => {
     try {
-      const r = await adminCall("vacancies.list");
+      const r = await adminCallSWR<{ data: any[] }>("vacancies.list", undefined, (fresh) => {
+        setItems(fresh.data ?? []);
+      });
       setItems(r.data ?? []);
     } catch (e: any) {
       toast.error(e.message);
@@ -1240,6 +1243,7 @@ const VacanciesPanel = () => {
     try {
       if (editing.id) await adminCall("vacancies.update", editing);
       else await adminCall("vacancies.create", editing);
+      invalidateAdminCache("vacancies.");
       toast.success("Сохранено");
       setEditing(null);
       load();
@@ -1250,8 +1254,10 @@ const VacanciesPanel = () => {
   const remove = async (id: string) => {
     if (!confirm("Удалить вакансию?")) return;
     await adminCall("vacancies.delete", { id });
+    invalidateAdminCache("vacancies.");
     load();
   };
+
 
   if (editing) {
     return (
