@@ -1628,6 +1628,9 @@ const SettingsPanel = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    // Один batch-вызов под обе панели (sender + notifications),
+    // чтобы первая отрисовка не упиралась в 2 параллельных холодных запроса.
+    prefetchAdminSettings(["sender", "notifications"]);
     adminCallSWR("settings.get", { key: "sender" })
       .then((r) => {
         setSender({ ...emptySender, ...(r.data ?? {}) });
