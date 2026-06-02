@@ -10,7 +10,7 @@ import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import ContactForm from "@/components/ContactForm";
 import { supabase } from "@/integrations/supabase/client";
-import { usePageHeader } from "@/hooks/useSiteContent";
+import { usePageHeader, useContactsContent } from "@/hooks/useSiteContent";
 
 interface Vacancy {
   id: string;
