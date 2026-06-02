@@ -121,8 +121,8 @@ const ContactsPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
             {contactInfo.map((item, i) => (
               <motion.a
-                key={item.title}
-                href={item.href}
+                key={`${item.title}-${i}`}
+                href={item.href || "#"}
                 target={item.href.startsWith("http") ? "_blank" : undefined}
                 rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined}
                 initial={{ opacity: 0, y: 20 }}
