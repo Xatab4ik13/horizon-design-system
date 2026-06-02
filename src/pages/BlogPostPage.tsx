@@ -4,18 +4,7 @@ import { ChevronRight, Calendar, ArrowLeft } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEO, { buildArticleJsonLd, buildBreadcrumbJsonLd } from "@/components/SEO";
-import { supabase } from "@/integrations/supabase/client";
-
-interface BlogPostRow {
-  id: string;
-  slug: string;
-  title: string;
-  excerpt: string | null;
-  content: string;
-  cover_image: string | null;
-  published_at: string | null;
-  created_at: string;
-}
+import { fetchBlogPost, getCachedBlogPost, type BlogPostFullRow as BlogPostRow } from "@/lib/blogCache";
 
 const formatDate = (iso: string | null) => {
   if (!iso) return "";
@@ -32,8 +21,9 @@ const formatDate = (iso: string | null) => {
 
 const BlogPostPage = () => {
   const { slug } = useParams<{ slug: string }>();
-  const [post, setPost] = useState<BlogPostRow | null>(null);
-  const [loading, setLoading] = useState(true);
+  const initial = slug ? getCachedBlogPost(slug) : null;
+  const [post, setPost] = useState<BlogPostRow | null>(initial);
+  const [loading, setLoading] = useState(!initial);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
@@ -42,25 +32,26 @@ const BlogPostPage = () => {
       setNotFound(true);
       return;
     }
+    const cached = getCachedBlogPost(slug);
+    if (cached) {
+      setPost(cached);
+      setLoading(false);
+      setNotFound(false);
+      return;
+    }
     let cancelled = false;
     setLoading(true);
     setNotFound(false);
-    supabase
-      .from("blog_posts")
-      .select("*")
-      .eq("slug", slug)
-      .eq("is_published", true)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (cancelled) return;
-        if (!data) {
-          setNotFound(true);
-          setPost(null);
-        } else {
-          setPost(data as BlogPostRow);
-        }
-        setLoading(false);
-      });
+    fetchBlogPost(slug).then((data) => {
+      if (cancelled) return;
+      if (!data) {
+        setNotFound(true);
+        setPost(null);
+      } else {
+        setPost(data);
+      }
+      setLoading(false);
+    });
     return () => {
       cancelled = true;
     };
