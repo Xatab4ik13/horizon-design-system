@@ -189,3 +189,85 @@ export function usePageHeader(key: PageKey, fallback: PageHeader): PageHeader {
   }, [key]);
   return h;
 }
+
+// ─── Contacts page ───
+export type ContactsContent = {
+  contacts?: { title?: string; value?: string; href?: string; note?: string; type?: "phone" | "email" | "messenger" | "address" }[];
+  hours?: { day?: string; time?: string }[];
+  hoursNote?: string;
+  careers?: { title?: string; intro?: string; ctaTitle?: string; ctaText?: string; email?: string; phone?: string };
+};
+
+let contactsCache: ContactsContent | null = null;
+let contactsInflight: Promise<ContactsContent> | null = null;
+
+export async function fetchContactsContent(): Promise<ContactsContent> {
+  if (contactsCache) return contactsCache;
+  if (contactsInflight) return contactsInflight;
+  contactsInflight = (async () => {
+    const { data } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "contacts_page")
+      .maybeSingle();
+    contactsCache = ((data?.value as ContactsContent) ?? {}) as ContactsContent;
+    return contactsCache;
+  })();
+  return contactsInflight;
+}
+
+export function invalidateContactsContent() {
+  contactsCache = null;
+  contactsInflight = null;
+}
+
+export function useContactsContent(): ContactsContent {
+  const [c, setC] = useState<ContactsContent>(contactsCache ?? {});
+  useEffect(() => {
+    let alive = true;
+    fetchContactsContent().then((v) => { if (alive) setC(v); });
+    return () => { alive = false; };
+  }, []);
+  return c;
+}
+
+// ─── Services page ───
+export type ServicesContent = {
+  items?: { title?: string; description?: string; features?: string[]; timing?: string; price?: string; enabled?: boolean }[];
+  downloadsTitle?: string;
+  cta?: { title?: string; text?: string; primary?: string; secondary?: string; phone?: string };
+};
+
+let servicesCache: ServicesContent | null = null;
+let servicesInflight: Promise<ServicesContent> | null = null;
+
+export async function fetchServicesContent(): Promise<ServicesContent> {
+  if (servicesCache) return servicesCache;
+  if (servicesInflight) return servicesInflight;
+  servicesInflight = (async () => {
+    const { data } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "services_page")
+      .maybeSingle();
+    servicesCache = ((data?.value as ServicesContent) ?? {}) as ServicesContent;
+    return servicesCache;
+  })();
+  return servicesInflight;
+}
+
+export function invalidateServicesContent() {
+  servicesCache = null;
+  servicesInflight = null;
+}
+
+export function useServicesContent(): ServicesContent {
+  const [c, setC] = useState<ServicesContent>(servicesCache ?? {});
+  useEffect(() => {
+    let alive = true;
+    fetchServicesContent().then((v) => { if (alive) setC(v); });
+    return () => { alive = false; };
+  }, []);
+  return c;
+}
+
