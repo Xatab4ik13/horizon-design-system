@@ -1666,6 +1666,8 @@ const ContentPanel = () => {
       <BlocksOrderEditor />
       <HomepageEditor />
       <PagesHeadersEditor />
+      <ContactsPageEditor />
+      <ServicesPageEditor />
       <AboutPageEditor />
       <ServicesDocsEditor />
     </div>
