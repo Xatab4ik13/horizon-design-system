@@ -285,38 +285,19 @@ const ProductPage = () => {
   }, [product, selectedVariations]);
 
   // Compute dynamic specs based on variations
-  const currentMaterial = useMemo(() => {
-    if (!product) return "";
-    const woodVar = product.variations?.find(v => v.type === "wood");
-    const sel = selectedVariations["wood"];
-    if (woodVar && sel) {
-      const opt = woodVar.options.find(o => o.value === sel);
-      return opt?.label || product.material;
-    }
-    return product.material;
-  }, [product, selectedVariations]);
+  const currentMaterial = useMemo(
+    () => selectedVariations["wood"] || product?.material || "",
+    [selectedVariations, product]
+  );
+  const currentCoating = useMemo(
+    () => selectedVariations["coating"] || product?.coating || "",
+    [selectedVariations, product]
+  );
+  const currentDimensions = useMemo(
+    () => selectedVariations["size"] || product?.dimensions || "",
+    [selectedVariations, product]
+  );
 
-  const currentCoating = useMemo(() => {
-    if (!product) return "";
-    const coatVar = product.variations?.find(v => v.type === "coating");
-    const sel = selectedVariations["coating"];
-    if (coatVar && sel) {
-      const opt = coatVar.options.find(o => o.value === sel);
-      return opt?.label || product.coating;
-    }
-    return product.coating;
-  }, [product, selectedVariations]);
-
-  const currentDimensions = useMemo(() => {
-    if (!product) return "";
-    const sizeVar = product.variations?.find(v => v.type === "size");
-    const sel = selectedVariations["size"];
-    if (sizeVar && sel) {
-      const opt = sizeVar.options.find(o => o.value === sel);
-      return opt?.label || product.dimensions;
-    }
-    return product.dimensions;
-  }, [product, selectedVariations]);
 
   // Подмена основного фото при выборе варианта (например, по породе)
   const displayImages = useMemo(() => {
