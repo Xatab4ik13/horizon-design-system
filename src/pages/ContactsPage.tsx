@@ -163,12 +163,8 @@ const ContactsPage = () => {
             <div className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-6 md:p-8">
               <h3 className="text-xl font-bold text-foreground mb-6">Время работы</h3>
               <div className="space-y-3">
-                {[
-                  { day: "Понедельник — Пятница", time: "10:00 — 19:00" },
-                  { day: "Суббота", time: "11:00 — 16:00" },
-                  { day: "Воскресенье", time: "Выходной" },
-                ].map((row) => (
-                  <div key={row.day} className="flex items-center justify-between py-3 border-b border-border/30 last:border-0">
+                {hours.map((row, idx) => (
+                  <div key={`${row.day}-${idx}`} className="flex items-center justify-between py-3 border-b border-border/30 last:border-0">
                     <span className="text-foreground/80 text-sm">{row.day}</span>
                     <span className="text-foreground font-medium text-sm">{row.time}</span>
                   </div>
