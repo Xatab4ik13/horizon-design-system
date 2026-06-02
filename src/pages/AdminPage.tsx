@@ -1434,6 +1434,7 @@ const slugify = (s: string) =>
 const BlogPanel = () => {
   const cached = getCachedAdminCall<{ data: any[] }>("blog.list");
   const [items, setItems] = useState<any[]>(cached?.data ?? []);
+  const [loading, setLoading] = useState(!cached);
   const [editing, setEditing] = useState<any | null>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -1445,6 +1446,8 @@ const BlogPanel = () => {
       setItems(r.data ?? []);
     } catch (e: any) {
       toast.error(e.message);
+    } finally {
+      setLoading(false);
     }
   };
   useEffect(() => {
