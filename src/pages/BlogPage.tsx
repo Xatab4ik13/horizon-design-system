@@ -5,17 +5,7 @@ import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEO, { buildArticleJsonLd, buildBreadcrumbJsonLd } from "@/components/SEO";
-import { supabase } from "@/integrations/supabase/client";
-
-interface BlogPostRow {
-  id: string;
-  slug: string;
-  title: string;
-  excerpt: string | null;
-  cover_image: string | null;
-  published_at: string | null;
-  created_at: string;
-}
+import { fetchBlogList, getCachedBlogList, fetchBlogPost, type BlogPostListRow as BlogPostRow } from "@/lib/blogCache";
 
 const formatDate = (iso: string | null) => {
   if (!iso) return "";
@@ -31,26 +21,25 @@ const formatDate = (iso: string | null) => {
 };
 
 const BlogPage = () => {
-  const [posts, setPosts] = useState<BlogPostRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cached = getCachedBlogList();
+  const [posts, setPosts] = useState<BlogPostRow[]>(cached ?? []);
+  const [loading, setLoading] = useState(!cached);
 
   useEffect(() => {
     let cancelled = false;
-    supabase
-      .from("blog_posts")
-      .select("id, slug, title, excerpt, cover_image, published_at, created_at")
-      .eq("is_published", true)
-      .order("published_at", { ascending: false, nullsFirst: false })
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        if (cancelled) return;
-        setPosts((data as BlogPostRow[]) ?? []);
-        setLoading(false);
-      });
+    fetchBlogList().then((data) => {
+      if (cancelled) return;
+      setPosts(data);
+      setLoading(false);
+    });
     return () => {
       cancelled = true;
     };
   }, []);
+
+  const prefetch = (slug: string) => {
+    fetchBlogPost(slug).catch(() => {});
+  };
 
   const articleJsonLd = posts.map((post) =>
     buildArticleJsonLd({
