@@ -103,6 +103,8 @@ const BlogPage = () => {
               {posts.map((post) => (
                 <article
                   key={post.id}
+                  onMouseEnter={() => prefetch(post.slug)}
+                  onTouchStart={() => prefetch(post.slug)}
                   className="bg-card/60 border border-border rounded-2xl overflow-hidden hover:border-primary/30 transition-colors duration-300 group flex flex-col"
                 >
                   {post.cover_image && (
