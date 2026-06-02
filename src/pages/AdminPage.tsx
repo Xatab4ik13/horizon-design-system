@@ -1004,29 +1004,35 @@ const orderStatuses = [
 ];
 
 const OrdersPanel = () => {
-  const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cached = getCachedAdminCall<{ data: any[] }>("orders.list");
+  const [items, setItems] = useState<any[]>(cached?.data ?? []);
+  const [loading, setLoading] = useState(!cached);
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  const load = async () => {
-    setLoading(true);
+  const load = async (silent = false) => {
+    if (!silent && !getCachedAdminCall("orders.list")) setLoading(true);
     try {
-      const r = await adminCall("orders.list");
+      const r = await adminCallSWR<{ data: any[] }>("orders.list", undefined, (fresh) => {
+        setItems(fresh.data ?? []);
+      });
       setItems(r.data ?? []);
     } catch (e: any) {
-      toast.error(e.message);
+      if (!silent) toast.error(e.message);
     }
     setLoading(false);
   };
   useEffect(() => {
     load();
-    // Polling: realtime требует RLS-доступа, у анонимов его нет. 10 сек — компромисс.
-    const t = setInterval(load, 10000);
+    const t = setInterval(() => {
+      invalidateAdminCache("orders.");
+      load(true);
+    }, 10000);
     return () => clearInterval(t);
   }, []);
 
   const setStatus = async (id: string, status: string) => {
     await adminCall("orders.updateStatus", { id, status });
+    invalidateAdminCache("orders.");
     toast.success("Статус обновлён");
     load();
   };
@@ -1034,8 +1040,10 @@ const OrdersPanel = () => {
   const remove = async (id: string) => {
     if (!confirm("Удалить заказ?")) return;
     await adminCall("orders.delete", { id });
+    invalidateAdminCache("orders.");
     load();
   };
+
 
   return (
     <div>
