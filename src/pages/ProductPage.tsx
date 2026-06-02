@@ -7,10 +7,10 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { categories } from "@/data/products";
-import { useDbProduct } from "@/lib/dbProducts";
+import { useDbProduct, useDbProducts } from "@/lib/dbProducts";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/contexts/CartContext";
