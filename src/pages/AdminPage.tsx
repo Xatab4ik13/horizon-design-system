@@ -464,15 +464,18 @@ const QrModal = ({ product, onClose }: { product: any; onClose: () => void }) =>
 };
 
 const ProductsPanel = () => {
-  const [items, setItems] = useState<any[]>([]);
+  const cached = getCachedAdminCall<{ data: any[] }>("products.list");
+  const [items, setItems] = useState<any[]>(cached?.data ?? []);
   const [editing, setEditing] = useState<any | null>(null);
   const [qrFor, setQrFor] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cached);
 
   const load = async () => {
-    setLoading(true);
+    if (!getCachedAdminCall("products.list")) setLoading(true);
     try {
-      const r = await adminCall("products.list");
+      const r = await adminCallSWR<{ data: any[] }>("products.list", undefined, (fresh) => {
+        setItems(fresh.data ?? []);
+      });
       setItems(r.data ?? []);
     } catch (e: any) {
       toast.error(e.message);
@@ -489,12 +492,14 @@ const ProductsPanel = () => {
     setItems((arr) => arr.filter((x) => x.id !== id));
     try {
       await adminCall("products.delete", { id });
+      invalidateAdminCache("products.");
       toast.success("Удалено");
     } catch (e: any) {
       setItems(prev);
       toast.error(e.message ?? "Не удалось удалить");
     }
   };
+
 
   if (editing) {
     return (
