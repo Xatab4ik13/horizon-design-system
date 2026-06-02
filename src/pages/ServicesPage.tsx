@@ -221,22 +221,24 @@ const ServicesPage = () => {
             className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-8 md:p-12 text-center"
           >
             <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
-              Нужна консультация?
+              {cta.title}
             </h2>
-            <p className="text-muted-foreground max-w-lg mx-auto mb-6">
-              Позвоните или оставьте заявку — мы поможем подобрать услугу и рассчитаем стоимость вашего проекта.
+            <p className="text-muted-foreground max-w-lg mx-auto mb-6 whitespace-pre-line">
+              {cta.text}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link to="/contacts">
                 <Button size="lg" className="rounded-full px-8">
-                  Оставить заявку
+                  {cta.primary}
                 </Button>
               </Link>
-              <a href="tel:+79001234567">
-                <Button variant="outline" size="lg" className="rounded-full px-8">
-                  <Phone className="h-4 w-4 mr-2" /> Позвонить
-                </Button>
-              </a>
+              {cta.phone ? (
+                <a href={`tel:${cta.phone.replace(/[^+\d]/g, "")}`}>
+                  <Button variant="outline" size="lg" className="rounded-full px-8">
+                    <Phone className="h-4 w-4 mr-2" /> {cta.secondary}
+                  </Button>
+                </a>
+              ) : null}
             </div>
           </motion.div>
         </div>
