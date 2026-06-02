@@ -628,6 +628,17 @@ const ProductEditor = ({
   const [form, setForm] = useState({ ...initial });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [arFileNames, setArFileNames] = useState<{ glb?: string; usdz?: string }>({});
+
+  const fileNameFromUrl = (url?: string | null) => {
+    if (!url) return "";
+    try {
+      const last = decodeURIComponent(new URL(url).pathname.split("/").pop() ?? "");
+      return last.replace(/^\d+-/, "") || url;
+    } catch {
+      return url.split("/").pop()?.replace(/^\d+-/, "") || url;
+    }
+  };
 
   const save = async () => {
     setSaving(true);
@@ -651,7 +662,7 @@ const ProductEditor = ({
     setUploading(true);
     try {
       const url = await adminUploadFile("product-images", file);
-      setForm({ ...form, images: [...(form.images ?? []), url] });
+      setForm((current: any) => ({ ...current, images: [...(current.images ?? []), url] }));
       toast.success("Фото загружено");
     } catch (e: any) {
       toast.error(e.message);
@@ -660,7 +671,7 @@ const ProductEditor = ({
   };
 
   const removeImage = (idx: number) => {
-    setForm({ ...form, images: form.images.filter((_: any, i: number) => i !== idx) });
+    setForm({ ...form, images: (form.images ?? []).filter((_: any, i: number) => i !== idx) });
   };
 
   const [arUploading, setArUploading] = useState<"glb" | "usdz" | null>(null);
@@ -669,7 +680,8 @@ const ProductEditor = ({
     try {
       const url = await adminUploadFile("product-models", file);
       const field = kind === "glb" ? "ar_glb_url" : "ar_usdz_url";
-      setForm({ ...form, [field]: url });
+      setForm((current: any) => ({ ...current, [field]: url }));
+      setArFileNames((current) => ({ ...current, [kind]: file.name }));
       toast.success(`${kind.toUpperCase()} загружен`);
     } catch (e: any) {
       toast.error(e.message);
