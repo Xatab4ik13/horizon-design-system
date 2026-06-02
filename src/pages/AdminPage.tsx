@@ -1644,13 +1644,30 @@ const SettingsPanel = () => {
       </div>
 
       <NotificationsEditor />
+      <PasswordPanel />
+    </div>
+  );
+};
+
+// ===================================================================
+// CONTENT PANEL — редактирование контента и страниц сайта
+// ===================================================================
+const ContentPanel = () => {
+  return (
+    <div className="grid gap-6">
+      <div className={ui.card}>
+        <h2 className={`${ui.h2} mb-2`}>Контент сайта</h2>
+        <p className="text-[14px] text-[#888]">
+          Здесь редактируются тексты, изображения, видео и порядок блоков на всех страницах сайта.
+          Изменения применяются сразу после сохранения.
+        </p>
+      </div>
       <NavMenuEditor />
       <BlocksOrderEditor />
       <HomepageEditor />
-      <ServicesDocsEditor />
-      <AboutPageEditor />
       <PagesHeadersEditor />
-      <PasswordPanel />
+      <AboutPageEditor />
+      <ServicesDocsEditor />
     </div>
   );
 };
