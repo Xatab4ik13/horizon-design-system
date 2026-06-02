@@ -26,6 +26,7 @@ export interface DbProductRow {
   material?: string | null;
   coating?: string | null;
   wood_species?: string | null;
+  package_info?: string | null;
 }
 
 // Маппинг "категорий админки" в category/subcategory сайта
