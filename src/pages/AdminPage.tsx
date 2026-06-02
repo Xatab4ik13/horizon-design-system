@@ -2674,3 +2674,316 @@ const NotificationsEditor = () => {
 };
 
 export default AdminPage;
+
+// ===================================================================
+// CONTACTS PAGE EDITOR — карточки контактов, часы работы, вакансии
+// ===================================================================
+const emptyContacts = {
+  contacts: [
+    { type: "phone", title: "Телефон", value: "+7 (900) 123-45-67", href: "tel:+79001234567", note: "Пн–Пт: 10:00 — 19:00" },
+    { type: "email", title: "Email", value: "info@derevo-master.ru", href: "mailto:info@derevo-master.ru", note: "Ответим в течение 2 часов" },
+    { type: "messenger", title: "WhatsApp / Telegram", value: "+7 (900) 123-45-67", href: "https://wa.me/79001234567", note: "Быстрые ответы и фото" },
+    { type: "address", title: "Адрес мастерской", value: "г. Москва, ул. Примерная, д. 1", href: "https://yandex.ru/maps", note: "Бесплатная парковка" },
+  ],
+  hours: [
+    { day: "Понедельник — Пятница", time: "10:00 — 19:00" },
+    { day: "Суббота", time: "11:00 — 16:00" },
+    { day: "Воскресенье", time: "Выходной" },
+  ],
+  hoursNote: "Для визита в мастерскую рекомендуем предварительно позвонить или написать — мы подготовим ваш заказ.",
+  careers: {
+    title: "Работа в компании",
+    intro: "Мы расширяем команду и ищем увлечённых людей, готовых создавать уникальные изделия из дерева.",
+    ctaTitle: "Хотите присоединиться?",
+    ctaText: "Отправьте резюме на",
+    email: "hr@derevo-master.ru",
+    phone: "+7 (900) 123-45-67",
+  },
+};
+
+const ContactsPageEditor = () => {
+  const [data, setData] = useState<any>(emptyContacts);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    adminCall("settings.get", { key: "contacts_page" })
+      .then((r) => {
+        const v = r.data ?? {};
+        setData({
+          contacts: Array.isArray(v.contacts) && v.contacts.length > 0 ? v.contacts : emptyContacts.contacts,
+          hours: Array.isArray(v.hours) && v.hours.length > 0 ? v.hours : emptyContacts.hours,
+          hoursNote: v.hoursNote ?? emptyContacts.hoursNote,
+          careers: { ...emptyContacts.careers, ...(v.careers ?? {}) },
+        });
+        setLoading(false);
+      })
+      .catch((e) => { toast.error(e.message); setLoading(false); });
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await adminCall("settings.set", { key: "contacts_page", value: data });
+      invalidateContactsContent();
+      toast.success("Страница «Контакты» сохранена");
+    } catch (e: any) { toast.error(e.message); }
+    setSaving(false);
+  };
+
+  if (loading) return null;
+
+  const setContact = (i: number, k: string, v: string) => {
+    const arr = [...data.contacts];
+    arr[i] = { ...arr[i], [k]: v };
+    setData({ ...data, contacts: arr });
+  };
+  const addContact = () => setData({ ...data, contacts: [...data.contacts, { type: "phone", title: "", value: "", href: "", note: "" }] });
+  const removeContact = (i: number) => setData({ ...data, contacts: data.contacts.filter((_: any, idx: number) => idx !== i) });
+
+  const setHour = (i: number, k: string, v: string) => {
+    const arr = [...data.hours];
+    arr[i] = { ...arr[i], [k]: v };
+    setData({ ...data, hours: arr });
+  };
+  const addHour = () => setData({ ...data, hours: [...data.hours, { day: "", time: "" }] });
+  const removeHour = (i: number) => setData({ ...data, hours: data.hours.filter((_: any, idx: number) => idx !== i) });
+
+  const setCareers = (k: string, v: string) => setData({ ...data, careers: { ...data.careers, [k]: v } });
+
+  return (
+    <div className={ui.card}>
+      <h2 className={`${ui.h2} mb-2`}>Страница «Контакты»</h2>
+      <p className="text-[14px] text-[#888] mb-6">
+        Карточки контактов, часы работы и блок вакансий. Заголовок страницы — в блоке «Заголовки страниц» выше.
+      </p>
+
+      <div className="grid gap-6">
+        <details open className="border border-[#3a3a3a] rounded-lg p-4">
+          <summary className={`${ui.h3} cursor-pointer`}>Карточки контактов</summary>
+          <div className="grid gap-4 mt-4">
+            {data.contacts.map((c: any, i: number) => (
+              <div key={i} className="border border-[#3a3a3a] rounded-lg p-4 grid gap-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-[#888] text-sm">Карточка {i + 1}</p>
+                  <button type="button" onClick={() => removeContact(i)} className={`${ui.btn} ${ui.btnDanger}`}>
+                    <X size={14} /> Удалить
+                  </button>
+                </div>
+                <div>
+                  <label className={ui.label}>Иконка</label>
+                  <select value={c.type ?? "phone"} onChange={(e) => setContact(i, "type", e.target.value)} className={ui.input}>
+                    <option value="phone">Телефон</option>
+                    <option value="email">Email</option>
+                    <option value="messenger">Мессенджер</option>
+                    <option value="address">Адрес</option>
+                  </select>
+                </div>
+                <div className="grid md:grid-cols-2 gap-3">
+                  <TextField label="Заголовок" value={c.title ?? ""} onChange={(v) => setContact(i, "title", v)} />
+                  <TextField label="Значение" value={c.value ?? ""} onChange={(v) => setContact(i, "value", v)} />
+                  <TextField label="Ссылка (tel:, mailto:, https://)" value={c.href ?? ""} onChange={(v) => setContact(i, "href", v)} />
+                  <TextField label="Подпись" value={c.note ?? ""} onChange={(v) => setContact(i, "note", v)} />
+                </div>
+              </div>
+            ))}
+            <button type="button" onClick={addContact} className={`${ui.btn} ${ui.btnSecondary} w-fit`}>
+              + Добавить карточку
+            </button>
+          </div>
+        </details>
+
+        <details className="border border-[#3a3a3a] rounded-lg p-4">
+          <summary className={`${ui.h3} cursor-pointer`}>Часы работы</summary>
+          <div className="grid gap-3 mt-4">
+            {data.hours.map((h: any, i: number) => (
+              <div key={i} className="grid md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+                <TextField label="День" value={h.day ?? ""} onChange={(v) => setHour(i, "day", v)} />
+                <TextField label="Время" value={h.time ?? ""} onChange={(v) => setHour(i, "time", v)} />
+                <button type="button" onClick={() => removeHour(i)} className={`${ui.btn} ${ui.btnDanger}`}>
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+            <button type="button" onClick={addHour} className={`${ui.btn} ${ui.btnSecondary} w-fit`}>
+              + Добавить строку
+            </button>
+            <TextField label="Примечание под расписанием" value={data.hoursNote} onChange={(v) => setData({ ...data, hoursNote: v })} multi />
+          </div>
+        </details>
+
+        <details className="border border-[#3a3a3a] rounded-lg p-4">
+          <summary className={`${ui.h3} cursor-pointer`}>Блок вакансий</summary>
+          <div className="grid gap-3 mt-4">
+            <TextField label="Заголовок" value={data.careers.title} onChange={(v) => setCareers("title", v)} />
+            <TextField label="Вступительный текст" value={data.careers.intro} onChange={(v) => setCareers("intro", v)} multi />
+            <TextField label="Заголовок CTA" value={data.careers.ctaTitle} onChange={(v) => setCareers("ctaTitle", v)} />
+            <TextField label="Текст CTA (до email)" value={data.careers.ctaText} onChange={(v) => setCareers("ctaText", v)} />
+            <div className="grid md:grid-cols-2 gap-3">
+              <TextField label="Email" value={data.careers.email} onChange={(v) => setCareers("email", v)} />
+              <TextField label="Телефон" value={data.careers.phone} onChange={(v) => setCareers("phone", v)} />
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div className="flex gap-2 mt-6 pt-6 border-t border-[#3a3a3a]">
+        <button onClick={save} disabled={saving} className={`${ui.btn} ${ui.btnPrimary} ${saving ? "opacity-50" : ""}`}>
+          <Check size={18} /> {saving ? "Сохранение…" : "Сохранить"}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ===================================================================
+// SERVICES PAGE EDITOR — карточки услуг и CTA
+// ===================================================================
+const emptyServices = {
+  items: [
+    { title: "Изготовление мебели на заказ", description: "Создаём мебель по индивидуальным размерам и эскизам из массива дерева.", features: ["Любые размеры", "Выбор породы дерева", "3D-визуализация", "Гарантия 5 лет"], timing: "от 14 дней", price: "от 15 000 ₽", enabled: true },
+    { title: "Замер и проектирование", description: "Бесплатный выезд замерщика. Чертежи и 3D-модель будущего изделия.", features: ["Бесплатный замер", "3D-моделирование", "Чертежи в подарок", "Консультация дизайнера"], timing: "1–3 дня", price: "Бесплатно", enabled: true },
+    { title: "Реставрация и покраска", description: "Восстанавливаем старую мебель: шлифовка, ремонт, покрытие маслом, воском или лаком.", features: ["Шлифовка", "Замена фурнитуры", "Покрытие на выбор", "Антикварная мебель"], timing: "от 5 дней", price: "от 5 000 ₽", enabled: true },
+    { title: "Монтаж и сборка", description: "Профессиональная сборка и установка мебели.", features: ["Доставка + сборка", "Крепёж в комплекте", "Уборка после монтажа", "Гарантия на работы"], timing: "1 день", price: "от 3 000 ₽", enabled: true },
+  ],
+  downloadsTitle: "Скачать документы",
+  cta: {
+    title: "Нужна консультация?",
+    text: "Позвоните или оставьте заявку — мы поможем подобрать услугу и рассчитаем стоимость вашего проекта.",
+    primary: "Оставить заявку",
+    secondary: "Позвонить",
+    phone: "+7 (900) 123-45-67",
+  },
+};
+
+const ServicesPageEditor = () => {
+  const [data, setData] = useState<any>(emptyServices);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    adminCall("settings.get", { key: "services_page" })
+      .then((r) => {
+        const v = r.data ?? {};
+        setData({
+          items: Array.isArray(v.items) && v.items.length > 0
+            ? emptyServices.items.map((d, i) => ({ ...d, ...(v.items[i] ?? {}) }))
+            : emptyServices.items,
+          downloadsTitle: v.downloadsTitle ?? emptyServices.downloadsTitle,
+          cta: { ...emptyServices.cta, ...(v.cta ?? {}) },
+        });
+        setLoading(false);
+      })
+      .catch((e) => { toast.error(e.message); setLoading(false); });
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await adminCall("settings.set", { key: "services_page", value: data });
+      invalidateServicesContent();
+      toast.success("Страница «Услуги» сохранена");
+    } catch (e: any) { toast.error(e.message); }
+    setSaving(false);
+  };
+
+  if (loading) return null;
+
+  const setItem = (i: number, k: string, v: any) => {
+    const arr = [...data.items];
+    arr[i] = { ...arr[i], [k]: v };
+    setData({ ...data, items: arr });
+  };
+  const setFeature = (i: number, fi: number, v: string) => {
+    const arr = [...data.items];
+    const feats = [...(arr[i].features ?? [])];
+    feats[fi] = v;
+    arr[i] = { ...arr[i], features: feats };
+    setData({ ...data, items: arr });
+  };
+  const addFeature = (i: number) => {
+    const arr = [...data.items];
+    arr[i] = { ...arr[i], features: [...(arr[i].features ?? []), ""] };
+    setData({ ...data, items: arr });
+  };
+  const removeFeature = (i: number, fi: number) => {
+    const arr = [...data.items];
+    arr[i] = { ...arr[i], features: (arr[i].features ?? []).filter((_: any, idx: number) => idx !== fi) };
+    setData({ ...data, items: arr });
+  };
+  const setCta = (k: string, v: string) => setData({ ...data, cta: { ...data.cta, [k]: v } });
+
+  return (
+    <div className={ui.card}>
+      <h2 className={`${ui.h2} mb-2`}>Страница «Услуги»</h2>
+      <p className="text-[14px] text-[#888] mb-6">
+        Карточки услуг, заголовок блока документов и CTA-блок. Сами файлы документов — в блоке «Документы услуг».
+      </p>
+
+      <div className="grid gap-6">
+        {data.items.map((it: any, i: number) => (
+          <details key={i} className="border border-[#3a3a3a] rounded-lg p-4">
+            <summary className={`${ui.h3} cursor-pointer`}>
+              Услуга {i + 1}{it.title ? <>: <span className="text-amber-400">{it.title}</span></> : null}
+            </summary>
+            <div className="grid gap-3 mt-4">
+              <label className="flex items-center gap-2 text-[13px] text-[#aaa] cursor-pointer select-none">
+                <input type="checkbox" checked={it.enabled !== false} onChange={(e) => setItem(i, "enabled", e.target.checked)} className="accent-amber-500 w-4 h-4" />
+                Показывать на сайте
+              </label>
+              <TextField label="Заголовок" value={it.title ?? ""} onChange={(v) => setItem(i, "title", v)} />
+              <TextField label="Описание" value={it.description ?? ""} onChange={(v) => setItem(i, "description", v)} multi />
+              <div className="grid md:grid-cols-2 gap-3">
+                <TextField label="Срок" value={it.timing ?? ""} onChange={(v) => setItem(i, "timing", v)} />
+                <TextField label="Цена" value={it.price ?? ""} onChange={(v) => setItem(i, "price", v)} />
+              </div>
+              <div>
+                <label className={ui.label}>Преимущества (буллеты)</label>
+                <div className="grid gap-2">
+                  {(it.features ?? []).map((f: string, fi: number) => (
+                    <div key={fi} className="flex gap-2">
+                      <input value={f} onChange={(e) => setFeature(i, fi, e.target.value)} className={`${ui.input} flex-1`} />
+                      <button type="button" onClick={() => removeFeature(i, fi)} className={`${ui.btn} ${ui.btnDanger}`}>
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button" onClick={() => addFeature(i)} className={`${ui.btn} ${ui.btnSecondary} w-fit`}>
+                    + Добавить
+                  </button>
+                </div>
+              </div>
+            </div>
+          </details>
+        ))}
+
+        <details className="border border-[#3a3a3a] rounded-lg p-4">
+          <summary className={`${ui.h3} cursor-pointer`}>Блок «Скачать документы»</summary>
+          <div className="grid gap-3 mt-4">
+            <TextField label="Заголовок секции" value={data.downloadsTitle} onChange={(v) => setData({ ...data, downloadsTitle: v })} />
+          </div>
+        </details>
+
+        <details className="border border-[#3a3a3a] rounded-lg p-4">
+          <summary className={`${ui.h3} cursor-pointer`}>CTA-блок (низ страницы)</summary>
+          <div className="grid gap-3 mt-4">
+            <TextField label="Заголовок" value={data.cta.title} onChange={(v) => setCta("title", v)} />
+            <TextField label="Текст" value={data.cta.text} onChange={(v) => setCta("text", v)} multi />
+            <div className="grid md:grid-cols-2 gap-3">
+              <TextField label="Основная кнопка" value={data.cta.primary} onChange={(v) => setCta("primary", v)} />
+              <TextField label="Кнопка-звонок" value={data.cta.secondary} onChange={(v) => setCta("secondary", v)} />
+            </div>
+            <TextField label="Телефон для звонка" value={data.cta.phone} onChange={(v) => setCta("phone", v)} />
+          </div>
+        </details>
+      </div>
+
+      <div className="flex gap-2 mt-6 pt-6 border-t border-[#3a3a3a]">
+        <button onClick={save} disabled={saving} className={`${ui.btn} ${ui.btnPrimary} ${saving ? "opacity-50" : ""}`}>
+          <Check size={18} /> {saving ? "Сохранение…" : "Сохранить"}
+        </button>
+      </div>
+    </div>
+  );
+};
+
