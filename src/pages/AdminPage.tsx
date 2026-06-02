@@ -281,21 +281,48 @@ const Import1CBlock = ({
     if (!parsed) return;
     setBusy(true);
     try {
-      const payload = {
-        items: parsed.map((p) => ({
-          ...p,
-          sku: p.sku || null,
-          category,
-          is_active: true,
-          sort_order: 0,
-        })),
-      };
+      // Загружаем встроенные изображения из карточек в storage
+      const totalImgs = parsed.reduce((s, p: any) => s + (p._images?.length ?? 0), 0);
+      let uploadedImgs = 0;
+      if (totalImgs > 0) toast.message(`Загрузка изображений: 0/${totalImgs}`);
+
+      const items = await Promise.all(
+        parsed.map(async (p: any) => {
+          const { _images, ...rest } = p;
+          const imageUrls: string[] = [];
+          if (_images?.length) {
+            for (const img of _images) {
+              try {
+                const file = new File([img.blob], img.name, { type: img.blob.type });
+                const url = await adminUploadFile("product-images", file, { prefix: "1c/" });
+                imageUrls.push(url);
+                uploadedImgs++;
+              } catch (e) {
+                console.warn("[1c-import] image upload failed", img.name, e);
+              }
+            }
+          }
+          const item: any = {
+            ...rest,
+            sku: rest.sku || null,
+            category,
+            is_active: true,
+            sort_order: 0,
+          };
+          if (imageUrls.length) item.images = imageUrls;
+          return item;
+        }),
+      );
+
       const r = await adminCall<{ data: { created: number; updated: number; errors: string[] } }>(
         "products.bulkUpsert",
-        payload,
+        { items },
       );
       const { created, updated, errors } = r.data;
-      toast.success(`Импорт: создано ${created}, обновлено ${updated}`);
+      toast.success(
+        `Импорт: создано ${created}, обновлено ${updated}` +
+          (totalImgs ? `, изображений загружено ${uploadedImgs}/${totalImgs}` : ""),
+      );
       if (errors.length) toast.error(`Ошибок: ${errors.length}. См. консоль.`);
       if (errors.length) console.warn("Import errors:", errors);
       setParsed(null);
@@ -362,8 +389,9 @@ const Import1CBlock = ({
           />
           <p className="text-[13px] text-[#888] mt-2">
             Поддерживается формат «карточка товара» из 1С. Один файл может содержать несколько
-            товаров. Сопоставление с существующими — по артикулу. Скидка из 1С игнорируется. Фото
-            добавьте отдельно после импорта.
+            товаров. Сопоставление с существующими — по артикулу. Скидка из 1С игнорируется.
+            Встроенные в файл изображения автоматически загружаются как миниатюры товара
+            (для существующих товаров — добавляются к уже загруженным без дублей).
           </p>
         </div>
 
@@ -383,6 +411,7 @@ const Import1CBlock = ({
                     <th className="px-2 py-2 w-20">В, см</th>
                     <th className="px-2 py-2 w-20">Г, см</th>
                     <th className="px-2 py-2 w-20">Вес, кг</th>
+                    <th className="px-2 py-2 w-16" title="Фото из 1С">Фото</th>
                     <th className="px-2 py-2 w-10"></th>
                   </tr>
                 </thead>
@@ -400,6 +429,9 @@ const Import1CBlock = ({
                         <td className="px-2 py-1"><input type="number" value={p.height_cm ?? ""} onChange={(e) => upd("height_cm", num(e.target.value))} className="bg-transparent border border-transparent hover:border-[#3a3a3a] focus:border-amber-500 rounded px-1 py-0.5 w-full" /></td>
                         <td className="px-2 py-1"><input type="number" value={p.depth_cm ?? ""} onChange={(e) => upd("depth_cm", num(e.target.value))} className="bg-transparent border border-transparent hover:border-[#3a3a3a] focus:border-amber-500 rounded px-1 py-0.5 w-full" /></td>
                         <td className="px-2 py-1"><input type="number" value={p.weight_kg ?? ""} onChange={(e) => upd("weight_kg", num(e.target.value))} className="bg-transparent border border-transparent hover:border-[#3a3a3a] focus:border-amber-500 rounded px-1 py-0.5 w-full" /></td>
+                        <td className="px-2 py-1 text-center text-[12px] text-amber-400">
+                          {(p as any)._images?.length ? `📷 ${(p as any)._images.length}` : "—"}
+                        </td>
                         <td className="px-2 py-1 text-center">
                           <button
                             onClick={() => setParsed((arr) => arr!.filter((_, idx) => idx !== i))}

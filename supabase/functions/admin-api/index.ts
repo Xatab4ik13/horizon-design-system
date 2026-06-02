@@ -160,6 +160,16 @@ Deno.serve(async (req) => {
                 const updatePatch = { ...item };
                 if (!Array.isArray(updatePatch.images) || updatePatch.images.length === 0) {
                   delete updatePatch.images;
+                } else {
+                  // Если в импорте есть фото — добавляем к существующим без дублей
+                  const { data: cur } = await admin
+                    .from("products")
+                    .select("images")
+                    .eq("id", existing.id)
+                    .maybeSingle();
+                  const prev: string[] = Array.isArray(cur?.images) ? cur!.images : [];
+                  const merged = Array.from(new Set([...prev, ...updatePatch.images]));
+                  updatePatch.images = merged;
                 }
                 const { error: upErr } = await admin
                   .from("products")
