@@ -281,21 +281,48 @@ const Import1CBlock = ({
     if (!parsed) return;
     setBusy(true);
     try {
-      const payload = {
-        items: parsed.map((p) => ({
-          ...p,
-          sku: p.sku || null,
-          category,
-          is_active: true,
-          sort_order: 0,
-        })),
-      };
+      // Загружаем встроенные изображения из карточек в storage
+      const totalImgs = parsed.reduce((s, p: any) => s + (p._images?.length ?? 0), 0);
+      let uploadedImgs = 0;
+      if (totalImgs > 0) toast.message(`Загрузка изображений: 0/${totalImgs}`);
+
+      const items = await Promise.all(
+        parsed.map(async (p: any) => {
+          const { _images, ...rest } = p;
+          const imageUrls: string[] = [];
+          if (_images?.length) {
+            for (const img of _images) {
+              try {
+                const file = new File([img.blob], img.name, { type: img.blob.type });
+                const url = await adminUploadFile("product-images", file, { prefix: "1c/" });
+                imageUrls.push(url);
+                uploadedImgs++;
+              } catch (e) {
+                console.warn("[1c-import] image upload failed", img.name, e);
+              }
+            }
+          }
+          const item: any = {
+            ...rest,
+            sku: rest.sku || null,
+            category,
+            is_active: true,
+            sort_order: 0,
+          };
+          if (imageUrls.length) item.images = imageUrls;
+          return item;
+        }),
+      );
+
       const r = await adminCall<{ data: { created: number; updated: number; errors: string[] } }>(
         "products.bulkUpsert",
-        payload,
+        { items },
       );
       const { created, updated, errors } = r.data;
-      toast.success(`Импорт: создано ${created}, обновлено ${updated}`);
+      toast.success(
+        `Импорт: создано ${created}, обновлено ${updated}` +
+          (totalImgs ? `, изображений загружено ${uploadedImgs}/${totalImgs}` : ""),
+      );
       if (errors.length) toast.error(`Ошибок: ${errors.length}. См. консоль.`);
       if (errors.length) console.warn("Import errors:", errors);
       setParsed(null);
