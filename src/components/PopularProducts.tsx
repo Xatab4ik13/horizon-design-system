@@ -137,7 +137,7 @@ const PopularProducts = () => {
               animate="center"
               exit="exit"
               transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
-              className="flex flex-col-reverse md:flex-row items-center justify-center gap-2 md:gap-1 lg:gap-2 max-w-6xl mx-auto pointer-events-none"
+              className="flex flex-col-reverse md:flex-row items-center justify-between gap-6 md:gap-8 lg:gap-12 w-full pointer-events-none"
             >
               {/* Text */}
               <div className="w-full md:w-5/12 text-center md:text-left pointer-events-auto">
@@ -184,7 +184,7 @@ const PopularProducts = () => {
               </div>
 
               {/* Image */}
-              <div className="w-full md:w-7/12 flex justify-center">
+              <div className="w-full md:w-7/12 flex justify-center md:justify-end">
                 <AutoTilt3D>
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
