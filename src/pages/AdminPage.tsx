@@ -628,6 +628,17 @@ const ProductEditor = ({
   const [form, setForm] = useState({ ...initial });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [arFileNames, setArFileNames] = useState<{ glb?: string; usdz?: string }>({});
+
+  const fileNameFromUrl = (url?: string | null) => {
+    if (!url) return "";
+    try {
+      const last = decodeURIComponent(new URL(url).pathname.split("/").pop() ?? "");
+      return last.replace(/^\d+-/, "") || url;
+    } catch {
+      return url.split("/").pop()?.replace(/^\d+-/, "") || url;
+    }
+  };
 
   const save = async () => {
     setSaving(true);
@@ -651,7 +662,7 @@ const ProductEditor = ({
     setUploading(true);
     try {
       const url = await adminUploadFile("product-images", file);
-      setForm({ ...form, images: [...(form.images ?? []), url] });
+      setForm((current: any) => ({ ...current, images: [...(current.images ?? []), url] }));
       toast.success("Фото загружено");
     } catch (e: any) {
       toast.error(e.message);
@@ -660,7 +671,7 @@ const ProductEditor = ({
   };
 
   const removeImage = (idx: number) => {
-    setForm({ ...form, images: form.images.filter((_: any, i: number) => i !== idx) });
+    setForm({ ...form, images: (form.images ?? []).filter((_: any, i: number) => i !== idx) });
   };
 
   const [arUploading, setArUploading] = useState<"glb" | "usdz" | null>(null);
@@ -669,7 +680,8 @@ const ProductEditor = ({
     try {
       const url = await adminUploadFile("product-models", file);
       const field = kind === "glb" ? "ar_glb_url" : "ar_usdz_url";
-      setForm({ ...form, [field]: url });
+      setForm((current: any) => ({ ...current, [field]: url }));
+      setArFileNames((current) => ({ ...current, [kind]: file.name }));
       toast.success(`${kind.toUpperCase()} загружен`);
     } catch (e: any) {
       toast.error(e.message);
@@ -865,7 +877,14 @@ const ProductEditor = ({
           <div className="flex flex-wrap gap-3 mb-3">
             {form.images?.map((url: string, i: number) => (
               <div key={i} className="relative w-28 h-28 rounded-lg overflow-hidden bg-[#1a1a1a]">
-                <img src={url} alt="" className="w-full h-full object-cover" />
+                <img
+                  src={url}
+                  alt={`Фото товара ${i + 1}`}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                  }}
+                />
                 <button
                   onClick={() => removeImage(i)}
                   className="absolute top-1 right-1 bg-black/70 hover:bg-black p-1 rounded"
@@ -922,12 +941,15 @@ const ProductEditor = ({
               </label>
             </div>
             {form.ar_glb_url && (
-              <button
-                onClick={() => setForm({ ...form, ar_glb_url: null })}
-                className="text-[12px] text-[#888] hover:text-white mt-1"
-              >
-                Удалить
-              </button>
+              <div className="flex items-center gap-3 mt-1 text-[12px] text-[#888]">
+                <span className="truncate">Файл: {arFileNames.glb || fileNameFromUrl(form.ar_glb_url)}</span>
+                <button
+                  onClick={() => setForm({ ...form, ar_glb_url: null })}
+                  className="hover:text-white flex-shrink-0"
+                >
+                  Удалить
+                </button>
+              </div>
             )}
           </div>
           <div>
@@ -957,12 +979,15 @@ const ProductEditor = ({
               </label>
             </div>
             {form.ar_usdz_url && (
-              <button
-                onClick={() => setForm({ ...form, ar_usdz_url: null })}
-                className="text-[12px] text-[#888] hover:text-white mt-1"
-              >
-                Удалить
-              </button>
+              <div className="flex items-center gap-3 mt-1 text-[12px] text-[#888]">
+                <span className="truncate">Файл: {arFileNames.usdz || fileNameFromUrl(form.ar_usdz_url)}</span>
+                <button
+                  onClick={() => setForm({ ...form, ar_usdz_url: null })}
+                  className="hover:text-white flex-shrink-0"
+                >
+                  Удалить
+                </button>
+              </div>
             )}
           </div>
         </div>
