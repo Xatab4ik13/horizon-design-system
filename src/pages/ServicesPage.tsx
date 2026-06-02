@@ -10,13 +10,14 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
-import { usePageHeader } from "@/hooks/useSiteContent";
+import { usePageHeader, useServicesContent } from "@/hooks/useSiteContent";
 
 type ServiceDoc = { name: string; desc: string; url?: string; format?: string };
 
-const services = [
+const defaultIcons = [Hammer, Ruler, PaintBucket, Wrench];
+
+const defaultServices = [
   {
-    icon: Hammer,
     title: "Изготовление мебели на заказ",
     description:
       "Создаём мебель по индивидуальным размерам и эскизам из массива дерева. Столы, стеллажи, кровати, тумбы — любая сложность.",
@@ -25,7 +26,6 @@ const services = [
     price: "от 15 000 ₽",
   },
   {
-    icon: Ruler,
     title: "Замер и проектирование",
     description:
       "Бесплатный выезд замерщика в пределах города. Создание чертежей и 3D-модели будущего изделия для согласования.",
@@ -34,7 +34,6 @@ const services = [
     price: "Бесплатно",
   },
   {
-    icon: PaintBucket,
     title: "Реставрация и покраска",
     description:
       "Восстанавливаем старую мебель: шлифовка, ремонт, покрытие маслом, воском или лаком. Даём вторую жизнь любимым вещам.",
@@ -43,7 +42,6 @@ const services = [
     price: "от 5 000 ₽",
   },
   {
-    icon: Wrench,
     title: "Монтаж и сборка",
     description:
       "Профессиональная сборка и установка мебели. Крепление стеллажей, зеркал, полок. Работаем аккуратно и убираем за собой.",
@@ -53,6 +51,14 @@ const services = [
   },
 ];
 
+const defaultCta = {
+  title: "Нужна консультация?",
+  text: "Позвоните или оставьте заявку — мы поможем подобрать услугу и рассчитаем стоимость вашего проекта.",
+  primary: "Оставить заявку",
+  secondary: "Позвонить",
+  phone: "+7 (900) 123-45-67",
+};
+
 const defaultDownloadFiles: ServiceDoc[] = [
   { name: "Прайс-лист 2026", desc: "Актуальные цены на все виды работ", format: "PDF, 1.2 МБ" },
   { name: "Каталог материалов", desc: "Породы дерева, покрытия, фурнитура", format: "PDF, 3.8 МБ" },
@@ -61,7 +67,19 @@ const defaultDownloadFiles: ServiceDoc[] = [
 
 const ServicesPage = () => {
   const header = usePageHeader("services", { title: "Наши услуги", subtitle: "Полный цикл работ — от замера и проектирования до изготовления, доставки и монтажа" });
+  const cms = useServicesContent();
   const [downloadFiles, setDownloadFiles] = useState<ServiceDoc[]>(defaultDownloadFiles);
+
+  const services = (cms.items?.length ? cms.items : defaultServices)
+    .filter((s) => (s as { enabled?: boolean }).enabled !== false)
+    .map((s, i) => ({
+      ...defaultServices[i],
+      ...s,
+      features: s.features?.length ? s.features : defaultServices[i]?.features ?? [],
+      icon: defaultIcons[i] ?? Hammer,
+    }));
+  const downloadsTitle = cms.downloadsTitle?.trim() || "Скачать документы";
+  const cta = { ...defaultCta, ...(cms.cta ?? {}) };
 
   useEffect(() => {
     supabase
@@ -167,7 +185,7 @@ const ServicesPage = () => {
             className="mb-20"
           >
             <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-8">
-              Скачать документы
+              {downloadsTitle}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
               {downloadFiles.map((file, idx) => (
@@ -203,22 +221,24 @@ const ServicesPage = () => {
             className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-8 md:p-12 text-center"
           >
             <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
-              Нужна консультация?
+              {cta.title}
             </h2>
-            <p className="text-muted-foreground max-w-lg mx-auto mb-6">
-              Позвоните или оставьте заявку — мы поможем подобрать услугу и рассчитаем стоимость вашего проекта.
+            <p className="text-muted-foreground max-w-lg mx-auto mb-6 whitespace-pre-line">
+              {cta.text}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link to="/contacts">
                 <Button size="lg" className="rounded-full px-8">
-                  Оставить заявку
+                  {cta.primary}
                 </Button>
               </Link>
-              <a href="tel:+79001234567">
-                <Button variant="outline" size="lg" className="rounded-full px-8">
-                  <Phone className="h-4 w-4 mr-2" /> Позвонить
-                </Button>
-              </a>
+              {cta.phone ? (
+                <a href={`tel:${cta.phone.replace(/[^+\d]/g, "")}`}>
+                  <Button variant="outline" size="lg" className="rounded-full px-8">
+                    <Phone className="h-4 w-4 mr-2" /> {cta.secondary}
+                  </Button>
+                </a>
+              ) : null}
             </div>
           </motion.div>
         </div>
