@@ -877,7 +877,14 @@ const ProductEditor = ({
           <div className="flex flex-wrap gap-3 mb-3">
             {form.images?.map((url: string, i: number) => (
               <div key={i} className="relative w-28 h-28 rounded-lg overflow-hidden bg-[#1a1a1a]">
-                <img src={url} alt="" className="w-full h-full object-cover" />
+                <img
+                  src={url}
+                  alt={`Фото товара ${i + 1}`}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display = "none";
+                  }}
+                />
                 <button
                   onClick={() => removeImage(i)}
                   className="absolute top-1 right-1 bg-black/70 hover:bg-black p-1 rounded"
@@ -934,12 +941,15 @@ const ProductEditor = ({
               </label>
             </div>
             {form.ar_glb_url && (
-              <button
-                onClick={() => setForm({ ...form, ar_glb_url: null })}
-                className="text-[12px] text-[#888] hover:text-white mt-1"
-              >
-                Удалить
-              </button>
+              <div className="flex items-center gap-3 mt-1 text-[12px] text-[#888]">
+                <span className="truncate">Файл: {arFileNames.glb || fileNameFromUrl(form.ar_glb_url)}</span>
+                <button
+                  onClick={() => setForm({ ...form, ar_glb_url: null })}
+                  className="hover:text-white flex-shrink-0"
+                >
+                  Удалить
+                </button>
+              </div>
             )}
           </div>
           <div>
@@ -969,12 +979,15 @@ const ProductEditor = ({
               </label>
             </div>
             {form.ar_usdz_url && (
-              <button
-                onClick={() => setForm({ ...form, ar_usdz_url: null })}
-                className="text-[12px] text-[#888] hover:text-white mt-1"
-              >
-                Удалить
-              </button>
+              <div className="flex items-center gap-3 mt-1 text-[12px] text-[#888]">
+                <span className="truncate">Файл: {arFileNames.usdz || fileNameFromUrl(form.ar_usdz_url)}</span>
+                <button
+                  onClick={() => setForm({ ...form, ar_usdz_url: null })}
+                  className="hover:text-white flex-shrink-0"
+                >
+                  Удалить
+                </button>
+              </div>
             )}
           </div>
         </div>
