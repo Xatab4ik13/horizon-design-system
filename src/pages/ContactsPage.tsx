@@ -20,39 +20,48 @@ interface Vacancy {
   salary: string | null;
 }
 
-const contactInfo = [
-  {
-    icon: Phone,
-    title: "Телефон",
-    value: "+7 (900) 123-45-67",
-    href: "tel:+79001234567",
-    note: "Пн–Пт: 10:00 — 19:00",
-  },
-  {
-    icon: Mail,
-    title: "Email",
-    value: "info@derevo-master.ru",
-    href: "mailto:info@derevo-master.ru",
-    note: "Ответим в течение 2 часов",
-  },
-  {
-    icon: MessageCircle,
-    title: "WhatsApp / Telegram",
-    value: "+7 (900) 123-45-67",
-    href: "https://wa.me/79001234567",
-    note: "Быстрые ответы и фото",
-  },
-  {
-    icon: MapPin,
-    title: "Адрес мастерской",
-    value: "г. Москва, ул. Примерная, д. 1",
-    href: "https://yandex.ru/maps",
-    note: "Бесплатная парковка",
-  },
+const defaultContacts = [
+  { type: "phone" as const, title: "Телефон", value: "+7 (900) 123-45-67", href: "tel:+79001234567", note: "Пн–Пт: 10:00 — 19:00" },
+  { type: "email" as const, title: "Email", value: "info@derevo-master.ru", href: "mailto:info@derevo-master.ru", note: "Ответим в течение 2 часов" },
+  { type: "messenger" as const, title: "WhatsApp / Telegram", value: "+7 (900) 123-45-67", href: "https://wa.me/79001234567", note: "Быстрые ответы и фото" },
+  { type: "address" as const, title: "Адрес мастерской", value: "г. Москва, ул. Примерная, д. 1", href: "https://yandex.ru/maps", note: "Бесплатная парковка" },
 ];
+
+const iconByType = {
+  phone: Phone,
+  email: Mail,
+  messenger: MessageCircle,
+  address: MapPin,
+} as const;
+
+const defaultHours = [
+  { day: "Понедельник — Пятница", time: "10:00 — 19:00" },
+  { day: "Суббота", time: "11:00 — 16:00" },
+  { day: "Воскресенье", time: "Выходной" },
+];
+
+const defaultHoursNote =
+  "Для визита в мастерскую рекомендуем предварительно позвонить или написать — мы подготовим ваш заказ.";
+
+const defaultCareers = {
+  title: "Работа в компании",
+  intro: "Мы расширяем команду и ищем увлечённых людей, готовых создавать уникальные изделия из дерева.",
+  ctaTitle: "Хотите присоединиться?",
+  ctaText: "Отправьте резюме на",
+  email: "hr@derevo-master.ru",
+  phone: "+7 (900) 123-45-67",
+};
 
 const ContactsPage = () => {
   const header = usePageHeader("contacts", { title: "Контакты", subtitle: "Свяжитесь с нами любым удобным способом — мы всегда на связи" });
+  const cms = useContactsContent();
+  const contactInfo = (cms.contacts?.length ? cms.contacts : defaultContacts).map((c) => ({
+    ...c,
+    icon: iconByType[(c.type as keyof typeof iconByType) ?? "phone"] ?? Phone,
+  }));
+  const hours = cms.hours?.length ? cms.hours : defaultHours;
+  const hoursNote = cms.hoursNote?.trim() || defaultHoursNote;
+  const careers = { ...defaultCareers, ...(cms.careers ?? {}) };
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
   const [vacanciesLoading, setVacanciesLoading] = useState(true);
 
