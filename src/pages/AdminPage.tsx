@@ -1373,13 +1373,16 @@ const slugify = (s: string) =>
     .slice(0, 80);
 
 const BlogPanel = () => {
-  const [items, setItems] = useState<any[]>([]);
+  const cached = getCachedAdminCall<{ data: any[] }>("blog.list");
+  const [items, setItems] = useState<any[]>(cached?.data ?? []);
   const [editing, setEditing] = useState<any | null>(null);
   const [uploading, setUploading] = useState(false);
 
   const load = async () => {
     try {
-      const r = await adminCall("blog.list");
+      const r = await adminCallSWR<{ data: any[] }>("blog.list", undefined, (fresh) => {
+        setItems(fresh.data ?? []);
+      });
       setItems(r.data ?? []);
     } catch (e: any) {
       toast.error(e.message);
@@ -1398,6 +1401,7 @@ const BlogPanel = () => {
       };
       if (editing.id) await adminCall("blog.update", payload);
       else await adminCall("blog.create", payload);
+      invalidateAdminCache("blog.");
       toast.success("Сохранено");
       setEditing(null);
       load();
@@ -1408,8 +1412,10 @@ const BlogPanel = () => {
   const remove = async (id: string) => {
     if (!confirm("Удалить статью?")) return;
     await adminCall("blog.delete", { id });
+    invalidateAdminCache("blog.");
     load();
   };
+
 
   const uploadCover = async (file: File) => {
     setUploading(true);
