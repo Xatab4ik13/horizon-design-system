@@ -1134,13 +1134,16 @@ const OrdersPanel = () => {
 // ЗАЯВКИ
 // ===================================================================
 const RequestsPanel = () => {
-  const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cached = getCachedAdminCall<{ data: any[] }>("requests.list");
+  const [items, setItems] = useState<any[]>(cached?.data ?? []);
+  const [loading, setLoading] = useState(!cached);
 
   const load = async () => {
-    setLoading(true);
+    if (!getCachedAdminCall("requests.list")) setLoading(true);
     try {
-      const r = await adminCall("requests.list");
+      const r = await adminCallSWR<{ data: any[] }>("requests.list", undefined, (fresh) => {
+        setItems(fresh.data ?? []);
+      });
       setItems(r.data ?? []);
     } catch (e: any) {
       toast.error(e.message);
@@ -1153,13 +1156,16 @@ const RequestsPanel = () => {
 
   const toggleRead = async (it: any) => {
     await adminCall("requests.markRead", { id: it.id, is_read: !it.is_read });
+    invalidateAdminCache("requests.");
     load();
   };
   const remove = async (id: string) => {
     if (!confirm("Удалить заявку?")) return;
     await adminCall("requests.delete", { id });
+    invalidateAdminCache("requests.");
     load();
   };
+
 
   return (
     <div>
