@@ -1709,6 +1709,22 @@ const SettingsPanel = () => {
 // CONTENT PANEL — редактирование контента и страниц сайта
 // ===================================================================
 const ContentPanel = () => {
+  // Подтягиваем все ключи настроек одним запросом и кладём в SWR-кэш,
+  // чтобы дочерние редакторы получили данные мгновенно вместо 8 параллельных
+  // вызовов settings.get на холодном старте edge-функции.
+  useEffect(() => {
+    prefetchAdminSettings([
+      "homepage",
+      "pages",
+      "nav_menu",
+      "homepage_blocks",
+      "services_docs",
+      "about_page",
+      "contacts_page",
+      "services_page",
+    ]);
+  }, []);
+
   return (
     <div className="grid gap-6">
       <div className={ui.card}>
