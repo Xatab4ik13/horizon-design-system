@@ -190,9 +190,9 @@ const ContactsPage = () => {
             viewport={{ once: true }}
             className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-6 md:p-10"
           >
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Работа в компании</h2>
-            <p className="text-muted-foreground mb-8 max-w-2xl">
-              Мы расширяем команду и ищем увлечённых людей, готовых создавать уникальные изделия из дерева.
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">{careers.title}</h2>
+            <p className="text-muted-foreground mb-8 max-w-2xl whitespace-pre-line">
+              {careers.intro}
             </p>
 
             {vacanciesLoading ? (
