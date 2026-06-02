@@ -428,6 +428,9 @@ const Import1CBlock = ({
                         <td className="px-2 py-1"><input type="number" value={p.height_cm ?? ""} onChange={(e) => upd("height_cm", num(e.target.value))} className="bg-transparent border border-transparent hover:border-[#3a3a3a] focus:border-amber-500 rounded px-1 py-0.5 w-full" /></td>
                         <td className="px-2 py-1"><input type="number" value={p.depth_cm ?? ""} onChange={(e) => upd("depth_cm", num(e.target.value))} className="bg-transparent border border-transparent hover:border-[#3a3a3a] focus:border-amber-500 rounded px-1 py-0.5 w-full" /></td>
                         <td className="px-2 py-1"><input type="number" value={p.weight_kg ?? ""} onChange={(e) => upd("weight_kg", num(e.target.value))} className="bg-transparent border border-transparent hover:border-[#3a3a3a] focus:border-amber-500 rounded px-1 py-0.5 w-full" /></td>
+                        <td className="px-2 py-1 text-center text-[12px] text-amber-400">
+                          {(p as any)._images?.length ? `📷 ${(p as any)._images.length}` : "—"}
+                        </td>
                         <td className="px-2 py-1 text-center">
                           <button
                             onClick={() => setParsed((arr) => arr!.filter((_, idx) => idx !== i))}
