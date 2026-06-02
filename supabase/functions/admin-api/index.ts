@@ -156,16 +156,24 @@ Deno.serve(async (req) => {
                 .maybeSingle();
               if (selErr) throw selErr;
               if (existing?.id) {
+                // На апдейте не затираем уже загруженные изображения, если в импорте их нет
+                const updatePatch = { ...item };
+                if (!Array.isArray(updatePatch.images) || updatePatch.images.length === 0) {
+                  delete updatePatch.images;
+                }
                 const { error: upErr } = await admin
                   .from("products")
-                  .update(item)
+                  .update(updatePatch)
                   .eq("id", existing.id);
                 if (upErr) throw upErr;
                 updated++;
                 continue;
               }
             }
-            const { error: insErr } = await admin.from("products").insert(item);
+            // При создании нового товара images может отсутствовать — это нормально
+            const insertItem = { ...item };
+            if (!Array.isArray(insertItem.images)) insertItem.images = [];
+            const { error: insErr } = await admin.from("products").insert(insertItem);
             if (insErr) throw insErr;
             created++;
           } catch (e: any) {

@@ -287,7 +287,6 @@ const Import1CBlock = ({
           sku: p.sku || null,
           category,
           is_active: true,
-          images: [],
           sort_order: 0,
         })),
       };
