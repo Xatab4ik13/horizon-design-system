@@ -14,6 +14,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEO, { buildFAQJsonLd } from "@/components/SEO";
 import { usePageHeader } from "@/hooks/useSiteContent";
+import DeliveryCalculator from "@/components/DeliveryCalculator";
 import { Link } from "react-router-dom";
 
 
@@ -223,6 +224,15 @@ const DeliveryPaymentPage = () => {
                   </a>
                 </div>
               </div>
+            </motion.div>
+
+            {/* Calculator */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <DeliveryCalculator />
             </motion.div>
 
           </section>
