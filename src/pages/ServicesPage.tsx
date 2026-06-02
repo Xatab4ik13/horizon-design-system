@@ -67,7 +67,19 @@ const defaultDownloadFiles: ServiceDoc[] = [
 
 const ServicesPage = () => {
   const header = usePageHeader("services", { title: "Наши услуги", subtitle: "Полный цикл работ — от замера и проектирования до изготовления, доставки и монтажа" });
+  const cms = useServicesContent();
   const [downloadFiles, setDownloadFiles] = useState<ServiceDoc[]>(defaultDownloadFiles);
+
+  const services = (cms.items?.length ? cms.items : defaultServices)
+    .filter((s) => s.enabled !== false)
+    .map((s, i) => ({
+      ...defaultServices[i],
+      ...s,
+      features: s.features?.length ? s.features : defaultServices[i]?.features ?? [],
+      icon: defaultIcons[i] ?? Hammer,
+    }));
+  const downloadsTitle = cms.downloadsTitle?.trim() || "Скачать документы";
+  const cta = { ...defaultCta, ...(cms.cta ?? {}) };
 
   useEffect(() => {
     supabase
