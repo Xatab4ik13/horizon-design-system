@@ -1,6 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 
 const STORAGE_KEY = "faktura_admin_pwd";
+const ADMIN_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-api`;
+const PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 export const adminAuth = {
   get password(): string | null {
@@ -29,22 +31,25 @@ export async function adminCall<T = any>(
   let lastErr: any = null;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const { data, error } = await supabase.functions.invoke("admin-api", {
-        body: { action, payload, password },
-        headers: { "x-admin-password": password },
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 30000);
+      const response = await fetch(ADMIN_FUNCTION_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: PUBLISHABLE_KEY,
+          Authorization: `Bearer ${PUBLISHABLE_KEY}`,
+          "x-admin-password": password,
+        },
+        body: JSON.stringify({ action, payload, password }),
+        signal: controller.signal,
       });
-      if (error) {
-        const ctx: any = (error as any).context;
-        let message = error.message;
-        let status = ctx?.status;
-        if (ctx?.json) {
-          try {
-            const j = await ctx.json();
-            message = j.error ?? message;
-          } catch {
-            // ignore
-          }
-        }
+      window.clearTimeout(timeout);
+
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        const message = data?.error ?? `Ошибка админ API: ${response.status}`;
+        const status = response.status;
         // 401/400/403 — не ретраим, реальная ошибка
         if (status && status >= 400 && status < 500) throw new Error(message);
         lastErr = new Error(message);
@@ -160,12 +165,15 @@ export async function adminUploadFile(
     { bucket, path },
   );
   const { token, publicUrl } = r.data;
+  const uploadPath = r.data.path || path;
+  const ext = file.name.split(".").pop()?.toLowerCase();
+  const contentType = file.type ||
+    (ext === "webp" ? "image/webp" :
+      ext === "glb" ? "model/gltf-binary" :
+        ext === "usdz" ? "model/vnd.usdz+zip" : "application/octet-stream");
   const { error } = await supabase.storage
     .from(bucket)
-    .uploadToSignedUrl(path, token, file, {
-      contentType: file.type || "application/octet-stream",
-      upsert: true,
-    });
+    .uploadToSignedUrl(uploadPath, token, file, { contentType, upsert: true });
   if (error) throw error;
   return publicUrl;
 }
