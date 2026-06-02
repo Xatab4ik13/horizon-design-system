@@ -2136,41 +2136,55 @@ const HomepageEditor = () => {
 
 
   const setHero = (k: string, v: string) =>
-    setData({ ...data, hero: { ...data.hero, [k]: v } });
+    setData((d: any) => ({ ...d, hero: { ...d.hero, [k]: v } }));
   const setContact = (k: string, v: string) =>
-    setData({ ...data, contact: { ...data.contact, [k]: v } });
+    setData((d: any) => ({ ...d, contact: { ...d.contact, [k]: v } }));
   const setFooter = (k: string, v: string) =>
-    setData({ ...data, footer: { ...data.footer, [k]: v } });
+    setData((d: any) => ({ ...d, footer: { ...d.footer, [k]: v } }));
   const setPopularItem = (i: number, k: string, v: string) => {
-    const items = [...data.popular.items];
-    items[i] = { ...items[i], [k]: v };
-    setData({ ...data, popular: { items } });
+    setData((d: any) => {
+      const items = [...d.popular.items];
+      items[i] = { ...items[i], [k]: v };
+      return { ...d, popular: { ...d.popular, items } };
+    });
   };
   const addPopularItem = () => {
-    const items = [...data.popular.items, { title: "", tagline: "", description: "", cta: "Выбрать", image: "", enabled: true }];
-    setData({ ...data, popular: { items } });
+    setData((d: any) => ({
+      ...d,
+      popular: { ...d.popular, items: [...d.popular.items, { title: "", tagline: "", description: "", cta: "Выбрать", image: "", enabled: true }] },
+    }));
   };
   const removePopularItem = (i: number) => {
-    const items = data.popular.items.filter((_: any, idx: number) => idx !== i);
-    setData({ ...data, popular: { items } });
+    setData((d: any) => ({
+      ...d,
+      popular: { ...d.popular, items: d.popular.items.filter((_: any, idx: number) => idx !== i) },
+    }));
   };
   const setCategoriesItem = (i: number, k: string, v: string) => {
-    const items = [...data.categories.items];
-    items[i] = { ...items[i], [k]: v };
-    setData({ ...data, categories: { ...data.categories, items } });
+    setData((d: any) => {
+      const items = [...d.categories.items];
+      items[i] = { ...items[i], [k]: v };
+      return { ...d, categories: { ...d.categories, items } };
+    });
   };
   const addCategoryItem = () => {
-    const items = [...data.categories.items, { name: "", image: "", enabled: true }];
-    setData({ ...data, categories: { ...data.categories, items } });
+    setData((d: any) => ({
+      ...d,
+      categories: { ...d.categories, items: [...d.categories.items, { name: "", image: "", enabled: true }] },
+    }));
   };
   const removeCategoryItem = (i: number) => {
-    const items = data.categories.items.filter((_: any, idx: number) => idx !== i);
-    setData({ ...data, categories: { ...data.categories, items } });
+    setData((d: any) => ({
+      ...d,
+      categories: { ...d.categories, items: d.categories.items.filter((_: any, idx: number) => idx !== i) },
+    }));
   };
   const setAdvantagesItem = (i: number, k: string, v: string) => {
-    const items = [...data.advantages.items];
-    items[i] = { ...items[i], [k]: v };
-    setData({ ...data, advantages: { ...data.advantages, items } });
+    setData((d: any) => {
+      const items = [...d.advantages.items];
+      items[i] = { ...items[i], [k]: v };
+      return { ...d, advantages: { ...d.advantages, items } };
+    });
   };
 
   const defaultPopular = ["Панно", "Зеркала"];
