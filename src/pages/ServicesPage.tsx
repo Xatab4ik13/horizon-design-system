@@ -14,9 +14,10 @@ import { usePageHeader, useServicesContent } from "@/hooks/useSiteContent";
 
 type ServiceDoc = { name: string; desc: string; url?: string; format?: string };
 
-const services = [
+const defaultIcons = [Hammer, Ruler, PaintBucket, Wrench];
+
+const defaultServices = [
   {
-    icon: Hammer,
     title: "Изготовление мебели на заказ",
     description:
       "Создаём мебель по индивидуальным размерам и эскизам из массива дерева. Столы, стеллажи, кровати, тумбы — любая сложность.",
@@ -25,7 +26,6 @@ const services = [
     price: "от 15 000 ₽",
   },
   {
-    icon: Ruler,
     title: "Замер и проектирование",
     description:
       "Бесплатный выезд замерщика в пределах города. Создание чертежей и 3D-модели будущего изделия для согласования.",
@@ -34,7 +34,6 @@ const services = [
     price: "Бесплатно",
   },
   {
-    icon: PaintBucket,
     title: "Реставрация и покраска",
     description:
       "Восстанавливаем старую мебель: шлифовка, ремонт, покрытие маслом, воском или лаком. Даём вторую жизнь любимым вещам.",
@@ -43,7 +42,6 @@ const services = [
     price: "от 5 000 ₽",
   },
   {
-    icon: Wrench,
     title: "Монтаж и сборка",
     description:
       "Профессиональная сборка и установка мебели. Крепление стеллажей, зеркал, полок. Работаем аккуратно и убираем за собой.",
@@ -52,6 +50,14 @@ const services = [
     price: "от 3 000 ₽",
   },
 ];
+
+const defaultCta = {
+  title: "Нужна консультация?",
+  text: "Позвоните или оставьте заявку — мы поможем подобрать услугу и рассчитаем стоимость вашего проекта.",
+  primary: "Оставить заявку",
+  secondary: "Позвонить",
+  phone: "+7 (900) 123-45-67",
+};
 
 const defaultDownloadFiles: ServiceDoc[] = [
   { name: "Прайс-лист 2026", desc: "Актуальные цены на все виды работ", format: "PDF, 1.2 МБ" },
