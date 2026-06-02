@@ -2373,6 +2373,30 @@ const defaultNav = [
   { name: "Контакты", url: "/contacts" },
 ];
 
+// Список реально существующих страниц сайта (см. src/App.tsx).
+// Пункт меню должен указывать на одну из этих ссылок, иначе будет 404.
+const AVAILABLE_PAGES: { url: string; label: string }[] = [
+  { url: "/", label: "Главная" },
+  { url: "/catalog", label: "Каталог" },
+  { url: "/services", label: "Услуги" },
+  { url: "/gallery", label: "Галерея" },
+  { url: "/blog", label: "Блог" },
+  { url: "/delivery", label: "Доставка и оплата" },
+  { url: "/contacts", label: "Контакты" },
+  { url: "/about", label: "О нас" },
+  { url: "/cart", label: "Корзина" },
+  { url: "/account", label: "Личный кабинет" },
+];
+const KNOWN_URLS = new Set(AVAILABLE_PAGES.map((p) => p.url));
+const isKnownUrl = (u: string) => {
+  const url = (u || "").trim();
+  if (!url) return false;
+  if (url.startsWith("http://") || url.startsWith("https://")) return true; // внешняя ссылка
+  if (KNOWN_URLS.has(url)) return true;
+  if (url.startsWith("/blog/") || url.startsWith("/product/")) return true;
+  return false;
+};
+
 const NavMenuEditor = () => {
   const [items, setItems] = useState<{ name: string; url: string }[]>(defaultNav);
   const [loading, setLoading] = useState(true);
