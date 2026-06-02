@@ -199,7 +199,9 @@ const MiniProductCard = ({ productId }: { productId: string }) => {
 // ─── Main page ───
 const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { product, loading: productLoading } = useDbProduct(id);
+  const { products: allProducts } = useDbProducts();
   const { addItem } = useCart();
   const [showAR, setShowAR] = useState(false);
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
@@ -207,6 +209,7 @@ const ProductPage = () => {
   const [isFavorite, setIsFavorite] = useState(false);
 
   const categoryData = useMemo(() => categories.find((c) => c.slug === product?.category), [product]);
+
 
   const computedPrice = useMemo(() => {
     if (!product) return 0;
