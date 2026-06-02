@@ -2373,6 +2373,30 @@ const defaultNav = [
   { name: "Контакты", url: "/contacts" },
 ];
 
+// Список реально существующих страниц сайта (см. src/App.tsx).
+// Пункт меню должен указывать на одну из этих ссылок, иначе будет 404.
+const AVAILABLE_PAGES: { url: string; label: string }[] = [
+  { url: "/", label: "Главная" },
+  { url: "/catalog", label: "Каталог" },
+  { url: "/services", label: "Услуги" },
+  { url: "/gallery", label: "Галерея" },
+  { url: "/blog", label: "Блог" },
+  { url: "/delivery", label: "Доставка и оплата" },
+  { url: "/contacts", label: "Контакты" },
+  { url: "/about", label: "О нас" },
+  { url: "/cart", label: "Корзина" },
+  { url: "/account", label: "Личный кабинет" },
+];
+const KNOWN_URLS = new Set(AVAILABLE_PAGES.map((p) => p.url));
+const isKnownUrl = (u: string) => {
+  const url = (u || "").trim();
+  if (!url) return false;
+  if (url.startsWith("http://") || url.startsWith("https://")) return true; // внешняя ссылка
+  if (KNOWN_URLS.has(url)) return true;
+  if (url.startsWith("/blog/") || url.startsWith("/product/")) return true;
+  return false;
+};
+
 const NavMenuEditor = () => {
   const [items, setItems] = useState<{ name: string; url: string }[]>(defaultNav);
   const [loading, setLoading] = useState(true);
@@ -2408,6 +2432,13 @@ const NavMenuEditor = () => {
       .map((i) => ({ name: i.name.trim(), url: i.url.trim() }))
       .filter((i) => i.name && i.url);
     if (cleaned.length === 0) { toast.error("Меню не может быть пустым"); return; }
+    const unknown = cleaned.filter((i) => !isKnownUrl(i.url));
+    if (unknown.length > 0) {
+      toast.error(
+        `Страницы не существуют: ${unknown.map((u) => u.url).join(", ")}. Выберите ссылку из списка или используйте полный URL (https://…).`
+      );
+      return;
+    }
     setSaving(true);
     try {
       await adminCall("settings.set", { key: "nav_menu", value: { items: cleaned } });
@@ -2423,30 +2454,55 @@ const NavMenuEditor = () => {
     <div className={ui.card}>
       <h3 className={`${ui.h3} mb-4`}>Меню сайта (шапка)</h3>
       <p className="text-sm text-[#999] mb-4">
-        Названия и ссылки пунктов главного меню. Можно менять порядок, переименовывать, добавлять свои страницы.
+        Названия и ссылки пунктов главного меню. Выберите страницу из списка, чтобы избежать ошибки 404.
+        Можно также указать внешнюю ссылку (https://…).
       </p>
       <div className="space-y-2 mb-4">
-        {items.map((it, i) => (
-          <div key={i} className="flex gap-2 items-center">
-            <div className="flex flex-col gap-1">
-              <button type="button" onClick={() => move(i, -1)} className="px-2 py-0.5 bg-[#3a3a3a] rounded text-xs hover:bg-[#4a4a4a]">↑</button>
-              <button type="button" onClick={() => move(i, 1)} className="px-2 py-0.5 bg-[#3a3a3a] rounded text-xs hover:bg-[#4a4a4a]">↓</button>
+        {items.map((it, i) => {
+          const known = isKnownUrl(it.url);
+          return (
+            <div key={i} className="flex flex-col gap-1">
+              <div className="flex gap-2 items-center">
+                <div className="flex flex-col gap-1">
+                  <button type="button" onClick={() => move(i, -1)} className="px-2 py-0.5 bg-[#3a3a3a] rounded text-xs hover:bg-[#4a4a4a]">↑</button>
+                  <button type="button" onClick={() => move(i, 1)} className="px-2 py-0.5 bg-[#3a3a3a] rounded text-xs hover:bg-[#4a4a4a]">↓</button>
+                </div>
+                <input
+                  value={it.name}
+                  onChange={(e) => update(i, "name", e.target.value)}
+                  placeholder="Название"
+                  className={`${ui.input} flex-1`}
+                />
+                <select
+                  value={KNOWN_URLS.has(it.url) ? it.url : "__custom"}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v !== "__custom") update(i, "url", v);
+                  }}
+                  className={`${ui.input}`}
+                  style={{ minWidth: 180 }}
+                >
+                  {AVAILABLE_PAGES.map((p) => (
+                    <option key={p.url} value={p.url}>{p.label} ({p.url})</option>
+                  ))}
+                  <option value="__custom">— другая ссылка —</option>
+                </select>
+                <input
+                  value={it.url}
+                  onChange={(e) => update(i, "url", e.target.value)}
+                  placeholder="/url или https://…"
+                  className={`${ui.input} flex-1`}
+                />
+                <button type="button" onClick={() => remove(i)} className={`${ui.btn} ${ui.btnDanger}`}>×</button>
+              </div>
+              {it.url && !known && (
+                <div className="text-xs text-red-400 ml-12">
+                  ⚠ Страница «{it.url}» не существует — посетители увидят 404. Выберите страницу из списка.
+                </div>
+              )}
             </div>
-            <input
-              value={it.name}
-              onChange={(e) => update(i, "name", e.target.value)}
-              placeholder="Название"
-              className={`${ui.input} flex-1`}
-            />
-            <input
-              value={it.url}
-              onChange={(e) => update(i, "url", e.target.value)}
-              placeholder="/url"
-              className={`${ui.input} flex-1`}
-            />
-            <button type="button" onClick={() => remove(i)} className={`${ui.btn} ${ui.btnDanger}`}>×</button>
-          </div>
-        ))}
+          );
+        })}
       </div>
       <div className="flex gap-2 flex-wrap">
         <button type="button" onClick={add} className={`${ui.btn} ${ui.btnSecondary}`}>+ Добавить пункт</button>

@@ -72,11 +72,32 @@ export function useHomepageContent(): HomepageContent {
 // ─── Nav menu (header items) ───
 export type NavItem = { name: string; url: string };
 
-let navCache: NavItem[] | null = null;
+const NAV_LS_KEY = "site:nav_menu:v1";
+
+function readNavLS(): NavItem[] | null {
+  try {
+    const raw = typeof window !== "undefined" ? localStorage.getItem(NAV_LS_KEY) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.every((i) => i && typeof i.name === "string" && typeof i.url === "string")) {
+      return parsed;
+    }
+  } catch {}
+  return null;
+}
+
+function writeNavLS(items: NavItem[] | null) {
+  try {
+    if (typeof window === "undefined") return;
+    if (items && items.length > 0) localStorage.setItem(NAV_LS_KEY, JSON.stringify(items));
+    else localStorage.removeItem(NAV_LS_KEY);
+  } catch {}
+}
+
+let navCache: NavItem[] | null = readNavLS();
 let navInflight: Promise<NavItem[] | null> | null = null;
 
 export async function fetchNavMenu(): Promise<NavItem[] | null> {
-  if (navCache) return navCache;
   if (navInflight) return navInflight;
   navInflight = (async () => {
     const { data } = await supabase
@@ -85,7 +106,9 @@ export async function fetchNavMenu(): Promise<NavItem[] | null> {
       .eq("key", "nav_menu")
       .maybeSingle();
     const v = data?.value as { items?: NavItem[] } | null | undefined;
-    navCache = (v?.items && Array.isArray(v.items) && v.items.length > 0) ? v.items : null;
+    const next = (v?.items && Array.isArray(v.items) && v.items.length > 0) ? v.items : null;
+    navCache = next;
+    writeNavLS(next);
     return navCache;
   })();
   return navInflight;
@@ -94,6 +117,7 @@ export async function fetchNavMenu(): Promise<NavItem[] | null> {
 export function invalidateNavMenu() {
   navCache = null;
   navInflight = null;
+  writeNavLS(null);
 }
 
 export function useNavMenu(fallback: NavItem[]): NavItem[] {
