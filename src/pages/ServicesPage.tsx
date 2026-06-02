@@ -10,7 +10,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
-import { usePageHeader } from "@/hooks/useSiteContent";
+import { usePageHeader, useServicesContent } from "@/hooks/useSiteContent";
 
 type ServiceDoc = { name: string; desc: string; url?: string; format?: string };
 
