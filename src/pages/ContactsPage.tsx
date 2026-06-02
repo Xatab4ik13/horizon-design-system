@@ -174,7 +174,7 @@ const ContactsPage = () => {
               <div className="mt-8 p-4 rounded-xl bg-primary/5 border border-primary/10">
                 <p className="text-sm text-foreground/80 leading-relaxed">
                   <Send className="h-4 w-4 text-primary inline mr-2" />
-                  Для визита в мастерскую рекомендуем предварительно позвонить или написать — мы подготовим ваш заказ.
+                  {hoursNote}
                 </p>
               </div>
             </div>
