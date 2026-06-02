@@ -466,25 +466,21 @@ const ProductPage = () => {
               <p className="text-foreground/80 leading-relaxed mb-6">{product.description}</p>
 
               {/* ─── Variations (dropdowns) ─── */}
-              {product.variations && product.variations.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                  {product.variations.map((v) => {
+              {syntheticVariations.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                  {syntheticVariations.map((v) => {
                     const selected = selectedVariations[v.type] ?? "";
                     return (
                       <div key={v.type}>
                         <label className="text-sm font-medium text-foreground mb-2 block">{v.label}</label>
                         <select
                           value={selected}
-                          onChange={(e) =>
-                            setSelectedVariations((prev) => ({ ...prev, [v.type]: e.target.value }))
-                          }
+                          onChange={(e) => handleVariationChange(v.type, e.target.value)}
                           className="w-full px-4 py-2.5 rounded-xl bg-background/60 border border-border text-foreground focus:border-primary focus:outline-none transition-colors text-sm appearance-none cursor-pointer bg-[url('data:image/svg+xml;utf8,<svg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%23999%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27><polyline%20points=%276%209%2012%2015%2018%209%27/></svg>')] bg-no-repeat bg-[right_14px_center] pr-10"
                         >
-                          <option value="">— выберите —</option>
                           {v.options.map((opt) => (
                             <option key={opt.value} value={opt.value}>
                               {opt.label}
-                              {opt.priceModifier ? ` (${opt.priceModifier > 0 ? "+" : ""}${opt.priceModifier.toLocaleString("ru-RU")} ₽)` : ""}
                             </option>
                           ))}
                         </select>
@@ -493,6 +489,7 @@ const ProductPage = () => {
                   })}
                 </div>
               )}
+
 
               {/* ─── Specs grid (dynamic) ─── */}
               <div className="grid grid-cols-2 gap-3 mb-8">
