@@ -532,18 +532,24 @@ const ProductPage = () => {
               {/* ─── Actions ─── */}
               <div className="flex gap-3 mb-4 mt-auto">
                 <Button size="lg" className="flex-1 gap-2 rounded-full" onClick={() => {
+                  const labels: Record<string, string> = {};
+                  if (currentMaterial) labels["Порода"] = currentMaterial;
+                  if (currentCoating) labels["Покрытие"] = currentCoating;
+                  if (currentDimensions) labels["Размеры"] = currentDimensions;
+                  if (product.packageInfo) labels["Комплектация"] = product.packageInfo;
                   addItem({
                     productId: product.id,
                     name: product.name,
                     price: computedPrice,
                     image: displayImages[0] ?? product.images[0],
                     variations: Object.keys(selectedVariations).length > 0 ? selectedVariations : undefined,
-                    variationLabels: Object.keys(variationLabels).length > 0 ? variationLabels : undefined,
+                    variationLabels: Object.keys(labels).length > 0 ? labels : undefined,
                     dimensions: currentDimensions,
                     weight: product.weight,
                   });
                   toast.success("Товар добавлен в корзину");
                 }}>
+
                   <ShoppingCart className="h-5 w-5" />
                   В корзину
                 </Button>

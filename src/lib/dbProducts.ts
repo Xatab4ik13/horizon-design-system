@@ -26,6 +26,7 @@ export interface DbProductRow {
   material?: string | null;
   coating?: string | null;
   wood_species?: string | null;
+  package_info?: string | null;
 }
 
 // Маппинг "категорий админки" в category/subcategory сайта
@@ -108,6 +109,7 @@ export const dbToUiProduct = (row: DbProductRow): Product => {
     inStock: isInStockStatus(row.stock_status),
     arModel,
     variations,
+    packageInfo: row.package_info ?? (typeof (opts as any).package_info === "string" ? (opts as any).package_info : (typeof (opts as any)["Упаковка"] === "string" ? (opts as any)["Упаковка"] : undefined)),
     imagesByVariation,
     reviews: [],
     qa: [],
