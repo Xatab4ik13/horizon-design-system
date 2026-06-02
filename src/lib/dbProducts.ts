@@ -109,6 +109,7 @@ export const dbToUiProduct = (row: DbProductRow): Product => {
     inStock: isInStockStatus(row.stock_status),
     arModel,
     variations,
+    packageInfo: row.package_info ?? (typeof (opts as any).package_info === "string" ? (opts as any).package_info : (typeof (opts as any)["Упаковка"] === "string" ? (opts as any)["Упаковка"] : undefined)),
     imagesByVariation,
     reviews: [],
     qa: [],
