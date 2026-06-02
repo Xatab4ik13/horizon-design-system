@@ -211,6 +211,66 @@ const ProductPage = () => {
   const categoryData = useMemo(() => categories.find((c) => c.slug === product?.category), [product]);
 
 
+  // ─── Synthetic variations from siblings in the same category ───
+  const siblings = useMemo(() => {
+    if (!product) return [];
+    return allProducts.filter((p) => p.category === product.category);
+  }, [allProducts, product]);
+
+  const syntheticVariations = useMemo(() => {
+    if (!product) return [] as { type: string; label: string; options: { value: string; label: string }[] }[];
+    const uniq = (arr: string[]) => Array.from(new Set(arr.map((s) => s.trim()).filter(Boolean)));
+    const woods = uniq([product.material, ...siblings.map((p) => p.material)]);
+    const coatings = uniq([product.coating, ...siblings.map((p) => p.coating)]);
+    const sizes = uniq([product.dimensions, ...siblings.map((p) => p.dimensions)]);
+    const vars: { type: string; label: string; options: { value: string; label: string }[] }[] = [];
+    if (woods.length) vars.push({ type: "wood", label: "Порода", options: woods.map((v) => ({ value: v, label: v })) });
+    if (coatings.length) vars.push({ type: "coating", label: "Покрытие", options: coatings.map((v) => ({ value: v, label: v })) });
+    if (sizes.length) vars.push({ type: "size", label: "Размеры", options: sizes.map((v) => ({ value: v, label: v })) });
+    return vars;
+  }, [siblings, product]);
+
+  // Preselect current product attributes
+  useEffect(() => {
+    if (!product) return;
+    setSelectedVariations({
+      wood: product.material || "",
+      coating: product.coating || "",
+      size: product.dimensions || "",
+    });
+  }, [product?.id]);
+
+  const handleVariationChange = useCallback(
+    (type: string, value: string) => {
+      const next = { ...selectedVariations, [type]: value };
+      setSelectedVariations(next);
+      if (!product) return;
+      // Score siblings by how many selected attributes they match; prefer the requested one
+      const scored = siblings
+        .filter((s) => s.id !== product.id)
+        .map((s) => {
+          let score = 0;
+          if (next.wood && s.material === next.wood) score += type === "wood" ? 10 : 3;
+          if (next.coating && s.coating === next.coating) score += type === "coating" ? 10 : 2;
+          if (next.size && s.dimensions === next.size) score += type === "size" ? 10 : 1;
+          return { s, score };
+        })
+        .filter((x) => x.score > 0)
+        .sort((a, b) => b.score - a.score);
+      const best = scored[0]?.s;
+      // Navigate when the changed attribute is matched by a sibling
+      const matchedChanged =
+        (type === "wood" && best?.material === value) ||
+        (type === "coating" && best?.coating === value) ||
+        (type === "size" && best?.dimensions === value);
+      if (best && matchedChanged) {
+        navigate(`/product/${best.id}`);
+      }
+    },
+    [selectedVariations, siblings, product, navigate]
+  );
+
+
   const computedPrice = useMemo(() => {
     if (!product) return 0;
     let p = product.price;
