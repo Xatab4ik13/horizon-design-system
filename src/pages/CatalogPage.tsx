@@ -435,14 +435,21 @@ const CatalogPage = () => {
                   to={`/product/${product.id}`}
                   className="group block bg-card rounded-2xl border border-border overflow-hidden hover:border-primary/40 transition-all duration-300"
                 >
-                  <div className="relative aspect-square overflow-hidden">
-                    <img
-                      src={product.images[0]}
-                      alt={product.name}
-                      loading="lazy"
-                      decoding="async"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                    />
+                  <div className="relative aspect-square overflow-hidden bg-muted/20">
+                    {product.images?.[0] ? (
+                      <img
+                        src={product.images[0]}
+                        alt={product.name}
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground/40 text-5xl">
+                        ✦
+                      </div>
+                    )}
                     {product.isNew && (
                       <span className="absolute top-3 left-3 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full">
                         Новинка
