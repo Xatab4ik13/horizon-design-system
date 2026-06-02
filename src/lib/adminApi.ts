@@ -123,6 +123,30 @@ export function invalidateAdminCache(actionPrefix?: string) {
   }
 }
 
+// Кладёт значение в SWR-кэш в том виде, в каком его вернул бы adminCall.
+// Полезно для batch-префетча (settings.getMulti), чтобы последующие
+// adminCallSWR("settings.get", { key }) сразу отдавали данные.
+export function seedAdminCache(action: string, payload: any, value: any) {
+  const key = action + ":" + JSON.stringify(payload ?? null);
+  swrCache.set(key, value);
+}
+
+// Префетч группы настроек одним запросом. Результат раскладывается в кэш
+// под ключами отдельных settings.get-вызовов, поэтому редакторы получат
+// данные мгновенно через adminCallSWR.
+export async function prefetchAdminSettings(keys: string[]): Promise<void> {
+  if (!keys.length) return;
+  try {
+    const r = await adminCall<{ data: Record<string, any> }>("settings.getMulti", { keys });
+    const map = r?.data ?? {};
+    for (const k of keys) {
+      seedAdminCache("settings.get", { key: k }, { data: map[k] ?? {} });
+    }
+  } catch {
+    // тихо: редакторы откатятся к индивидуальным запросам
+  }
+}
+
 
 export async function adminLogin(password: string): Promise<boolean> {
   // 2 захода: на холодный старт edge функции первый вызов часто отваливается
