@@ -226,10 +226,16 @@ const ContactsPage = () => {
             )}
 
             <div className="p-5 rounded-xl bg-primary/5 border border-primary/10">
-              <p className="text-foreground text-sm mb-1 font-medium">Хотите присоединиться?</p>
+              <p className="text-foreground text-sm mb-1 font-medium">{careers.ctaTitle}</p>
               <p className="text-muted-foreground text-sm">
-                Отправьте резюме на <a href="mailto:hr@derevo-master.ru" className="text-primary hover:underline">hr@derevo-master.ru</a> или позвоните по телефону{" "}
-                <a href="tel:+79001234567" className="text-primary hover:underline">+7 (900) 123-45-67</a>
+                {careers.ctaText}{" "}
+                <a href={`mailto:${careers.email}`} className="text-primary hover:underline">{careers.email}</a>
+                {careers.phone ? (
+                  <>
+                    {" "}или позвоните по телефону{" "}
+                    <a href={`tel:${careers.phone.replace(/[^+\d]/g, "")}`} className="text-primary hover:underline">{careers.phone}</a>
+                  </>
+                ) : null}
               </p>
             </div>
           </motion.div>
