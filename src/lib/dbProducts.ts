@@ -115,28 +115,80 @@ export const dbToUiProduct = (row: DbProductRow): Product => {
   };
 };
 
-/** Хук — все активные товары из БД, преобразованные к UI-форме. */
-export const useDbProducts = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+// ─── In-memory cache ───
+let listCache: Product[] | null = null;
+let listInflight: Promise<Product[]> | null = null;
+const productCache = new Map<string, Product>();
+const productInflight = new Map<string, Promise<Product | null>>();
 
-  useEffect(() => {
-    let cancelled = false;
-    supabase
+const seedProductCache = (products: Product[]) => {
+  for (const p of products) productCache.set(p.id, p);
+};
+
+export const fetchAllProducts = (): Promise<Product[]> => {
+  if (listCache) return Promise.resolve(listCache);
+  if (listInflight) return listInflight;
+  listInflight = (async () => {
+    const { data, error } = await supabase
       .from("products")
       .select("*")
       .eq("is_active", true)
       .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: false })
-      .then(({ data, error }) => {
+      .order("created_at", { ascending: false });
+    if (error) {
+      listInflight = null;
+      throw error;
+    }
+    const mapped = (data ?? []).map((r) => dbToUiProduct(r as unknown as DbProductRow));
+    listCache = mapped;
+    seedProductCache(mapped);
+    return mapped;
+  })();
+  return listInflight;
+};
+
+export const fetchProductById = (id: string): Promise<Product | null> => {
+  const cached = productCache.get(id);
+  if (cached) return Promise.resolve(cached);
+  const inflight = productInflight.get(id);
+  if (inflight) return inflight;
+  // If we have a full list cache and product not in it, it doesn't exist
+  if (listCache) return Promise.resolve(null);
+  const p = (async () => {
+    const { data } = await supabase
+      .from("products")
+      .select("*")
+      .eq("id", id)
+      .eq("is_active", true)
+      .maybeSingle();
+    productInflight.delete(id);
+    if (!data) return null;
+    const product = dbToUiProduct(data as unknown as DbProductRow);
+    productCache.set(id, product);
+    return product;
+  })();
+  productInflight.set(id, p);
+  return p;
+};
+
+/** Хук — все активные товары из БД, преобразованные к UI-форме. */
+export const useDbProducts = () => {
+  const [products, setProducts] = useState<Product[]>(() => listCache ?? []);
+  const [loading, setLoading] = useState(!listCache);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchAllProducts()
+      .then((data) => {
         if (cancelled) return;
-        if (error) {
-          setError(error.message);
-          setProducts([]);
-        } else {
-          setProducts((data ?? []).map((r) => dbToUiProduct(r as unknown as DbProductRow)));
-        }
+        setProducts(data);
+        setLoading(false);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setError(e?.message ?? "Error");
+        setProducts([]);
         setLoading(false);
       });
     return () => {
@@ -149,8 +201,9 @@ export const useDbProducts = () => {
 
 /** Загрузка одного товара по id. */
 export const useDbProduct = (id: string | undefined) => {
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
+  const initial = id ? productCache.get(id) ?? null : null;
+  const [product, setProduct] = useState<Product | null>(initial);
+  const [loading, setLoading] = useState(!initial && !!id);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
@@ -159,29 +212,35 @@ export const useDbProduct = (id: string | undefined) => {
       setNotFound(true);
       return;
     }
+    const cached = productCache.get(id);
+    if (cached) {
+      setProduct(cached);
+      setLoading(false);
+      setNotFound(false);
+      return;
+    }
     let cancelled = false;
     setLoading(true);
     setNotFound(false);
-    supabase
-      .from("products")
-      .select("*")
-      .eq("id", id)
-      .eq("is_active", true)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (cancelled) return;
-        if (error || !data) {
-          setNotFound(true);
-          setProduct(null);
-        } else {
-          setProduct(dbToUiProduct(data as unknown as DbProductRow));
-        }
-        setLoading(false);
-      });
+    fetchProductById(id).then((p) => {
+      if (cancelled) return;
+      if (!p) {
+        setNotFound(true);
+        setProduct(null);
+      } else {
+        setProduct(p);
+      }
+      setLoading(false);
+    });
     return () => {
       cancelled = true;
     };
   }, [id]);
 
   return { product, loading, notFound };
+};
+
+export const prefetchProduct = (id: string) => {
+  if (!id || productCache.has(id) || productInflight.has(id)) return;
+  void fetchProductById(id);
 };
