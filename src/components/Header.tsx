@@ -47,6 +47,14 @@ const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileCatalogOpen, setMobileCatalogOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     const match = navItems.find((item) => item.url === location.pathname);
@@ -78,6 +86,14 @@ const Header = () => {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 pt-6">
+      <div
+        className={cn(
+          "absolute inset-0 -z-10 transition-all duration-300",
+          scrolled
+            ? "bg-background/95 backdrop-blur-xl shadow-lg shadow-black/40 border-b border-white/10"
+            : "bg-transparent"
+        )}
+      />
       <div className="container mx-auto px-4 flex items-center justify-center">
         {/* Desktop navbar */}
         {!isMobile ? (
