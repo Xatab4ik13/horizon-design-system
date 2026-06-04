@@ -2306,12 +2306,24 @@ const HomepageEditor = () => {
               accept="video/mp4,video/*"
               upload={uploadImage}
             />
+            <ImageField
+              label="Постер (показывается, если видео не задано)"
+              value={data.hero.posterUrl ?? ""}
+              onChange={(v) => setHero("posterUrl", v)}
+              upload={uploadImage}
+            />
           </div>
         </details>
 
         <details className="border border-[#3a3a3a] rounded-lg p-4">
           <summary className={`${ui.h3} cursor-pointer`}>Слайдер «Популярное»</summary>
           <div className="grid gap-6 mt-4">
+            <ImageField
+              label="Фоновое изображение секции (опционально, перекрывает градиент)"
+              value={data.popular.bgImage ?? ""}
+              onChange={(v) => setData((d: any) => ({ ...d, popular: { ...d.popular, bgImage: v } }))}
+              upload={uploadImage}
+            />
             {data.popular.items.map((it: any, i: number) => (
               <div key={i} className="border border-[#3a3a3a] rounded-lg p-4 grid gap-3">
                 <div className="flex items-center justify-between gap-3">
