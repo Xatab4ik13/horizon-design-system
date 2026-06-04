@@ -661,6 +661,13 @@ const ProductEditor = ({
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [arFileNames, setArFileNames] = useState<{ glb?: string; usdz?: string }>({});
+  const [imageUploadPreviews, setImageUploadPreviews] = useState<{ id: string; url: string; name: string }[]>([]);
+
+  useEffect(() => {
+    return () => {
+      imageUploadPreviews.forEach((preview) => URL.revokeObjectURL(preview.url));
+    };
+  }, [imageUploadPreviews]);
 
   const fileNameFromUrl = (url?: string | null) => {
     if (!url) return "";
@@ -673,6 +680,10 @@ const ProductEditor = ({
   };
 
   const save = async () => {
+    if (uploading || arUploading) {
+      toast.error("Дождитесь окончания загрузки файлов");
+      return;
+    }
     setSaving(true);
     try {
       if (form.id) {
@@ -691,6 +702,8 @@ const ProductEditor = ({
   };
 
   const handleUpload = async (file: File) => {
+    const preview = { id: `${Date.now()}-${file.name}`, url: URL.createObjectURL(file), name: file.name };
+    setImageUploadPreviews((current) => [...current, preview]);
     setUploading(true);
     try {
       const url = await adminUploadFile("product-images", file);
@@ -698,8 +711,11 @@ const ProductEditor = ({
       toast.success("Фото загружено");
     } catch (e: any) {
       toast.error(e.message);
+    } finally {
+      setImageUploadPreviews((current) => current.filter((item) => item.id !== preview.id));
+      URL.revokeObjectURL(preview.url);
+      setUploading(false);
     }
-    setUploading(false);
   };
 
   const removeImage = (idx: number) => {
@@ -709,11 +725,11 @@ const ProductEditor = ({
   const [arUploading, setArUploading] = useState<"glb" | "usdz" | null>(null);
   const handleArUpload = async (file: File, kind: "glb" | "usdz") => {
     setArUploading(kind);
+    setArFileNames((current) => ({ ...current, [kind]: file.name }));
     try {
       const url = await adminUploadFile("product-models", file);
       const field = kind === "glb" ? "ar_glb_url" : "ar_usdz_url";
       setForm((current: any) => ({ ...current, [field]: url }));
-      setArFileNames((current) => ({ ...current, [kind]: file.name }));
       toast.success(`${kind.toUpperCase()} загружен`);
     } catch (e: any) {
       toast.error(e.message);
