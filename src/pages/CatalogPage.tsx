@@ -443,7 +443,7 @@ const CatalogPage = () => {
                         loading="lazy"
                         decoding="async"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                        onError={(e) => { const img = e.currentTarget as HTMLImageElement; if (!img.src.endsWith("/placeholder.svg")) img.src = "/placeholder.svg"; }}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-muted-foreground/40 text-5xl">
