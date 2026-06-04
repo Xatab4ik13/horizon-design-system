@@ -663,12 +663,6 @@ const ProductEditor = ({
   const [arFileNames, setArFileNames] = useState<{ glb?: string; usdz?: string }>({});
   const [imageUploadPreviews, setImageUploadPreviews] = useState<{ id: string; url: string; name: string }[]>([]);
 
-  useEffect(() => {
-    return () => {
-      imageUploadPreviews.forEach((preview) => URL.revokeObjectURL(preview.url));
-    };
-  }, [imageUploadPreviews]);
-
   const fileNameFromUrl = (url?: string | null) => {
     if (!url) return "";
     try {
