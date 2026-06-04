@@ -27,6 +27,12 @@ export interface DbProductRow {
   coating?: string | null;
   wood_species?: string | null;
   package_info?: string | null;
+  brand?: string | null;
+  country?: string | null;
+  manufacturer?: string | null;
+  area_m2?: number | null;
+  volume_m3?: number | null;
+  weight_gross_kg?: number | null;
 }
 
 // Маппинг "категорий админки" в category/subcategory сайта
@@ -114,6 +120,15 @@ export const dbToUiProduct = (row: DbProductRow): Product => {
     reviews: [],
     qa: [],
     rating: 0,
+    specs: {
+      brand: row.brand ?? undefined,
+      country: row.country ?? undefined,
+      manufacturer: row.manufacturer ?? undefined,
+      area_m2: row.area_m2 ?? undefined,
+      volume_m3: row.volume_m3 ?? undefined,
+      weight_gross_kg: row.weight_gross_kg ?? undefined,
+      stock_status: row.stock_status ?? undefined,
+    },
   };
 };
 

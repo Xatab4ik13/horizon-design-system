@@ -58,6 +58,15 @@ export interface Product {
   rating: number;
   relatedIds?: string[];
   crossSellIds?: string[];
+  specs?: {
+    brand?: string;
+    country?: string;
+    manufacturer?: string;
+    area_m2?: number;
+    volume_m3?: number;
+    weight_gross_kg?: number;
+    stock_status?: string;
+  };
 }
 
 // Mock reviews

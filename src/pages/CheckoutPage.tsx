@@ -82,10 +82,19 @@ const CheckoutPage = () => {
       .maybeSingle()
       .then(({ data }) => {
         if (!data) return;
+        const normalizePhone = (p: string) => {
+          if (!p) return "+7 ";
+          let v = p.replace(/[^\d+\s\-()]/g, "");
+          if (!v.startsWith("+")) {
+            const digits = v.replace(/\D/g, "");
+            v = "+" + (digits.startsWith("7") ? digits : "7" + digits);
+          }
+          return v;
+        };
         setContact((c) => ({
           firstName: c.firstName || (data.first_name ?? ""),
           lastName: c.lastName || (data.last_name ?? ""),
-          phone: c.phone || (data.phone ?? ""),
+          phone: c.phone && c.phone !== "+7 " ? c.phone : normalizePhone(data.phone ?? ""),
           email: c.email || user.email || "",
         }));
       });
@@ -95,8 +104,9 @@ const CheckoutPage = () => {
 
   const isPickup = delivery === "pickup";
   const selectedQuote = isPickup ? null : quotes?.[delivery];
+  // п.6: разрешаем продолжить даже без рассчитанной стоимости — менеджер пересчитает
   const canProceedToPayment =
-    isPickup || (city.trim().length > 1 && address.trim().length > 0 && !!selectedQuote?.ok);
+    isPickup || (city.trim().length > 1 && address.trim().length > 0);
   const canProceedFromContact =
     contact.firstName.trim().length >= 2 &&
     contact.lastName.trim().length >= 2 &&
@@ -460,21 +470,17 @@ const CheckoutPage = () => {
                       <div className="flex items-start gap-2 text-xs text-foreground/80 bg-amber-500/5 border border-amber-500/30 rounded-xl p-3 mb-4">
                         <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-amber-500" />
                         <div>
-                          <p className="font-medium text-foreground mb-1">Что дальше:</p>
-                          <ol className="list-decimal list-inside space-y-0.5 text-muted-foreground">
-                            <li>Введите город и адрес</li>
-                            <li>Нажмите «Рассчитать стоимость»</li>
-                            <li>Выберите тариф — кнопка «Далее» станет активной</li>
-                          </ol>
-                          <p className="mt-2 text-muted-foreground">
-                            Заказ будет оформлен после уточнения стоимости доставки.
+                          <p className="font-medium text-foreground mb-1">Расчёт стоимости доставки</p>
+                          <p className="text-muted-foreground">
+                            Введите город и адрес, выберите перевозчика и нажмите «Рассчитать стоимость».
+                            Если расчёт недоступен — оформите заказ, менеджер уточнит стоимость доставки и свяжется с вами.
                           </p>
                         </div>
                       </div>
                     ) : !selectedQuote?.ok ? (
                       <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
                         <AlertCircle className="h-3.5 w-3.5 text-primary/60" />
-                        <span>Выберите подходящий тариф доставки из списка выше.</span>
+                        <span>Тариф недоступен автоматически — менеджер пересчитает после оформления заказа.</span>
                       </div>
                     ) : null}
 

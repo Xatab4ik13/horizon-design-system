@@ -398,7 +398,7 @@ const Import1CBlock = ({
         {parsed && (
           <div className="border border-[#3a3a3a] rounded-lg overflow-hidden">
             <div className="bg-[#1a1a1a] px-4 py-2 text-[14px] text-[#aaa]">
-              Предпросмотр ({parsed.length}) — можно править ячейки или удалить строку
+              Предпросмотр ({parsed.length}) — кликните по любому полю, чтобы изменить значение. Нажмите ✕ справа, чтобы удалить позицию из импорта.
             </div>
             <div className="max-h-96 overflow-auto">
               <table className="w-full text-[13px]">
@@ -412,7 +412,7 @@ const Import1CBlock = ({
                     <th className="px-2 py-2 w-20">Г, см</th>
                     <th className="px-2 py-2 w-20">Вес, кг</th>
                     <th className="px-2 py-2 w-16" title="Фото из 1С">Фото</th>
-                    <th className="px-2 py-2 w-10"></th>
+                    <th className="px-2 py-2 w-14"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -420,25 +420,26 @@ const Import1CBlock = ({
                     const upd = (k: string, v: any) =>
                       setParsed((arr) => arr!.map((it, idx) => idx === i ? { ...it, [k]: v } : it));
                     const num = (v: string) => v === "" ? null : Number(v);
+                    const cellInput = "bg-[#0f0f0f] border border-[#3a3a3a] hover:border-[#555] focus:border-amber-500 rounded px-2 py-1 w-full text-[#e8e8e8] focus:outline-none";
                     return (
                       <tr key={i} className="border-t border-[#3a3a3a]">
-                        <td className="px-2 py-1"><input value={p.sku ?? ""} onChange={(e) => upd("sku", e.target.value || null)} className="bg-transparent border border-transparent hover:border-[#3a3a3a] focus:border-amber-500 rounded px-1 py-0.5 w-full font-mono text-[12px]" /></td>
-                        <td className="px-2 py-1"><input value={p.name ?? ""} onChange={(e) => upd("name", e.target.value)} className="bg-transparent border border-transparent hover:border-[#3a3a3a] focus:border-amber-500 rounded px-1 py-0.5 w-full" /></td>
-                        <td className="px-2 py-1"><input type="number" value={p.price ?? 0} onChange={(e) => upd("price", num(e.target.value) ?? 0)} className="bg-transparent border border-transparent hover:border-[#3a3a3a] focus:border-amber-500 rounded px-1 py-0.5 w-full" /></td>
-                        <td className="px-2 py-1"><input type="number" value={p.width_cm ?? ""} onChange={(e) => upd("width_cm", num(e.target.value))} className="bg-transparent border border-transparent hover:border-[#3a3a3a] focus:border-amber-500 rounded px-1 py-0.5 w-full" /></td>
-                        <td className="px-2 py-1"><input type="number" value={p.height_cm ?? ""} onChange={(e) => upd("height_cm", num(e.target.value))} className="bg-transparent border border-transparent hover:border-[#3a3a3a] focus:border-amber-500 rounded px-1 py-0.5 w-full" /></td>
-                        <td className="px-2 py-1"><input type="number" value={p.depth_cm ?? ""} onChange={(e) => upd("depth_cm", num(e.target.value))} className="bg-transparent border border-transparent hover:border-[#3a3a3a] focus:border-amber-500 rounded px-1 py-0.5 w-full" /></td>
-                        <td className="px-2 py-1"><input type="number" value={p.weight_kg ?? ""} onChange={(e) => upd("weight_kg", num(e.target.value))} className="bg-transparent border border-transparent hover:border-[#3a3a3a] focus:border-amber-500 rounded px-1 py-0.5 w-full" /></td>
+                        <td className="px-2 py-1"><input value={p.sku ?? ""} onChange={(e) => upd("sku", e.target.value || null)} className={`${cellInput} font-mono text-[12px]`} /></td>
+                        <td className="px-2 py-1"><input value={p.name ?? ""} onChange={(e) => upd("name", e.target.value)} className={cellInput} /></td>
+                        <td className="px-2 py-1"><input type="number" value={p.price ?? 0} onChange={(e) => upd("price", num(e.target.value) ?? 0)} className={cellInput} /></td>
+                        <td className="px-2 py-1"><input type="number" value={p.width_cm ?? ""} onChange={(e) => upd("width_cm", num(e.target.value))} className={cellInput} /></td>
+                        <td className="px-2 py-1"><input type="number" value={p.height_cm ?? ""} onChange={(e) => upd("height_cm", num(e.target.value))} className={cellInput} /></td>
+                        <td className="px-2 py-1"><input type="number" value={p.depth_cm ?? ""} onChange={(e) => upd("depth_cm", num(e.target.value))} className={cellInput} /></td>
+                        <td className="px-2 py-1"><input type="number" value={p.weight_kg ?? ""} onChange={(e) => upd("weight_kg", num(e.target.value))} className={cellInput} /></td>
                         <td className="px-2 py-1 text-center text-[12px] text-amber-400">
                           {(p as any)._images?.length ? `📷 ${(p as any)._images.length}` : "—"}
                         </td>
                         <td className="px-2 py-1 text-center">
                           <button
                             onClick={() => setParsed((arr) => arr!.filter((_, idx) => idx !== i))}
-                            className="text-[#888] hover:text-red-400 transition-colors"
-                            title="Удалить строку"
+                            className="inline-flex items-center justify-center w-8 h-8 rounded bg-[#3a1a1a] hover:bg-[#7a2a2a] text-[#ffb0b0] hover:text-white transition-colors"
+                            title="Удалить строку из импорта"
                           >
-                            <X size={16} />
+                            <Trash2 size={14} />
                           </button>
                         </td>
                       </tr>
@@ -1118,6 +1119,8 @@ const OrdersPanel = () => {
     setLoading(false);
   };
   useEffect(() => {
+    // п.7: всегда сбрасываем кеш при открытии вкладки, иначе видны устаревшие данные
+    invalidateAdminCache("orders.");
     load();
     const t = setInterval(() => {
       invalidateAdminCache("orders.");
@@ -1143,7 +1146,15 @@ const OrdersPanel = () => {
 
   return (
     <div>
-      <h2 className={`${ui.h2} mb-6`}>Заказы ({items.length})</h2>
+      <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
+        <h2 className={ui.h2}>Заказы ({items.length})</h2>
+        <button
+          onClick={() => { invalidateAdminCache("orders."); load(); }}
+          className={`${ui.btn} ${ui.btnSecondary}`}
+        >
+          Обновить
+        </button>
+      </div>
       {loading ? (
         <p className="text-[#888]">Загрузка…</p>
       ) : items.length === 0 ? (
