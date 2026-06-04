@@ -95,8 +95,9 @@ const CheckoutPage = () => {
 
   const isPickup = delivery === "pickup";
   const selectedQuote = isPickup ? null : quotes?.[delivery];
+  // п.6: разрешаем продолжить даже без рассчитанной стоимости — менеджер пересчитает
   const canProceedToPayment =
-    isPickup || (city.trim().length > 1 && address.trim().length > 0 && !!selectedQuote?.ok);
+    isPickup || (city.trim().length > 1 && address.trim().length > 0);
   const canProceedFromContact =
     contact.firstName.trim().length >= 2 &&
     contact.lastName.trim().length >= 2 &&
