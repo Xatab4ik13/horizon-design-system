@@ -1118,6 +1118,8 @@ const OrdersPanel = () => {
     setLoading(false);
   };
   useEffect(() => {
+    // п.7: всегда сбрасываем кеш при открытии вкладки, иначе видны устаревшие данные
+    invalidateAdminCache("orders.");
     load();
     const t = setInterval(() => {
       invalidateAdminCache("orders.");
