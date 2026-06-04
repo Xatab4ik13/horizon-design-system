@@ -2017,7 +2017,14 @@ const ImageField = ({
       <div className="flex items-start gap-3">
         {value ? (
           accept.startsWith("video") ? (
-            <video src={value} className="w-24 h-24 object-cover rounded bg-black" muted />
+            <video
+              src={value}
+              className="w-40 h-24 object-cover rounded bg-black"
+              muted
+              playsInline
+              controls
+              preload="metadata"
+            />
           ) : (
             <img src={value} alt="" className="w-24 h-24 object-cover rounded bg-[#1a1a1a]" />
           )
