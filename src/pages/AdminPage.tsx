@@ -917,6 +917,14 @@ const ProductEditor = ({
         <div>
           <label className={ui.label}>Фотографии</label>
           <div className="flex flex-wrap gap-3 mb-3">
+            {imageUploadPreviews.map((preview) => (
+              <div key={preview.id} className="relative w-28 h-28 rounded-lg overflow-hidden bg-[#1a1a1a] opacity-80">
+                <img src={preview.url} alt={preview.name} className="w-full h-full object-cover" />
+                <div className="absolute inset-x-0 bottom-0 bg-black/70 px-2 py-1 text-[11px] text-[#ddd] truncate">
+                  Загрузка…
+                </div>
+              </div>
+            ))}
             {form.images?.map((url: string, i: number) => (
               <div key={i} className="relative w-28 h-28 rounded-lg overflow-hidden bg-[#1a1a1a]">
                 <img
@@ -982,11 +990,16 @@ const ProductEditor = ({
                 />
               </label>
             </div>
-            {form.ar_glb_url && (
+            {(form.ar_glb_url || arFileNames.glb) && (
               <div className="flex items-center gap-3 mt-1 text-[12px] text-[#888]">
-                <span className="truncate">Файл: {arFileNames.glb || fileNameFromUrl(form.ar_glb_url)}</span>
+                <span className="truncate">
+                  Файл: {arFileNames.glb || fileNameFromUrl(form.ar_glb_url)}{arUploading === "glb" ? " — загрузка…" : ""}
+                </span>
                 <button
-                  onClick={() => setForm((f: any) => ({ ...f, ar_glb_url: null }))}
+                  onClick={() => {
+                    setForm((f: any) => ({ ...f, ar_glb_url: null }));
+                    setArFileNames((current) => ({ ...current, glb: undefined }));
+                  }}
                   className="hover:text-white flex-shrink-0"
                 >
                   Удалить
@@ -1020,11 +1033,16 @@ const ProductEditor = ({
                 />
               </label>
             </div>
-            {form.ar_usdz_url && (
+            {(form.ar_usdz_url || arFileNames.usdz) && (
               <div className="flex items-center gap-3 mt-1 text-[12px] text-[#888]">
-                <span className="truncate">Файл: {arFileNames.usdz || fileNameFromUrl(form.ar_usdz_url)}</span>
+                <span className="truncate">
+                  Файл: {arFileNames.usdz || fileNameFromUrl(form.ar_usdz_url)}{arUploading === "usdz" ? " — загрузка…" : ""}
+                </span>
                 <button
-                  onClick={() => setForm((f: any) => ({ ...f, ar_usdz_url: null }))}
+                  onClick={() => {
+                    setForm((f: any) => ({ ...f, ar_usdz_url: null }));
+                    setArFileNames((current) => ({ ...current, usdz: undefined }));
+                  }}
                   className="hover:text-white flex-shrink-0"
                 >
                   Удалить
