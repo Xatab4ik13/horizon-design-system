@@ -32,13 +32,15 @@ const CategoriesSection = () => {
     };
   }).filter((c) => c.enabled && c.name);
   const title = content.categories?.title?.trim() || "Категории каталога";
+  const bgImage = content.categories?.bgImage?.trim();
+  const sectionStyle = bgImage
+    ? { backgroundImage: `url(${bgImage})`, backgroundSize: "cover", backgroundPosition: "center" }
+    : { background: "radial-gradient(ellipse at 50% 50%, hsl(25 40% 12%) 0%, hsl(20 20% 6%) 50%, hsl(0 0% 2%) 100%)" };
 
   return (
     <section
       className="py-16 relative"
-      style={{
-        background: "radial-gradient(ellipse at 50% 50%, hsl(25 40% 12%) 0%, hsl(20 20% 6%) 50%, hsl(0 0% 2%) 100%)"
-      }}
+      style={sectionStyle}
     >
       {/* Top fade */}
       <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-t from-transparent to-[hsl(0_0%_2%)] pointer-events-none" />

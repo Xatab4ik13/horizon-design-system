@@ -74,7 +74,7 @@ const ContactForm = () => {
       {/* Workshop background */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-fixed"
-        style={{ backgroundImage: `url(${workshopBg})` }}
+        style={{ backgroundImage: `url(${content.contact?.bgImage?.trim() || workshopBg})` }}
       />
       <div className="absolute inset-0 bg-black/75" />
       {/* Top fade from dark */}

@@ -38,13 +38,14 @@ const AdvantagesSection = () => {
     };
   }).filter((a) => a.enabled && a.title);
   const sectionTitle = content.advantages?.title?.trim() || "Почему выбирают нас";
+  const bgImage = content.advantages?.bgImage?.trim() || workshopBg;
 
   return (
     <section className="py-24 relative overflow-hidden">
       {/* Background image */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-fixed"
-        style={{ backgroundImage: `url(${workshopBg})` }}
+        style={{ backgroundImage: `url(${bgImage})` }}
       />
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/75" />
