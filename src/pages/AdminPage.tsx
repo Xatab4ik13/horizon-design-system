@@ -286,33 +286,33 @@ const Import1CBlock = ({
       let uploadedImgs = 0;
       if (totalImgs > 0) toast.message(`Загрузка изображений: 0/${totalImgs}`);
 
-      const items = await Promise.all(
-        parsed.map(async (p: any) => {
-          const { _images, ...rest } = p;
-          const imageUrls: string[] = [];
-          if (_images?.length) {
-            for (const img of _images) {
-              try {
-                const file = new File([img.blob], img.name, { type: img.blob.type });
-                const url = await adminUploadFile("product-images", file, { prefix: "1c/" });
-                imageUrls.push(url);
-                uploadedImgs++;
-              } catch (e) {
-                console.warn("[1c-import] image upload failed", img.name, e);
-              }
+      const items = [];
+      for (const p of parsed) {
+        const { _images, ...rest } = p;
+        const imageUrls: string[] = [];
+        if (_images?.length) {
+          for (const img of _images) {
+            try {
+              const file = new File([img.blob], img.name, { type: img.blob.type });
+              const url = await adminUploadFile("product-images", file, { prefix: "1c/" });
+              imageUrls.push(url);
+              uploadedImgs++;
+              if (totalImgs > 0) toast.message(`Загрузка изображений: ${uploadedImgs}/${totalImgs}`);
+            } catch (e) {
+              console.warn("[1c-import] image upload failed", img.name, e);
             }
           }
-          const item: any = {
-            ...rest,
-            sku: rest.sku || null,
-            category,
-            is_active: true,
-            sort_order: 0,
-          };
-          if (imageUrls.length) item.images = imageUrls;
-          return item;
-        }),
-      );
+        }
+        const item: any = {
+          ...rest,
+          sku: rest.sku || null,
+          category,
+          is_active: true,
+          sort_order: 0,
+        };
+        if (imageUrls.length) item.images = imageUrls;
+        items.push(item);
+      }
 
       const r = await adminCall<{ data: { created: number; updated: number; errors: string[] } }>(
         "products.bulkUpsert",
@@ -591,17 +591,20 @@ const ProductsPanel = () => {
         <div className="grid gap-3">
           {items.map((p) => (
             <div key={p.id} className={`${ui.card} flex items-center gap-4`}>
-              <div className="w-20 h-20 bg-[#1a1a1a] rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center">
+              <div className="relative w-20 h-20 bg-[#1a1a1a] rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center">
                 {p.images?.[0] ? (
-                  <img
-                    src={p.images[0]}
-                    alt={p.name}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).style.display = "none";
-                    }}
-                  />
+                  <>
+                    <ImageIcon size={28} className="text-[#555]" />
+                    <img
+                      src={p.images[0]}
+                      alt={p.name}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      loading="lazy"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  </>
                 ) : (
                   <ImageIcon size={28} className="text-[#555]" />
                 )}
@@ -661,6 +664,8 @@ const ProductEditor = ({
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [arFileNames, setArFileNames] = useState<{ glb?: string; usdz?: string }>({});
+  const [arUploadErrors, setArUploadErrors] = useState<{ glb?: boolean; usdz?: boolean }>({});
+  const [imageUploadPreviews, setImageUploadPreviews] = useState<{ id: string; url: string; name: string }[]>([]);
 
   const fileNameFromUrl = (url?: string | null) => {
     if (!url) return "";
@@ -673,6 +678,10 @@ const ProductEditor = ({
   };
 
   const save = async () => {
+    if (uploading || arUploading) {
+      toast.error("Дождитесь окончания загрузки файлов");
+      return;
+    }
     setSaving(true);
     try {
       if (form.id) {
@@ -691,6 +700,8 @@ const ProductEditor = ({
   };
 
   const handleUpload = async (file: File) => {
+    const preview = { id: `${Date.now()}-${file.name}`, url: URL.createObjectURL(file), name: file.name };
+    setImageUploadPreviews((current) => [...current, preview]);
     setUploading(true);
     try {
       const url = await adminUploadFile("product-images", file);
@@ -698,8 +709,11 @@ const ProductEditor = ({
       toast.success("Фото загружено");
     } catch (e: any) {
       toast.error(e.message);
+    } finally {
+      setImageUploadPreviews((current) => current.filter((item) => item.id !== preview.id));
+      URL.revokeObjectURL(preview.url);
+      setUploading(false);
     }
-    setUploading(false);
   };
 
   const removeImage = (idx: number) => {
@@ -709,13 +723,15 @@ const ProductEditor = ({
   const [arUploading, setArUploading] = useState<"glb" | "usdz" | null>(null);
   const handleArUpload = async (file: File, kind: "glb" | "usdz") => {
     setArUploading(kind);
+    setArFileNames((current) => ({ ...current, [kind]: file.name }));
+    setArUploadErrors((current) => ({ ...current, [kind]: false }));
     try {
       const url = await adminUploadFile("product-models", file);
       const field = kind === "glb" ? "ar_glb_url" : "ar_usdz_url";
       setForm((current: any) => ({ ...current, [field]: url }));
-      setArFileNames((current) => ({ ...current, [kind]: file.name }));
       toast.success(`${kind.toUpperCase()} загружен`);
     } catch (e: any) {
+      setArUploadErrors((current) => ({ ...current, [kind]: true }));
       toast.error(e.message);
     }
     setArUploading(null);
@@ -907,12 +923,21 @@ const ProductEditor = ({
         <div>
           <label className={ui.label}>Фотографии</label>
           <div className="flex flex-wrap gap-3 mb-3">
+            {imageUploadPreviews.map((preview) => (
+              <div key={preview.id} className="relative w-28 h-28 rounded-lg overflow-hidden bg-[#1a1a1a] opacity-80">
+                <img src={preview.url} alt={preview.name} className="w-full h-full object-cover" />
+                <div className="absolute inset-x-0 bottom-0 bg-black/70 px-2 py-1 text-[11px] text-[#ddd] truncate">
+                  Загрузка…
+                </div>
+              </div>
+            ))}
             {form.images?.map((url: string, i: number) => (
-              <div key={i} className="relative w-28 h-28 rounded-lg overflow-hidden bg-[#1a1a1a]">
+              <div key={i} className="relative w-28 h-28 rounded-lg overflow-hidden bg-[#1a1a1a] flex items-center justify-center">
+                <ImageIcon size={28} className="text-[#555]" />
                 <img
                   src={url}
                   alt={`Фото товара ${i + 1}`}
-                  className="w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-cover"
                   onError={(e) => {
                     (e.currentTarget as HTMLImageElement).style.display = "none";
                   }}
@@ -972,11 +997,17 @@ const ProductEditor = ({
                 />
               </label>
             </div>
-            {form.ar_glb_url && (
+            {(form.ar_glb_url || arFileNames.glb) && (
               <div className="flex items-center gap-3 mt-1 text-[12px] text-[#888]">
-                <span className="truncate">Файл: {arFileNames.glb || fileNameFromUrl(form.ar_glb_url)}</span>
+                <span className="truncate">
+                  {arUploadErrors.glb ? "Ошибка загрузки: " : "Файл: "}{arFileNames.glb || fileNameFromUrl(form.ar_glb_url)}{arUploading === "glb" ? " — загрузка…" : ""}
+                </span>
                 <button
-                  onClick={() => setForm((f: any) => ({ ...f, ar_glb_url: null }))}
+                  onClick={() => {
+                    setForm((f: any) => ({ ...f, ar_glb_url: null }));
+                    setArFileNames((current) => ({ ...current, glb: undefined }));
+                    setArUploadErrors((current) => ({ ...current, glb: false }));
+                  }}
                   className="hover:text-white flex-shrink-0"
                 >
                   Удалить
@@ -1010,11 +1041,17 @@ const ProductEditor = ({
                 />
               </label>
             </div>
-            {form.ar_usdz_url && (
+            {(form.ar_usdz_url || arFileNames.usdz) && (
               <div className="flex items-center gap-3 mt-1 text-[12px] text-[#888]">
-                <span className="truncate">Файл: {arFileNames.usdz || fileNameFromUrl(form.ar_usdz_url)}</span>
+                <span className="truncate">
+                  {arUploadErrors.usdz ? "Ошибка загрузки: " : "Файл: "}{arFileNames.usdz || fileNameFromUrl(form.ar_usdz_url)}{arUploading === "usdz" ? " — загрузка…" : ""}
+                </span>
                 <button
-                  onClick={() => setForm((f: any) => ({ ...f, ar_usdz_url: null }))}
+                  onClick={() => {
+                    setForm((f: any) => ({ ...f, ar_usdz_url: null }));
+                    setArFileNames((current) => ({ ...current, usdz: undefined }));
+                    setArUploadErrors((current) => ({ ...current, usdz: false }));
+                  }}
                   className="hover:text-white flex-shrink-0"
                 >
                   Удалить

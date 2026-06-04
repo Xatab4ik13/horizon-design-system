@@ -89,6 +89,7 @@ Deno.serve(async (req) => {
     }
 
     const payload = body?.payload ?? {};
+    console.log(`[admin-api] action=${action} payload_size=${JSON.stringify(payload).length}`);
 
     switch (action) {
       // ===== AUTH =====

@@ -1,8 +1,21 @@
 import { supabase } from "@/integrations/supabase/client";
 
 const STORAGE_KEY = "faktura_admin_pwd";
-const ADMIN_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-api`;
+const ADMIN_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL.replace(/\/$/, "")}/functions/v1/admin-api`;
 const PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const ADMIN_REQUEST_TIMEOUT_MS = 30000;
+const ADMIN_REQUEST_ATTEMPTS = 3;
+
+const isNetworkAdminError = (message: string) =>
+  /Failed to send|Failed to fetch|NetworkError|timeout|aborted|AbortError/i.test(message);
+
+const friendlyAdminError = (error: any) => {
+  const msg = String(error?.message ?? error ?? "");
+  if (isNetworkAdminError(msg)) {
+    return new Error("Не удалось связаться с админ-сервером. Повторите действие через несколько секунд.");
+  }
+  return error instanceof Error ? error : new Error(msg || "Неизвестная ошибка");
+};
 
 export const adminAuth = {
   get password(): string | null {
@@ -27,14 +40,13 @@ export async function adminCall<T = any>(
   const password = passwordOverride ?? adminAuth.password ?? "";
 
   // Ретрай для cold-start edge function: первый запрос может отвалиться
-  // сетевой ошибкой — делаем 1 повтор. Таймаут на запрос укоротили до 15с,
-  // чтобы при массовых параллельных вызовах (Контент сайта / Настройки)
-  // суммарная задержка не уходила в минуты.
+  // сетевой ошибкой, особенно при сохранении карточек и выдаче signed URL.
   let lastErr: any = null;
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < ADMIN_REQUEST_ATTEMPTS; attempt++) {
+    let timeout: number | undefined;
     try {
       const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), 15000);
+      timeout = window.setTimeout(() => controller.abort(), ADMIN_REQUEST_TIMEOUT_MS);
       const response = await fetch(ADMIN_FUNCTION_URL, {
         method: "POST",
         headers: {
@@ -46,31 +58,30 @@ export async function adminCall<T = any>(
         body: JSON.stringify({ action, payload, password }),
         signal: controller.signal,
       });
-      window.clearTimeout(timeout);
-
       const data = await response.json().catch(() => null);
       if (!response.ok) {
         const message = data?.error ?? `Ошибка админ API: ${response.status}`;
         const status = response.status;
         if (status && status >= 400 && status < 500) throw new Error(message);
         lastErr = new Error(message);
-        if (attempt < 1) {
-          await new Promise((r) => setTimeout(r, 400));
+        if (attempt < ADMIN_REQUEST_ATTEMPTS - 1) {
+          await new Promise((r) => setTimeout(r, 600));
           continue;
         }
-        throw lastErr;
+        throw friendlyAdminError(lastErr);
       }
       if (data?.error) throw new Error(data.error);
       return data;
     } catch (e: any) {
       lastErr = e;
       const msg = String(e?.message ?? "");
-      const isNetwork = /Failed to send|Failed to fetch|NetworkError|timeout|aborted/i.test(msg);
-      if (!isNetwork || attempt >= 1) throw e;
-      await new Promise((r) => setTimeout(r, 400));
+      if (!isNetworkAdminError(msg) || attempt >= ADMIN_REQUEST_ATTEMPTS - 1) throw friendlyAdminError(e);
+      await new Promise((r) => setTimeout(r, 600));
+    } finally {
+      if (timeout) window.clearTimeout(timeout);
     }
   }
-  throw lastErr ?? new Error("Unknown error");
+  throw friendlyAdminError(lastErr ?? new Error("Unknown error"));
 }
 
 // ─── Stale-while-revalidate cache for read-only admin calls ───
