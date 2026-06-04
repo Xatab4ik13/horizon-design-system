@@ -591,14 +591,14 @@ const ProductsPanel = () => {
         <div className="grid gap-3">
           {items.map((p) => (
             <div key={p.id} className={`${ui.card} flex items-center gap-4`}>
-              <div className="w-20 h-20 bg-[#1a1a1a] rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center">
+              <div className="relative w-20 h-20 bg-[#1a1a1a] rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center">
                 {p.images?.[0] ? (
                   <>
                     <ImageIcon size={28} className="text-[#555]" />
                     <img
                       src={p.images[0]}
                       alt={p.name}
-                      className="w-full h-full object-cover"
+                      className="absolute inset-0 w-full h-full object-cover"
                       loading="lazy"
                       onError={(e) => {
                         (e.currentTarget as HTMLImageElement).style.display = "none";
