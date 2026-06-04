@@ -2361,6 +2361,12 @@ const HomepageEditor = () => {
               onChange={(v) => setData({ ...data, categories: { ...data.categories, title: v } })}
               placeholder="Категории каталога"
             />
+            <ImageField
+              label="Фоновое изображение секции (опционально, перекрывает градиент)"
+              value={data.categories.bgImage ?? ""}
+              onChange={(v) => setData((d: any) => ({ ...d, categories: { ...d.categories, bgImage: v } }))}
+              upload={uploadImage}
+            />
             <div className="grid md:grid-cols-2 gap-4">
               {data.categories.items.map((it: any, i: number) => (
                 <div key={i} className="border border-[#3a3a3a] rounded-lg p-4 grid gap-3">
@@ -2395,6 +2401,12 @@ const HomepageEditor = () => {
               onChange={(v) => setData({ ...data, advantages: { ...data.advantages, title: v } })}
               placeholder="Почему выбирают нас"
             />
+            <ImageField
+              label="Фоновое изображение секции (перекрывает стандартное)"
+              value={data.advantages.bgImage ?? ""}
+              onChange={(v) => setData((d: any) => ({ ...d, advantages: { ...d.advantages, bgImage: v } }))}
+              upload={uploadImage}
+            />
             <div className="grid md:grid-cols-2 gap-4">
               {data.advantages.items.map((it: any, i: number) => (
                 <div key={i} className="border border-[#3a3a3a] rounded-lg p-4 grid gap-3">
@@ -2414,11 +2426,19 @@ const HomepageEditor = () => {
 
         <details className="border border-[#3a3a3a] rounded-lg p-4">
           <summary className={`${ui.h3} cursor-pointer`}>Форма «Оставить заявку»</summary>
-          <div className="grid md:grid-cols-2 gap-4 mt-4">
-            <TextField label="Заголовок" value={data.contact.title} onChange={(v) => setContact("title", v)} placeholder="Оставить заявку" />
-            <TextField label="Подзаголовок" value={data.contact.subtitle} onChange={(v) => setContact("subtitle", v)} multi />
-            <TextField label="Текст кнопки" value={data.contact.submitLabel} onChange={(v) => setContact("submitLabel", v)} placeholder="Отправить заявку" />
-            <TextField label="Строка о согласии" value={data.contact.consent} onChange={(v) => setContact("consent", v)} multi />
+          <div className="grid gap-4 mt-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <TextField label="Заголовок" value={data.contact.title} onChange={(v) => setContact("title", v)} placeholder="Оставить заявку" />
+              <TextField label="Подзаголовок" value={data.contact.subtitle} onChange={(v) => setContact("subtitle", v)} multi />
+              <TextField label="Текст кнопки" value={data.contact.submitLabel} onChange={(v) => setContact("submitLabel", v)} placeholder="Отправить заявку" />
+              <TextField label="Строка о согласии" value={data.contact.consent} onChange={(v) => setContact("consent", v)} multi />
+            </div>
+            <ImageField
+              label="Фоновое изображение секции (перекрывает стандартное)"
+              value={data.contact.bgImage ?? ""}
+              onChange={(v) => setContact("bgImage", v)}
+              upload={uploadImage}
+            />
           </div>
         </details>
 
