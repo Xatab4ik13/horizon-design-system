@@ -82,10 +82,19 @@ const CheckoutPage = () => {
       .maybeSingle()
       .then(({ data }) => {
         if (!data) return;
+        const normalizePhone = (p: string) => {
+          if (!p) return "+7 ";
+          let v = p.replace(/[^\d+\s\-()]/g, "");
+          if (!v.startsWith("+")) {
+            const digits = v.replace(/\D/g, "");
+            v = "+" + (digits.startsWith("7") ? digits : "7" + digits);
+          }
+          return v;
+        };
         setContact((c) => ({
           firstName: c.firstName || (data.first_name ?? ""),
           lastName: c.lastName || (data.last_name ?? ""),
-          phone: c.phone || (data.phone ?? ""),
+          phone: c.phone && c.phone !== "+7 " ? c.phone : normalizePhone(data.phone ?? ""),
           email: c.email || user.email || "",
         }));
       });
