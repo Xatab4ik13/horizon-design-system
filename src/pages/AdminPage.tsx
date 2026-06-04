@@ -661,6 +661,7 @@ const ProductEditor = ({
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [arFileNames, setArFileNames] = useState<{ glb?: string; usdz?: string }>({});
+  const [arUploadErrors, setArUploadErrors] = useState<{ glb?: boolean; usdz?: boolean }>({});
   const [imageUploadPreviews, setImageUploadPreviews] = useState<{ id: string; url: string; name: string }[]>([]);
 
   const fileNameFromUrl = (url?: string | null) => {
@@ -720,12 +721,14 @@ const ProductEditor = ({
   const handleArUpload = async (file: File, kind: "glb" | "usdz") => {
     setArUploading(kind);
     setArFileNames((current) => ({ ...current, [kind]: file.name }));
+    setArUploadErrors((current) => ({ ...current, [kind]: false }));
     try {
       const url = await adminUploadFile("product-models", file);
       const field = kind === "glb" ? "ar_glb_url" : "ar_usdz_url";
       setForm((current: any) => ({ ...current, [field]: url }));
       toast.success(`${kind.toUpperCase()} загружен`);
     } catch (e: any) {
+      setArUploadErrors((current) => ({ ...current, [kind]: true }));
       toast.error(e.message);
     }
     setArUploading(null);
@@ -993,12 +996,13 @@ const ProductEditor = ({
             {(form.ar_glb_url || arFileNames.glb) && (
               <div className="flex items-center gap-3 mt-1 text-[12px] text-[#888]">
                 <span className="truncate">
-                  Файл: {arFileNames.glb || fileNameFromUrl(form.ar_glb_url)}{arUploading === "glb" ? " — загрузка…" : ""}
+                  {arUploadErrors.glb ? "Ошибка загрузки: " : "Файл: "}{arFileNames.glb || fileNameFromUrl(form.ar_glb_url)}{arUploading === "glb" ? " — загрузка…" : ""}
                 </span>
                 <button
                   onClick={() => {
                     setForm((f: any) => ({ ...f, ar_glb_url: null }));
                     setArFileNames((current) => ({ ...current, glb: undefined }));
+                    setArUploadErrors((current) => ({ ...current, glb: false }));
                   }}
                   className="hover:text-white flex-shrink-0"
                 >
@@ -1036,12 +1040,13 @@ const ProductEditor = ({
             {(form.ar_usdz_url || arFileNames.usdz) && (
               <div className="flex items-center gap-3 mt-1 text-[12px] text-[#888]">
                 <span className="truncate">
-                  Файл: {arFileNames.usdz || fileNameFromUrl(form.ar_usdz_url)}{arUploading === "usdz" ? " — загрузка…" : ""}
+                  {arUploadErrors.usdz ? "Ошибка загрузки: " : "Файл: "}{arFileNames.usdz || fileNameFromUrl(form.ar_usdz_url)}{arUploading === "usdz" ? " — загрузка…" : ""}
                 </span>
                 <button
                   onClick={() => {
                     setForm((f: any) => ({ ...f, ar_usdz_url: null }));
                     setArFileNames((current) => ({ ...current, usdz: undefined }));
+                    setArUploadErrors((current) => ({ ...current, usdz: false }));
                   }}
                   className="hover:text-white flex-shrink-0"
                 >
