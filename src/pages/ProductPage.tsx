@@ -531,6 +531,34 @@ const ProductPage = () => {
                 })}
               </div>
 
+              {/* ─── Дополнительные характеристики (из БД / 1С) ─── */}
+              {(() => {
+                const s = product.specs ?? {};
+                const rows: { label: string; value: string }[] = [];
+                if (s.brand) rows.push({ label: "Бренд", value: s.brand });
+                if (s.manufacturer) rows.push({ label: "Производитель", value: s.manufacturer });
+                if (s.country) rows.push({ label: "Страна", value: s.country });
+                if (s.stock_status) rows.push({ label: "Наличие на складе", value: s.stock_status });
+                if (s.area_m2 != null) rows.push({ label: "Площадь", value: `${s.area_m2} м²` });
+                if (s.volume_m3 != null) rows.push({ label: "Объём", value: `${s.volume_m3} м³` });
+                if (s.weight_gross_kg != null) rows.push({ label: "Вес брутто", value: `${s.weight_gross_kg} кг` });
+                if (product.packageInfo) rows.push({ label: "Упаковка", value: product.packageInfo });
+                if (!rows.length) return null;
+                return (
+                  <div className="mb-8 rounded-2xl border border-border bg-card/40 overflow-hidden">
+                    <div className="px-4 py-3 border-b border-border text-sm font-semibold text-foreground">Характеристики</div>
+                    <dl className="divide-y divide-border">
+                      {rows.map((r) => (
+                        <div key={r.label} className="grid grid-cols-2 gap-3 px-4 py-2.5 text-sm">
+                          <dt className="text-muted-foreground">{r.label}</dt>
+                          <dd className="text-foreground font-medium">{r.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                );
+              })()}
+
               {/* ─── Actions ─── */}
               <div className="flex gap-3 mb-4 mt-auto">
                 <Button size="lg" className="flex-1 gap-2 rounded-full" onClick={() => {
