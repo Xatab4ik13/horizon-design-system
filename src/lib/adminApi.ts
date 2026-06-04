@@ -34,7 +34,7 @@ export async function adminCall<T = any>(
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), 15000);
+      const timeout = window.setTimeout(() => controller.abort(), 30000);
       const response = await fetch(ADMIN_FUNCTION_URL, {
         method: "POST",
         headers: {
