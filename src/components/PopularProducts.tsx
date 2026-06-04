@@ -137,10 +137,10 @@ const PopularProducts = () => {
               animate="center"
               exit="exit"
               transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
-              className="flex flex-col-reverse md:flex-row items-center justify-between gap-6 md:gap-8 lg:gap-12 w-full pointer-events-none"
+              className="flex flex-col-reverse md:flex-row items-center justify-between gap-6 md:gap-4 w-full pointer-events-none"
             >
               {/* Text */}
-              <div className="w-full md:w-5/12 text-center md:text-left pointer-events-auto">
+              <div className="w-full md:w-1/2 text-center md:text-left pointer-events-auto md:pr-4">
                 <motion.span
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -184,7 +184,7 @@ const PopularProducts = () => {
               </div>
 
               {/* Image */}
-              <div className="w-full md:w-7/12 flex justify-center md:justify-end">
+              <div className="w-full md:w-1/2 flex justify-center md:justify-end">
                 <AutoTilt3D>
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -196,7 +196,7 @@ const PopularProducts = () => {
                       alt={item.title}
                       loading="lazy"
                       decoding="async"
-                      className="w-[280px] h-[280px] md:w-[450px] md:h-[450px] lg:w-[522px] lg:h-[522px] object-contain drop-shadow-2xl pointer-events-none"
+                      className="w-[280px] h-[280px] md:w-[400px] md:h-[400px] lg:w-[480px] lg:h-[480px] object-contain drop-shadow-2xl pointer-events-none ml-auto"
                     />
                   </motion.div>
                 </AutoTilt3D>
