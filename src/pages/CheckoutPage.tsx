@@ -461,21 +461,17 @@ const CheckoutPage = () => {
                       <div className="flex items-start gap-2 text-xs text-foreground/80 bg-amber-500/5 border border-amber-500/30 rounded-xl p-3 mb-4">
                         <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-amber-500" />
                         <div>
-                          <p className="font-medium text-foreground mb-1">Что дальше:</p>
-                          <ol className="list-decimal list-inside space-y-0.5 text-muted-foreground">
-                            <li>Введите город и адрес</li>
-                            <li>Нажмите «Рассчитать стоимость»</li>
-                            <li>Выберите тариф — кнопка «Далее» станет активной</li>
-                          </ol>
-                          <p className="mt-2 text-muted-foreground">
-                            Заказ будет оформлен после уточнения стоимости доставки.
+                          <p className="font-medium text-foreground mb-1">Расчёт стоимости доставки</p>
+                          <p className="text-muted-foreground">
+                            Введите город и адрес, выберите перевозчика и нажмите «Рассчитать стоимость».
+                            Если расчёт недоступен — оформите заказ, менеджер уточнит стоимость доставки и свяжется с вами.
                           </p>
                         </div>
                       </div>
                     ) : !selectedQuote?.ok ? (
                       <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
                         <AlertCircle className="h-3.5 w-3.5 text-primary/60" />
-                        <span>Выберите подходящий тариф доставки из списка выше.</span>
+                        <span>Тариф недоступен автоматически — менеджер пересчитает после оформления заказа.</span>
                       </div>
                     ) : null}
 
