@@ -703,7 +703,7 @@ const ProductEditor = ({
   };
 
   const removeImage = (idx: number) => {
-    setForm((f: any) => ({ ...f, images: (form.images ?? []).filter((_: any, i: number) => i !== idx) }));
+    setForm((f: any) => ({ ...f, images: (f.images ?? []).filter((_: any, i: number) => i !== idx) }));
   };
 
   const [arUploading, setArUploading] = useState<"glb" | "usdz" | null>(null);
