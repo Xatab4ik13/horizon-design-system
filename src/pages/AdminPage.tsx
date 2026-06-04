@@ -593,15 +593,18 @@ const ProductsPanel = () => {
             <div key={p.id} className={`${ui.card} flex items-center gap-4`}>
               <div className="w-20 h-20 bg-[#1a1a1a] rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center">
                 {p.images?.[0] ? (
-                  <img
-                    src={p.images[0]}
-                    alt={p.name}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).style.display = "none";
-                    }}
-                  />
+                  <>
+                    <ImageIcon size={28} className="text-[#555]" />
+                    <img
+                      src={p.images[0]}
+                      alt={p.name}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  </>
                 ) : (
                   <ImageIcon size={28} className="text-[#555]" />
                 )}
@@ -929,11 +932,12 @@ const ProductEditor = ({
               </div>
             ))}
             {form.images?.map((url: string, i: number) => (
-              <div key={i} className="relative w-28 h-28 rounded-lg overflow-hidden bg-[#1a1a1a]">
+              <div key={i} className="relative w-28 h-28 rounded-lg overflow-hidden bg-[#1a1a1a] flex items-center justify-center">
+                <ImageIcon size={28} className="text-[#555]" />
                 <img
                   src={url}
                   alt={`Фото товара ${i + 1}`}
-                  className="w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-cover"
                   onError={(e) => {
                     (e.currentTarget as HTMLImageElement).style.display = "none";
                   }}
