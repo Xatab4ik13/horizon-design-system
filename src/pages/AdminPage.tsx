@@ -703,7 +703,7 @@ const ProductEditor = ({
   };
 
   const removeImage = (idx: number) => {
-    setForm({ ...form, images: (form.images ?? []).filter((_: any, i: number) => i !== idx) });
+    setForm((f: any) => ({ ...f, images: (form.images ?? []).filter((_: any, i: number) => i !== idx) }));
   };
 
   const [arUploading, setArUploading] = useState<"glb" | "usdz" | null>(null);
@@ -728,7 +728,7 @@ const ProductEditor = ({
         type="number"
         step="0.1"
         value={form[k] ?? ""}
-        onChange={(e) => setForm({ ...form, [k]: e.target.value === "" ? null : Number(e.target.value) })}
+        onChange={(e) => setForm((f: any) => ({ ...f, [k]: e.target.value === "" ? null : Number(e.target.value) }))}
         className={ui.input}
       />
     </div>
@@ -744,7 +744,7 @@ const ProductEditor = ({
             <label className={ui.label}>Название *</label>
             <input
               value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              onChange={(e) => setForm((f: any) => ({ ...f, name: e.target.value }))}
               className={ui.input}
             />
           </div>
@@ -752,7 +752,7 @@ const ProductEditor = ({
             <label className={ui.label}>Артикул (SKU)</label>
             <input
               value={form.sku ?? ""}
-              onChange={(e) => setForm({ ...form, sku: e.target.value })}
+              onChange={(e) => setForm((f: any) => ({ ...f, sku: e.target.value }))}
               className={ui.input}
               placeholder="напр. П0002"
             />
@@ -763,7 +763,7 @@ const ProductEditor = ({
           <label className={ui.label}>Описание</label>
           <textarea
             value={form.description ?? ""}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            onChange={(e) => setForm((f: any) => ({ ...f, description: e.target.value }))}
             className={ui.textarea}
           />
         </div>
@@ -773,7 +773,7 @@ const ProductEditor = ({
             <label className={ui.label}>Категория *</label>
             <select
               value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value })}
+              onChange={(e) => setForm((f: any) => ({ ...f, category: e.target.value }))}
               className={ui.input}
             >
               {categoryOptions.map((c) => (
@@ -788,7 +788,7 @@ const ProductEditor = ({
             <input
               type="number"
               value={form.price}
-              onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
+              onChange={(e) => setForm((f: any) => ({ ...f, price: Number(e.target.value) }))}
               className={ui.input}
             />
           </div>
@@ -811,7 +811,7 @@ const ProductEditor = ({
               step={1}
               value={form.discount_percent ?? 0}
               onChange={(e) =>
-                setForm({ ...form, discount_percent: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })
+                setForm((f: any) => ({ ...f, discount_percent: Math.max(0, Math.min(100, Number(e.target.value) || 0)) }))
               }
               className={ui.input}
               placeholder="0"
@@ -821,7 +821,7 @@ const ProductEditor = ({
             <label className={ui.label}>Наличие</label>
             <select
               value={form.stock_status ?? ""}
-              onChange={(e) => setForm({ ...form, stock_status: e.target.value || null })}
+              onChange={(e) => setForm((f: any) => ({ ...f, stock_status: e.target.value || null }))}
               className={ui.input}
             >
               <option value="">— не указано —</option>
@@ -840,7 +840,7 @@ const ProductEditor = ({
             <label className={ui.label}>Материал</label>
             <input
               value={form.material ?? ""}
-              onChange={(e) => setForm({ ...form, material: e.target.value || null })}
+              onChange={(e) => setForm((f: any) => ({ ...f, material: e.target.value || null }))}
               className={ui.input}
               placeholder="напр. Дерево"
             />
@@ -849,7 +849,7 @@ const ProductEditor = ({
             <label className={ui.label}>Порода</label>
             <input
               value={form.wood_species ?? ""}
-              onChange={(e) => setForm({ ...form, wood_species: e.target.value || null })}
+              onChange={(e) => setForm((f: any) => ({ ...f, wood_species: e.target.value || null }))}
               className={ui.input}
               placeholder="напр. Дуб"
             />
@@ -858,7 +858,7 @@ const ProductEditor = ({
             <label className={ui.label}>Покрытие</label>
             <input
               value={form.coating ?? ""}
-              onChange={(e) => setForm({ ...form, coating: e.target.value || null })}
+              onChange={(e) => setForm((f: any) => ({ ...f, coating: e.target.value || null }))}
               className={ui.input}
               placeholder="напр. Воск"
             />
@@ -871,7 +871,7 @@ const ProductEditor = ({
             <label className={ui.label}>Упаковка</label>
             <input
               value={form.package_info ?? ""}
-              onChange={(e) => setForm({ ...form, package_info: e.target.value || null })}
+              onChange={(e) => setForm((f: any) => ({ ...f, package_info: e.target.value || null }))}
               className={ui.input}
               placeholder="напр. 200x100x11"
             />
@@ -880,7 +880,7 @@ const ProductEditor = ({
             <label className={ui.label}>Бренд</label>
             <input
               value={form.brand ?? ""}
-              onChange={(e) => setForm({ ...form, brand: e.target.value || null })}
+              onChange={(e) => setForm((f: any) => ({ ...f, brand: e.target.value || null }))}
               className={ui.input}
             />
           </div>
@@ -888,7 +888,7 @@ const ProductEditor = ({
             <label className={ui.label}>Страна</label>
             <input
               value={form.country ?? ""}
-              onChange={(e) => setForm({ ...form, country: e.target.value || null })}
+              onChange={(e) => setForm((f: any) => ({ ...f, country: e.target.value || null }))}
               className={ui.input}
               placeholder="напр. Россия"
             />
@@ -899,7 +899,7 @@ const ProductEditor = ({
           <label className={ui.label}>Производитель</label>
           <input
             value={form.manufacturer ?? ""}
-            onChange={(e) => setForm({ ...form, manufacturer: e.target.value || null })}
+            onChange={(e) => setForm((f: any) => ({ ...f, manufacturer: e.target.value || null }))}
             className={ui.input}
           />
         </div>
@@ -951,7 +951,7 @@ const ProductEditor = ({
             <div className="flex gap-2">
               <input
                 value={form.ar_glb_url ?? ""}
-                onChange={(e) => setForm({ ...form, ar_glb_url: e.target.value || null })}
+                onChange={(e) => setForm((f: any) => ({ ...f, ar_glb_url: e.target.value || null }))}
                 className={ui.input}
                 placeholder="URL или загрузите файл"
               />
@@ -976,7 +976,7 @@ const ProductEditor = ({
               <div className="flex items-center gap-3 mt-1 text-[12px] text-[#888]">
                 <span className="truncate">Файл: {arFileNames.glb || fileNameFromUrl(form.ar_glb_url)}</span>
                 <button
-                  onClick={() => setForm({ ...form, ar_glb_url: null })}
+                  onClick={() => setForm((f: any) => ({ ...f, ar_glb_url: null }))}
                   className="hover:text-white flex-shrink-0"
                 >
                   Удалить
@@ -989,7 +989,7 @@ const ProductEditor = ({
             <div className="flex gap-2">
               <input
                 value={form.ar_usdz_url ?? ""}
-                onChange={(e) => setForm({ ...form, ar_usdz_url: e.target.value || null })}
+                onChange={(e) => setForm((f: any) => ({ ...f, ar_usdz_url: e.target.value || null }))}
                 className={ui.input}
                 placeholder="URL или загрузите файл"
               />
@@ -1014,7 +1014,7 @@ const ProductEditor = ({
               <div className="flex items-center gap-3 mt-1 text-[12px] text-[#888]">
                 <span className="truncate">Файл: {arFileNames.usdz || fileNameFromUrl(form.ar_usdz_url)}</span>
                 <button
-                  onClick={() => setForm({ ...form, ar_usdz_url: null })}
+                  onClick={() => setForm((f: any) => ({ ...f, ar_usdz_url: null }))}
                   className="hover:text-white flex-shrink-0"
                 >
                   Удалить
@@ -1029,7 +1029,7 @@ const ProductEditor = ({
             type="checkbox"
             id="active"
             checked={form.is_active}
-            onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
+            onChange={(e) => setForm((f: any) => ({ ...f, is_active: e.target.checked }))}
             className="w-5 h-5"
           />
           <label htmlFor="active" className="text-[16px]">
