@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 const STORAGE_KEY = "faktura_admin_pwd";
-const ADMIN_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-api`;
+const ADMIN_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL.replace(/\/$/, "")}/functions/v1/admin-api`;
 const PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 export const adminAuth = {

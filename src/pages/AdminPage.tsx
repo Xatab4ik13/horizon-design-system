@@ -286,33 +286,33 @@ const Import1CBlock = ({
       let uploadedImgs = 0;
       if (totalImgs > 0) toast.message(`Загрузка изображений: 0/${totalImgs}`);
 
-      const items = await Promise.all(
-        parsed.map(async (p: any) => {
-          const { _images, ...rest } = p;
-          const imageUrls: string[] = [];
-          if (_images?.length) {
-            for (const img of _images) {
-              try {
-                const file = new File([img.blob], img.name, { type: img.blob.type });
-                const url = await adminUploadFile("product-images", file, { prefix: "1c/" });
-                imageUrls.push(url);
-                uploadedImgs++;
-              } catch (e) {
-                console.warn("[1c-import] image upload failed", img.name, e);
-              }
+      const items = [];
+      for (const p of parsed) {
+        const { _images, ...rest } = p;
+        const imageUrls: string[] = [];
+        if (_images?.length) {
+          for (const img of _images) {
+            try {
+              const file = new File([img.blob], img.name, { type: img.blob.type });
+              const url = await adminUploadFile("product-images", file, { prefix: "1c/" });
+              imageUrls.push(url);
+              uploadedImgs++;
+              if (totalImgs > 0) toast.message(`Загрузка изображений: ${uploadedImgs}/${totalImgs}`);
+            } catch (e) {
+              console.warn("[1c-import] image upload failed", img.name, e);
             }
           }
-          const item: any = {
-            ...rest,
-            sku: rest.sku || null,
-            category,
-            is_active: true,
-            sort_order: 0,
-          };
-          if (imageUrls.length) item.images = imageUrls;
-          return item;
-        }),
-      );
+        }
+        const item: any = {
+          ...rest,
+          sku: rest.sku || null,
+          category,
+          is_active: true,
+          sort_order: 0,
+        };
+        if (imageUrls.length) item.images = imageUrls;
+        items.push(item);
+      }
 
       const r = await adminCall<{ data: { created: number; updated: number; errors: string[] } }>(
         "products.bulkUpsert",
