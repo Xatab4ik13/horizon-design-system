@@ -27,6 +27,12 @@ export interface DbProductRow {
   coating?: string | null;
   wood_species?: string | null;
   package_info?: string | null;
+  brand?: string | null;
+  country?: string | null;
+  manufacturer?: string | null;
+  area_m2?: number | null;
+  volume_m3?: number | null;
+  weight_gross_kg?: number | null;
 }
 
 // Маппинг "категорий админки" в category/subcategory сайта
