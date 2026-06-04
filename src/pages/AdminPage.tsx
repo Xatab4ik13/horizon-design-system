@@ -1981,21 +1981,24 @@ const PasswordPanel = () => {
 // HOMEPAGE EDITOR — тексты и изображения главной страницы
 // ===================================================================
 const emptyHomepage = {
-  hero: { marqueeText: "", marqueeEnabled: true, videoUrl: "" },
+  hero: { marqueeText: "", marqueeEnabled: true, videoUrl: "", posterUrl: "" },
   popular: {
+    bgImage: "",
     items: Array.from({ length: 10 }, () => ({
       title: "", tagline: "", description: "", cta: "", image: "", enabled: true,
     })),
   },
   categories: {
     title: "",
+    bgImage: "",
     items: Array.from({ length: 12 }, () => ({ name: "", image: "", enabled: true })),
   },
   advantages: {
     title: "",
+    bgImage: "",
     items: Array.from({ length: 8 }, () => ({ title: "", desc: "", enabled: true })),
   },
-  contact: { title: "", subtitle: "", consent: "", submitLabel: "" },
+  contact: { title: "", subtitle: "", consent: "", submitLabel: "", bgImage: "" },
   footer: { tagline: "", phone: "", email: "", copyright: "" },
 };
 
@@ -2148,13 +2151,15 @@ const HomepageEditor = () => {
           : emptyHomepage.categories.items.map((d) => ({ ...d }));
         setData({
           hero: { ...emptyHomepage.hero, ...(v.hero ?? {}) },
-          popular: { items: popularItems },
+          popular: { bgImage: v.popular?.bgImage ?? "", items: popularItems },
           categories: {
             title: v.categories?.title ?? "",
+            bgImage: v.categories?.bgImage ?? "",
             items: categoryItems,
           },
           advantages: {
             title: v.advantages?.title ?? "",
+            bgImage: v.advantages?.bgImage ?? "",
             items: emptyHomepage.advantages.items.map((d, i) => ({
               ...d,
               ...(v.advantages?.items?.[i] ?? {}),
