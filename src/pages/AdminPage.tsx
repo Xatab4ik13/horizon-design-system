@@ -1145,7 +1145,15 @@ const OrdersPanel = () => {
 
   return (
     <div>
-      <h2 className={`${ui.h2} mb-6`}>Заказы ({items.length})</h2>
+      <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
+        <h2 className={ui.h2}>Заказы ({items.length})</h2>
+        <button
+          onClick={() => { invalidateAdminCache("orders."); load(); }}
+          className={`${ui.btn} ${ui.btnSecondary}`}
+        >
+          Обновить
+        </button>
+      </div>
       {loading ? (
         <p className="text-[#888]">Загрузка…</p>
       ) : items.length === 0 ? (
