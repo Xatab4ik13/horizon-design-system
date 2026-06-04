@@ -12,19 +12,29 @@ const HeroSection = () => {
   const marqueeText = content.hero?.marqueeText || DEFAULT_MARQUEE;
   const marqueeEnabled = content.hero?.marqueeEnabled !== false;
   const videoSrc = content.hero?.videoUrl || heroVideo;
+  const posterUrl = content.hero?.posterUrl?.trim() || undefined;
+  const hasVideo = !!videoSrc;
 
   return (
     <section className="relative h-screen w-full overflow-hidden">
-      <video
-        ref={videoRef}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="auto"
-        className="absolute inset-0 w-full h-full object-cover"
-        src={videoSrc}
-      />
+      {hasVideo ? (
+        <video
+          ref={videoRef}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          poster={posterUrl}
+          className="absolute inset-0 w-full h-full object-cover"
+          src={videoSrc}
+        />
+      ) : posterUrl ? (
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${posterUrl})` }}
+        />
+      ) : null}
       <div className="absolute inset-0 bg-black/30" />
       <div className="absolute inset-0 flex items-center justify-center">
         <motion.div
