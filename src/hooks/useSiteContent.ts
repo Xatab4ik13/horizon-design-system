@@ -6,16 +6,20 @@ export type HomepageContent = {
     marqueeText?: string;
     marqueeEnabled?: boolean;
     videoUrl?: string;
+    posterUrl?: string;
   };
   popular?: {
+    bgImage?: string;
     items?: { title?: string; tagline?: string; description?: string; cta?: string; image?: string; enabled?: boolean }[];
   };
   categories?: {
     title?: string;
+    bgImage?: string;
     items?: { name?: string; image?: string; enabled?: boolean }[];
   };
   advantages?: {
     title?: string;
+    bgImage?: string;
     items?: { title?: string; desc?: string; enabled?: boolean }[];
   };
   contact?: {
@@ -23,6 +27,7 @@ export type HomepageContent = {
     subtitle?: string;
     consent?: string;
     submitLabel?: string;
+    bgImage?: string;
   };
   footer?: {
     tagline?: string;

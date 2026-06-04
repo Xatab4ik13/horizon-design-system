@@ -61,6 +61,7 @@ const PopularProducts = () => {
   const [paused, setPaused] = useState(false);
   const content = useHomepageContent();
   const overrides = content.popular?.items ?? [];
+  const sectionBgImage = content.popular?.bgImage?.trim();
   const total = Math.max(defaultShowcaseItems.length, overrides.length);
   const showcaseItems = Array.from({ length: total }, (_, i) => {
     const def = defaultShowcaseItems[i];
@@ -112,8 +113,8 @@ const PopularProducts = () => {
 
   return (
     <section
-      className="relative overflow-hidden transition-[background] duration-1000"
-      style={{ background: item.bg }}
+      className="relative overflow-hidden transition-[background] duration-1000 bg-cover bg-center"
+      style={sectionBgImage ? { backgroundImage: `url(${sectionBgImage})` } : { background: item.bg }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >

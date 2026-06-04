@@ -1981,21 +1981,24 @@ const PasswordPanel = () => {
 // HOMEPAGE EDITOR — тексты и изображения главной страницы
 // ===================================================================
 const emptyHomepage = {
-  hero: { marqueeText: "", marqueeEnabled: true, videoUrl: "" },
+  hero: { marqueeText: "", marqueeEnabled: true, videoUrl: "", posterUrl: "" },
   popular: {
+    bgImage: "",
     items: Array.from({ length: 10 }, () => ({
       title: "", tagline: "", description: "", cta: "", image: "", enabled: true,
     })),
   },
   categories: {
     title: "",
+    bgImage: "",
     items: Array.from({ length: 12 }, () => ({ name: "", image: "", enabled: true })),
   },
   advantages: {
     title: "",
+    bgImage: "",
     items: Array.from({ length: 8 }, () => ({ title: "", desc: "", enabled: true })),
   },
-  contact: { title: "", subtitle: "", consent: "", submitLabel: "" },
+  contact: { title: "", subtitle: "", consent: "", submitLabel: "", bgImage: "" },
   footer: { tagline: "", phone: "", email: "", copyright: "" },
 };
 
@@ -2148,13 +2151,15 @@ const HomepageEditor = () => {
           : emptyHomepage.categories.items.map((d) => ({ ...d }));
         setData({
           hero: { ...emptyHomepage.hero, ...(v.hero ?? {}) },
-          popular: { items: popularItems },
+          popular: { bgImage: v.popular?.bgImage ?? "", items: popularItems },
           categories: {
             title: v.categories?.title ?? "",
+            bgImage: v.categories?.bgImage ?? "",
             items: categoryItems,
           },
           advantages: {
             title: v.advantages?.title ?? "",
+            bgImage: v.advantages?.bgImage ?? "",
             items: emptyHomepage.advantages.items.map((d, i) => ({
               ...d,
               ...(v.advantages?.items?.[i] ?? {}),
@@ -2301,12 +2306,24 @@ const HomepageEditor = () => {
               accept="video/mp4,video/*"
               upload={uploadImage}
             />
+            <ImageField
+              label="Постер (показывается, если видео не задано)"
+              value={data.hero.posterUrl ?? ""}
+              onChange={(v) => setHero("posterUrl", v)}
+              upload={uploadImage}
+            />
           </div>
         </details>
 
         <details className="border border-[#3a3a3a] rounded-lg p-4">
           <summary className={`${ui.h3} cursor-pointer`}>Слайдер «Популярное»</summary>
           <div className="grid gap-6 mt-4">
+            <ImageField
+              label="Фоновое изображение секции (опционально, перекрывает градиент)"
+              value={data.popular.bgImage ?? ""}
+              onChange={(v) => setData((d: any) => ({ ...d, popular: { ...d.popular, bgImage: v } }))}
+              upload={uploadImage}
+            />
             {data.popular.items.map((it: any, i: number) => (
               <div key={i} className="border border-[#3a3a3a] rounded-lg p-4 grid gap-3">
                 <div className="flex items-center justify-between gap-3">
@@ -2344,6 +2361,12 @@ const HomepageEditor = () => {
               onChange={(v) => setData({ ...data, categories: { ...data.categories, title: v } })}
               placeholder="Категории каталога"
             />
+            <ImageField
+              label="Фоновое изображение секции (опционально, перекрывает градиент)"
+              value={data.categories.bgImage ?? ""}
+              onChange={(v) => setData((d: any) => ({ ...d, categories: { ...d.categories, bgImage: v } }))}
+              upload={uploadImage}
+            />
             <div className="grid md:grid-cols-2 gap-4">
               {data.categories.items.map((it: any, i: number) => (
                 <div key={i} className="border border-[#3a3a3a] rounded-lg p-4 grid gap-3">
@@ -2378,6 +2401,12 @@ const HomepageEditor = () => {
               onChange={(v) => setData({ ...data, advantages: { ...data.advantages, title: v } })}
               placeholder="Почему выбирают нас"
             />
+            <ImageField
+              label="Фоновое изображение секции (перекрывает стандартное)"
+              value={data.advantages.bgImage ?? ""}
+              onChange={(v) => setData((d: any) => ({ ...d, advantages: { ...d.advantages, bgImage: v } }))}
+              upload={uploadImage}
+            />
             <div className="grid md:grid-cols-2 gap-4">
               {data.advantages.items.map((it: any, i: number) => (
                 <div key={i} className="border border-[#3a3a3a] rounded-lg p-4 grid gap-3">
@@ -2397,11 +2426,19 @@ const HomepageEditor = () => {
 
         <details className="border border-[#3a3a3a] rounded-lg p-4">
           <summary className={`${ui.h3} cursor-pointer`}>Форма «Оставить заявку»</summary>
-          <div className="grid md:grid-cols-2 gap-4 mt-4">
-            <TextField label="Заголовок" value={data.contact.title} onChange={(v) => setContact("title", v)} placeholder="Оставить заявку" />
-            <TextField label="Подзаголовок" value={data.contact.subtitle} onChange={(v) => setContact("subtitle", v)} multi />
-            <TextField label="Текст кнопки" value={data.contact.submitLabel} onChange={(v) => setContact("submitLabel", v)} placeholder="Отправить заявку" />
-            <TextField label="Строка о согласии" value={data.contact.consent} onChange={(v) => setContact("consent", v)} multi />
+          <div className="grid gap-4 mt-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <TextField label="Заголовок" value={data.contact.title} onChange={(v) => setContact("title", v)} placeholder="Оставить заявку" />
+              <TextField label="Подзаголовок" value={data.contact.subtitle} onChange={(v) => setContact("subtitle", v)} multi />
+              <TextField label="Текст кнопки" value={data.contact.submitLabel} onChange={(v) => setContact("submitLabel", v)} placeholder="Отправить заявку" />
+              <TextField label="Строка о согласии" value={data.contact.consent} onChange={(v) => setContact("consent", v)} multi />
+            </div>
+            <ImageField
+              label="Фоновое изображение секции (перекрывает стандартное)"
+              value={data.contact.bgImage ?? ""}
+              onChange={(v) => setContact("bgImage", v)}
+              upload={uploadImage}
+            />
           </div>
         </details>
 
