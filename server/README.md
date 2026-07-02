@@ -39,7 +39,7 @@ newgrp docker
 
 ```bash
 cd /opt
-sudo git clone https://github.com/<ваш-org>/faktura.git
+sudo git clone https://github.com/Xatab4ik13/horizon-design-system.git faktura
 sudo chown -R $USER:$USER /opt/faktura
 cd /opt/faktura/server
 
