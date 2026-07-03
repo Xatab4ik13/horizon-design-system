@@ -9,88 +9,85 @@ import logoPek from "@/assets/logo-pek.png";
 import logoDelovyeLinii from "@/assets/logo-delovye-linii.png";
 import logoPochta from "@/assets/logo-pochta.png";
 import logoYandex from "@/assets/logo-yandex-delivery.png";
-import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEO, { buildFAQJsonLd } from "@/components/SEO";
-import { usePageHeader } from "@/hooks/useSiteContent";
+import { usePageHeader, useDeliveryContent } from "@/hooks/useSiteContent";
 import DeliveryCalculator from "@/components/DeliveryCalculator";
 import { Link } from "react-router-dom";
 
-
-// ─── Delivery companies ───
-const deliveryCompanies = [
-  {
-    name: "СДЭК",
-    logo: logoCdek,
-    description: "Доставка по всей России и СНГ. Более 3 000 пунктов выдачи.",
-    timing: "2–7 дней",
-    features: ["Пункты выдачи", "Курьерская доставка", "Примерка при получении"],
-  },
-  {
-    name: "Boxberry",
-    logo: logoBoxberry,
-    description: "Сеть из 4 500+ пунктов выдачи по всей стране.",
-    timing: "3–10 дней",
-    features: ["Пункты выдачи", "Постаматы", "Частичный выкуп"],
-  },
-  {
-    name: "ПЭК",
-    logo: logoPek,
-    description: "Перевозка крупногабаритных грузов и мебели по России.",
-    timing: "3–14 дней",
-    features: ["Крупногабарит", "Страхование", "До терминала / до двери"],
-  },
-  {
-    name: "Деловые Линии",
-    logo: logoDelovyeLinii,
-    description: "Транспортная компания для крупных и тяжёлых отправлений.",
-    timing: "2–10 дней",
-    features: ["Сборный груз", "Доставка до двери", "Жёсткая упаковка"],
-  },
-  {
-    name: "Почта России",
-    logo: logoPochta,
-    description: "Доставка в любой населённый пункт страны, включая отдалённые.",
-    timing: "5–21 день",
-    features: ["Любой адрес РФ", "Наложенный платёж", "Трекинг"],
-  },
-  {
-    name: "Яндекс Доставка",
-    logo: logoYandex,
-    description: "Быстрая курьерская доставка в крупных городах за 1–2 дня.",
-    timing: "1–2 дня",
-    features: ["Экспресс-доставка", "Курьер до двери", "Отслеживание в реальном времени"],
-  },
+// ─── Defaults (используются пока админ не заполнил соответствующие поля) ───
+const defaultCompanies = [
+  { name: "СДЭК", logo: logoCdek, description: "Доставка по всей России и СНГ. Более 3 000 пунктов выдачи.", timing: "2–7 дней", features: ["Пункты выдачи", "Курьерская доставка", "Примерка при получении"], enabled: true },
+  { name: "Boxberry", logo: logoBoxberry, description: "Сеть из 4 500+ пунктов выдачи по всей стране.", timing: "3–10 дней", features: ["Пункты выдачи", "Постаматы", "Частичный выкуп"], enabled: true },
+  { name: "ПЭК", logo: logoPek, description: "Перевозка крупногабаритных грузов и мебели по России.", timing: "3–14 дней", features: ["Крупногабарит", "Страхование", "До терминала / до двери"], enabled: true },
+  { name: "Деловые Линии", logo: logoDelovyeLinii, description: "Транспортная компания для крупных и тяжёлых отправлений.", timing: "2–10 дней", features: ["Сборный груз", "Доставка до двери", "Жёсткая упаковка"], enabled: true },
+  { name: "Почта России", logo: logoPochta, description: "Доставка в любой населённый пункт страны, включая отдалённые.", timing: "5–21 день", features: ["Любой адрес РФ", "Наложенный платёж", "Трекинг"], enabled: true },
+  { name: "Яндекс Доставка", logo: logoYandex, description: "Быстрая курьерская доставка в крупных городах за 1–2 дня.", timing: "1–2 дня", features: ["Экспресс-доставка", "Курьер до двери", "Отслеживание в реальном времени"], enabled: true },
 ];
 
-// ─── Payment methods ───
-const paymentMethods = [
-  {
-    name: "Банковские карты",
-    description: "Visa, Mastercard, МИР — оплата на сайте через защищённый платёжный шлюз.",
-    icon: CreditCard,
-  },
-  {
-    name: "YooKassa",
-    description: "Приём платежей через YooKassa — один из крупнейших агрегаторов в России.",
-    icon: ShieldCheck,
-  },
-  {
-    name: "Онлайн-чеки (54-ФЗ)",
-    description: "Все чеки формируются автоматически и отправляются в ФНС в соответствии с 54-ФЗ.",
-    icon: Receipt,
-  },
-  {
-    name: "Промокоды и купоны",
-    description: "Введите промокод при оформлении заказа и получите скидку. Следите за акциями!",
-    icon: Tag,
-  },
+const defaultPickup = {
+  title: "Самовывоз",
+  subtitle: "Бесплатно из нашей мастерской",
+  description: "Вы можете забрать заказ самостоятельно из нашей мастерской. Перед визитом, пожалуйста, свяжитесь с нами для согласования времени. Мы расположены в удобном месте с бесплатной парковкой.",
+  features: ["Бесплатно", "Осмотр изделия перед покупкой", "Бесплатная парковка"],
+  address: "г. Москва, ул. Примерная, д. 1",
+  hours: "Пн–Пт: 10:00 — 19:00",
+  phone: "+7 (900) 123-45-67",
+};
+
+const defaultPackaging = {
+  title: "Надёжная упаковка",
+  items: [
+    { title: "Индивидуальная упаковка", desc: "Каждое изделие упаковывается вручную в несколько слоёв защитного материала." },
+    { title: "Жёсткий каркас", desc: "Для крупных и хрупких изделий мы используем деревянную обрешётку или жёсткий короб." },
+    { title: "Страхование", desc: "Все отправления застрахованы на полную стоимость товара. Если что-то случится — мы заменим бесплатно." },
+  ],
+};
+
+const iconByKey = {
+  card: CreditCard,
+  shield: ShieldCheck,
+  receipt: Receipt,
+  tag: Tag,
+} as const;
+
+const defaultPaymentMethods = [
+  { name: "Банковские карты", description: "Visa, Mastercard, МИР — оплата на сайте через защищённый платёжный шлюз.", icon: "card" as const, enabled: true },
+  { name: "YooKassa", description: "Приём платежей через YooKassa — один из крупнейших агрегаторов в России.", icon: "shield" as const, enabled: true },
+  { name: "Онлайн-чеки (54-ФЗ)", description: "Все чеки формируются автоматически и отправляются в ФНС в соответствии с 54-ФЗ.", icon: "receipt" as const, enabled: true },
+  { name: "Промокоды и купоны", description: "Введите промокод при оформлении заказа и получите скидку. Следите за акциями!", icon: "tag" as const, enabled: true },
 ];
 
-// ─── Page ───
+const defaultFaq = [
+  { q: "Сколько стоит доставка?", a: "Стоимость зависит от города, веса и выбранной транспортной компании. Воспользуйтесь калькулятором выше для расчёта. Самовывоз — бесплатно." },
+  { q: "Как быстро отправляете заказ?", a: "Товары в наличии отправляем в течение 1–3 рабочих дней после оплаты. Изделия на заказ — в срок, указанный на странице товара." },
+  { q: "Можно ли оплатить при получении?", a: "Да, наложенный платёж доступен при отправке Почтой России и СДЭК. Обратите внимание: транспортная компания взимает комиссию за эту услугу." },
+  { q: "Что делать, если товар пришёл повреждённым?", a: "Все отправления застрахованы. Сфотографируйте повреждение и свяжитесь с нами — мы заменим товар или вернём деньги в кратчайшие сроки." },
+  { q: "Как использовать промокод?", a: "Введите промокод на странице оформления заказа в поле «Промокод». Скидка применится автоматически. Промокоды не суммируются с другими акциями." },
+];
+
 const DeliveryPaymentPage = () => {
   const header = usePageHeader("delivery", { title: "Доставка и оплата", subtitle: "Мы работаем с надёжными транспортными компаниями и обеспечиваем безопасную упаковку каждого изделия ручной работы." });
+  const cms = useDeliveryContent();
+
+  const companies = (cms.companies?.length ? cms.companies : defaultCompanies)
+    .filter((c) => c.enabled !== false && (c.name || c.logo))
+    .map((c) => ({
+      name: c.name ?? "",
+      logo: c.logo?.trim() || undefined,
+      description: c.description ?? "",
+      timing: c.timing ?? "",
+      features: c.features ?? [],
+    }));
+
+  const pickup = { ...defaultPickup, ...(cms.pickup ?? {}), features: cms.pickup?.features?.length ? cms.pickup.features : defaultPickup.features };
+  const packaging = { ...defaultPackaging, ...(cms.packaging ?? {}), items: cms.packaging?.items?.length ? cms.packaging.items : defaultPackaging.items };
+  const paymentMethods = (cms.paymentMethods?.length ? cms.paymentMethods : defaultPaymentMethods)
+    .filter((m) => m.enabled !== false)
+    .map((m) => ({ ...m, Icon: iconByKey[(m.icon as keyof typeof iconByKey) ?? "card"] ?? CreditCard }));
+  const faq = cms.faq?.length ? cms.faq : defaultFaq;
+
   return (
     <div
       className="min-h-screen"
@@ -102,11 +99,7 @@ const DeliveryPaymentPage = () => {
       <SEO
         title="Доставка и оплата"
         description="Доставка по всей России: СДЭК, Boxberry, ПЭК, Деловые Линии, Почта России. Оплата картой, онлайн-чеки 54-ФЗ."
-        jsonLd={[buildFAQJsonLd([
-          { question: "Сколько стоит доставка?", answer: "Стоимость доставки рассчитывается автоматически при оформлении заказа в зависимости от региона и веса." },
-          { question: "Какие способы оплаты доступны?", answer: "Банковские карты Visa, Mastercard, МИР через защищённый шлюз YooKassa. Все чеки формируются в соответствии с 54-ФЗ." },
-          { question: "Сколько времени занимает доставка?", answer: "Сроки зависят от транспортной компании и региона: от 2 до 14 дней по России." },
-        ])]}
+        jsonLd={[buildFAQJsonLd(faq.map((f) => ({ question: f.q ?? "", answer: f.a ?? "" })).filter((x) => x.question && x.answer))]}
       />
       <Header />
       <main className="pt-32 pb-20">
@@ -149,38 +142,53 @@ const DeliveryPaymentPage = () => {
               </div>
             </motion.div>
 
-            {/* Company cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-              {deliveryCompanies.map((company, i) => (
-                <motion.div
-                  key={company.name}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.08 }}
-                  className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-6 hover:border-primary/30 transition-all duration-300 group"
-                >
-                  <div className="mb-4">
-                    <img src={company.logo} alt={company.name} className="h-12 object-contain" />
-                  </div>
+            {companies.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+                {companies.map((company, i) => (
+                  <motion.div
+                    key={`${company.name}-${i}`}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.08 }}
+                    className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-6 hover:border-primary/30 transition-all duration-300 group"
+                  >
+                    <div className="mb-4 flex items-center gap-3">
+                      {company.logo ? (
+                        <img src={company.logo} alt={company.name} className="h-12 object-contain" />
+                      ) : (
+                        <div className="h-12 flex items-center text-foreground font-bold text-lg">{company.name}</div>
+                      )}
+                    </div>
 
-                  <p className="text-foreground/70 text-sm mb-4 leading-relaxed">
-                    {company.description}
-                  </p>
+                    {company.description && (
+                      <p className="text-foreground/70 text-sm mb-4 leading-relaxed">
+                        {company.description}
+                      </p>
+                    )}
 
-                  <div className="flex flex-wrap gap-2">
-                    {company.features.map((f) => (
-                      <span
-                        key={f}
-                        className="text-xs px-3 py-1.5 rounded-full bg-primary/5 text-primary/80 border border-primary/10"
-                      >
-                        {f}
-                      </span>
-                    ))}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+                    {company.timing && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+                        <Clock className="h-3 w-3" /> {company.timing}
+                      </div>
+                    )}
+
+                    {company.features.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {company.features.map((f) => (
+                          <span
+                            key={f}
+                            className="text-xs px-3 py-1.5 rounded-full bg-primary/5 text-primary/80 border border-primary/10"
+                          >
+                            {f}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            )}
 
             {/* Pickup */}
             <motion.div
@@ -194,18 +202,17 @@ const DeliveryPaymentPage = () => {
                   <MapPin className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-foreground">Самовывоз</h3>
-                  <p className="text-sm text-muted-foreground">Бесплатно из нашей мастерской</p>
+                  <h3 className="text-lg font-bold text-foreground">{pickup.title}</h3>
+                  <p className="text-sm text-muted-foreground">{pickup.subtitle}</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <p className="text-foreground/70 text-sm leading-relaxed mb-3">
-                    Вы можете забрать заказ самостоятельно из нашей мастерской. Перед визитом, пожалуйста,
-                    свяжитесь с нами для согласования времени. Мы расположены в удобном месте с бесплатной парковкой.
+                  <p className="text-foreground/70 text-sm leading-relaxed mb-3 whitespace-pre-line">
+                    {pickup.description}
                   </p>
                   <ul className="space-y-2">
-                    {["Бесплатно", "Осмотр изделия перед покупкой", "Бесплатная парковка"].map((item) => (
+                    {pickup.features.map((item) => (
                       <li key={item} className="flex items-center gap-2 text-sm text-foreground/80">
                         <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
                         {item}
@@ -215,13 +222,17 @@ const DeliveryPaymentPage = () => {
                 </div>
                 <div className="bg-background/40 rounded-xl p-4 border border-border/50">
                   <p className="text-sm text-muted-foreground mb-2">Адрес мастерской</p>
-                  <p className="text-foreground font-medium mb-3">г. Москва, ул. Примерная, д. 1</p>
+                  <p className="text-foreground font-medium mb-3">{pickup.address}</p>
                   <p className="text-sm text-muted-foreground mb-2">Время работы</p>
-                  <p className="text-foreground font-medium mb-3">Пн–Пт: 10:00 — 19:00</p>
-                  <p className="text-sm text-muted-foreground mb-2">Контакт</p>
-                  <a href="tel:+79001234567" className="text-primary font-medium flex items-center gap-2 hover:underline">
-                    <Phone className="h-4 w-4" /> +7 (900) 123-45-67
-                  </a>
+                  <p className="text-foreground font-medium mb-3">{pickup.hours}</p>
+                  {pickup.phone && (
+                    <>
+                      <p className="text-sm text-muted-foreground mb-2">Контакт</p>
+                      <a href={`tel:${pickup.phone.replace(/[^+\d]/g, "")}`} className="text-primary font-medium flex items-center gap-2 hover:underline">
+                        <Phone className="h-4 w-4" /> {pickup.phone}
+                      </a>
+                    </>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -234,131 +245,102 @@ const DeliveryPaymentPage = () => {
             >
               <DeliveryCalculator />
             </motion.div>
-
           </section>
 
           {/* ═══════ PACKAGING ═══════ */}
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-20"
-          >
-            <div className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-6 md:p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <Package className="h-5 w-5 text-primary" />
-                </div>
-                <h3 className="text-xl font-bold text-foreground">Надёжная упаковка</h3>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {[
-                  {
-                    title: "Индивидуальная упаковка",
-                    desc: "Каждое изделие упаковывается вручную в несколько слоёв защитного материала.",
-                  },
-                  {
-                    title: "Жёсткий каркас",
-                    desc: "Для крупных и хрупких изделий мы используем деревянную обрешётку или жёсткий короб.",
-                  },
-                  {
-                    title: "Страхование",
-                    desc: "Все отправления застрахованы на полную стоимость товара. Если что-то случится — мы заменим бесплатно.",
-                  },
-                ].map((item) => (
-                  <div key={item.title}>
-                    <h4 className="text-foreground font-semibold mb-2">{item.title}</h4>
-                    <p className="text-foreground/70 text-sm leading-relaxed">{item.desc}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </motion.section>
-
-          {/* ═══════ PAYMENT SECTION ═══════ */}
-          <section className="mb-20">
-            <motion.div
+          {packaging.items.length > 0 && (
+            <motion.section
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="flex items-center gap-3 mb-8"
+              className="mb-20"
             >
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-                <CreditCard className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-2xl md:text-3xl font-bold text-foreground">Способы оплаты</h2>
-                <p className="text-muted-foreground text-sm">Безопасные и удобные варианты оплаты</p>
-              </div>
-            </motion.div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {paymentMethods.map((method, i) => (
-                <motion.div
-                  key={method.name}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.08 }}
-                  className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-6 hover:border-primary/30 transition-all duration-300"
-                >
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                    <method.icon className="h-6 w-6 text-primary" />
+              <div className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Package className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="text-foreground font-semibold text-lg mb-2">{method.name}</h3>
-                  <p className="text-foreground/70 text-sm leading-relaxed">{method.description}</p>
-                </motion.div>
-              ))}
-            </div>
-          </section>
+                  <h3 className="text-xl font-bold text-foreground">{packaging.title}</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {packaging.items.map((item, i) => (
+                    <div key={`${item.title}-${i}`}>
+                      <h4 className="text-foreground font-semibold mb-2">{item.title}</h4>
+                      <p className="text-foreground/70 text-sm leading-relaxed">{item.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.section>
+          )}
+
+          {/* ═══════ PAYMENT SECTION ═══════ */}
+          {paymentMethods.length > 0 && (
+            <section className="mb-20">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="flex items-center gap-3 mb-8"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <CreditCard className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-2xl md:text-3xl font-bold text-foreground">Способы оплаты</h2>
+                  <p className="text-muted-foreground text-sm">Безопасные и удобные варианты оплаты</p>
+                </div>
+              </motion.div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {paymentMethods.map((method, i) => (
+                  <motion.div
+                    key={`${method.name}-${i}`}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.08 }}
+                    className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-6 hover:border-primary/30 transition-all duration-300"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                      <method.Icon className="h-6 w-6 text-primary" />
+                    </div>
+                    <h3 className="text-foreground font-semibold text-lg mb-2">{method.name}</h3>
+                    <p className="text-foreground/70 text-sm leading-relaxed">{method.description}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* ═══════ FAQ ═══════ */}
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-8">
-              Частые вопросы
-            </h2>
-            <div className="max-w-3xl mx-auto space-y-4">
-              {[
-                {
-                  q: "Сколько стоит доставка?",
-                  a: "Стоимость зависит от города, веса и выбранной транспортной компании. Воспользуйтесь калькулятором выше для расчёта. Самовывоз — бесплатно.",
-                },
-                {
-                  q: "Как быстро отправляете заказ?",
-                  a: "Товары в наличии отправляем в течение 1–3 рабочих дней после оплаты. Изделия на заказ — в срок, указанный на странице товара.",
-                },
-                {
-                  q: "Можно ли оплатить при получении?",
-                  a: "Да, наложенный платёж доступен при отправке Почтой России и СДЭК. Обратите внимание: транспортная компания взимает комиссию за эту услугу.",
-                },
-                {
-                  q: "Что делать, если товар пришёл повреждённым?",
-                  a: "Все отправления застрахованы. Сфотографируйте повреждение и свяжитесь с нами — мы заменим товар или вернём деньги в кратчайшие сроки.",
-                },
-                {
-                  q: "Как использовать промокод?",
-                  a: "Введите промокод на странице оформления заказа в поле «Промокод». Скидка применится автоматически. Промокоды не суммируются с другими акциями.",
-                },
-              ].map((faq, i) => (
-                <details
-                  key={i}
-                  className="group bg-card/40 border border-border rounded-xl overflow-hidden"
-                >
-                  <summary className="flex items-center justify-between p-5 cursor-pointer text-foreground font-medium hover:text-primary transition-colors">
-                    {faq.q}
-                    <ChevronRight className="h-4 w-4 text-muted-foreground group-open:rotate-90 transition-transform" />
-                  </summary>
-                  <div className="px-5 pb-5 text-foreground/70 text-sm leading-relaxed">
-                    {faq.a}
-                  </div>
-                </details>
-              ))}
-            </div>
-          </motion.section>
+          {faq.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-8">
+                Частые вопросы
+              </h2>
+              <div className="max-w-3xl mx-auto space-y-4">
+                {faq.map((item, i) => (
+                  <details
+                    key={i}
+                    className="group bg-card/40 border border-border rounded-xl overflow-hidden"
+                  >
+                    <summary className="flex items-center justify-between p-5 cursor-pointer text-foreground font-medium hover:text-primary transition-colors">
+                      {item.q}
+                      <ChevronRight className="h-4 w-4 text-muted-foreground group-open:rotate-90 transition-transform" />
+                    </summary>
+                    <div className="px-5 pb-5 text-foreground/70 text-sm leading-relaxed whitespace-pre-line">
+                      {item.a}
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </motion.section>
+          )}
         </div>
       </main>
       <Footer />
