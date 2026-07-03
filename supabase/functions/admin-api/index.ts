@@ -475,21 +475,71 @@ Deno.serve(async (req) => {
 
       // ===== DASHBOARD STATS =====
       case "stats": {
-        const [orders, requests] = await Promise.all([
-          admin.from("orders").select("id, status", { count: "exact" }),
-          admin.from("contact_requests").select("id, is_read", { count: "exact" }),
+        const now = new Date();
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+        const start7 = new Date(now.getTime() - 7 * 86400_000).toISOString();
+        const start30 = new Date(now.getTime() - 30 * 86400_000).toISOString();
+
+        const [ordersRes, requestsRes, productsRes, emailsRes] = await Promise.all([
+          admin.from("orders").select("id, status, total_amount, created_at, delivery_method, payment_method"),
+          admin.from("contact_requests").select("id, is_read, created_at"),
+          admin.from("products").select("id, is_active"),
+          admin.from("email_log").select("id, status, created_at"),
         ]);
-        const newOrders = (orders.data ?? []).filter((o: any) => o.status === "new").length;
-        const unreadRequests = (requests.data ?? []).filter((r: any) => !r.is_read).length;
+
+        const orders = ordersRes.data ?? [];
+        const requests = requestsRes.data ?? [];
+        const products = productsRes.data ?? [];
+        const emails = emailsRes.data ?? [];
+
+        const nonCancelled = (o: any) => o.status !== "cancelled";
+        const revenue = (arr: any[]) =>
+          arr.filter(nonCancelled).reduce((s, o: any) => s + Number(o.total_amount ?? 0), 0);
+
+        const inRange = (arr: any[], from: string) => arr.filter((x) => x.created_at >= from);
+
+        // Разбивка по статусам
+        const byStatus: Record<string, number> = {};
+        for (const o of orders) byStatus[o.status] = (byStatus[o.status] ?? 0) + 1;
+
+        // Разбивка по способам доставки
+        const byDelivery: Record<string, number> = {};
+        for (const o of orders) if (o.delivery_method) byDelivery[o.delivery_method] = (byDelivery[o.delivery_method] ?? 0) + 1;
+
+        // Кол-во пользователей
+        let usersTotal = 0;
+        try {
+          const { data } = await admin.auth.admin.listUsers({ page: 1, perPage: 1 });
+          usersTotal = (data as any)?.total ?? 0;
+        } catch { /* игнор */ }
+
         return json({
           data: {
-            ordersTotal: orders.count ?? 0,
-            ordersNew: newOrders,
-            requestsTotal: requests.count ?? 0,
-            requestsUnread: unreadRequests,
+            ordersTotal: orders.length,
+            ordersNew: orders.filter((o: any) => o.status === "new").length,
+            ordersToday: inRange(orders, startOfDay).length,
+            orders7d: inRange(orders, start7).length,
+            orders30d: inRange(orders, start30).length,
+            revenueTotal: revenue(orders),
+            revenueToday: revenue(inRange(orders, startOfDay)),
+            revenue7d: revenue(inRange(orders, start7)),
+            revenue30d: revenue(inRange(orders, start30)),
+            byStatus,
+            byDelivery,
+            requestsTotal: requests.length,
+            requestsUnread: requests.filter((r: any) => !r.is_read).length,
+            requestsToday: inRange(requests, startOfDay).length,
+            requests7d: inRange(requests, start7).length,
+            productsTotal: products.length,
+            productsActive: products.filter((p: any) => p.is_active).length,
+            usersTotal,
+            emailsTotal: emails.length,
+            emailsFailed: emails.filter((e: any) => e.status === "failed" || e.status === "bounced").length,
+            emails7d: inRange(emails, start7).length,
           },
         });
       }
+
 
       // ===== USERS =====
       // Список зарегистрированных пользователей + агрегаты по заказам.
