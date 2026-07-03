@@ -365,3 +365,57 @@ export function useDeliveryContent(): DeliveryContent {
   }, []);
   return c;
 }
+
+// ─── SEO metadata (per-page) ───
+export type SeoPageKey =
+  | "home"
+  | "catalog"
+  | "gallery"
+  | "services"
+  | "delivery"
+  | "blog"
+  | "contacts"
+  | "about";
+
+export type SeoPageValue = {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+  noindex?: boolean;
+};
+
+export type SeoContent = Partial<Record<SeoPageKey, SeoPageValue>>;
+
+let seoCache: SeoContent | null = null;
+let seoInflight: Promise<SeoContent> | null = null;
+
+export async function fetchSeoContent(): Promise<SeoContent> {
+  if (seoCache) return seoCache;
+  if (seoInflight) return seoInflight;
+  seoInflight = (async () => {
+    const { data } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "seo")
+      .maybeSingle();
+    seoCache = ((data?.value as SeoContent) ?? {}) as SeoContent;
+    return seoCache;
+  })();
+  return seoInflight;
+}
+
+export function invalidateSeoContent() {
+  seoCache = null;
+  seoInflight = null;
+}
+
+export function useSeoPage(key?: SeoPageKey): SeoPageValue | undefined {
+  const [v, setV] = useState<SeoPageValue | undefined>(key ? seoCache?.[key] : undefined);
+  useEffect(() => {
+    if (!key) { setV(undefined); return; }
+    let alive = true;
+    fetchSeoContent().then((c) => { if (alive) setV(c?.[key]); });
+    return () => { alive = false; };
+  }, [key]);
+  return v;
+}
