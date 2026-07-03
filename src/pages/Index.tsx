@@ -22,7 +22,7 @@ const Index = () => {
   const order = useHomepageBlocks(defaultOrder);
   return (
     <div className="min-h-screen">
-      <SEO
+      <SEO pageKey="home"
         title="Главная"
         description="FAKTURA — мастерская уникальных изделий из натурального дерева. Панно, зеркала, мебель, кухонные аксессуары ручной работы. Доставка по России."
       />

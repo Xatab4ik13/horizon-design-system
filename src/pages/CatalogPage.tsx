@@ -187,7 +187,7 @@ const CatalogPage = () => {
   if (!activeCategory) {
     return (
       <div className="min-h-screen bg-background">
-        <SEO
+        <SEO pageKey="catalog"
           title="Каталог изделий из дерева"
           description="Каталог изделий из натурального дерева: мебель, панно, зеркала, кухонные принадлежности, двери. Ручная работа, доставка по России."
           jsonLd={[buildBreadcrumbJsonLd([{ name: "Главная", url: "/" }, { name: "Каталог", url: "/catalog" }])]}
@@ -258,7 +258,7 @@ const CatalogPage = () => {
   // --- Products view with filters ---
   return (
     <div className="min-h-screen" style={{ background: "linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(25 15% 8%) 40%, hsl(30 12% 6%) 70%, hsl(0 0% 0%) 100%)" }}>
-      <SEO
+      <SEO pageKey="catalog"
         title={`${activeCategoryData?.name || "Каталог"} — изделия из дерева`}
         description={`${activeCategoryData?.name || "Каталог"} из натурального дерева ручной работы. Выбирайте породу, покрытие и размер.`}
         jsonLd={[buildBreadcrumbJsonLd([
