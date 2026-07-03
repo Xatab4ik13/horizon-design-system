@@ -57,7 +57,7 @@ const ui = {
   tabIdle: "bg-[#2a2a2a] text-[#bbb] hover:bg-[#333]",
 };
 
-type Tab = "dashboard" | "products" | "orders" | "requests" | "users" | "emails" | "vacancies" | "blog" | "gallery" | "media" | "content" | "settings";
+type Tab = "dashboard" | "products" | "orders" | "requests" | "users" | "emails" | "payments" | "vacancies" | "blog" | "gallery" | "media" | "content" | "settings";
 
 const AdminPage = () => {
   const [authed, setAuthed] = useState(adminAuth.isLoggedIn());
