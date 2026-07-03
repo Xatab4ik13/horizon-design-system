@@ -183,44 +183,129 @@ const LoginScreen = ({ onSuccess }: { onSuccess: () => void }) => {
 // ===================================================================
 // СВОДКА
 // ===================================================================
+const fmtRub = (n: number) => `${Math.round(Number(n) || 0).toLocaleString("ru-RU")} ₽`;
+
+type Stats = {
+  ordersTotal: number; ordersNew: number; ordersToday: number; orders7d: number; orders30d: number;
+  revenueTotal: number; revenueToday: number; revenue7d: number; revenue30d: number;
+  byStatus: Record<string, number>; byDelivery: Record<string, number>;
+  requestsTotal: number; requestsUnread: number; requestsToday: number; requests7d: number;
+  productsTotal: number; productsActive: number;
+  usersTotal: number;
+  emailsTotal: number; emailsFailed: number; emails7d: number;
+};
+
 const Dashboard = ({ onNavigate }: { onNavigate: (t: Tab) => void }) => {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    adminCall("stats")
+  const load = () => {
+    setLoading(true);
+    adminCall<{ data: Stats }>("stats")
       .then((r) => setStats(r.data))
-      .catch((e) => toast.error(e.message));
-  }, []);
+      .catch((e) => toast.error(e.message))
+      .finally(() => setLoading(false));
+  };
+  useEffect(() => { load(); }, []);
 
-  const cards = [
-    { label: "Всего заказов", value: stats?.ordersTotal ?? "—", tab: "orders" as Tab },
-    { label: "Новых заказов", value: stats?.ordersNew ?? "—", tab: "orders" as Tab, hot: true },
-    { label: "Всего заявок", value: stats?.requestsTotal ?? "—", tab: "requests" as Tab },
-    {
-      label: "Непрочитанных заявок",
-      value: stats?.requestsUnread ?? "—",
-      tab: "requests" as Tab,
-      hot: true,
-    },
-  ];
+  if (loading && !stats) return <p className="text-[#888]">Загрузка сводки…</p>;
+  if (!stats) return <p className="text-[#888]">Нет данных.</p>;
+
+  const StatCard = ({ label, value, sub, tab, hot }: { label: string; value: React.ReactNode; sub?: string; tab?: Tab; hot?: boolean }) => (
+    <button
+      onClick={() => tab && onNavigate(tab)}
+      disabled={!tab}
+      className={`${ui.card} text-left transition-colors ${tab ? "hover:border-[#666] cursor-pointer" : "cursor-default"}`}
+    >
+      <div className="text-[13px] uppercase tracking-wider text-[#888] mb-2">{label}</div>
+      <div className={`text-4xl font-bold ${hot && Number(value) > 0 ? "text-[#f5b15a]" : ""}`}>{value}</div>
+      {sub && <div className="text-[13px] text-[#888] mt-2">{sub}</div>}
+    </button>
+  );
+
+  const statusOrder = ["new", "in_progress", "shipped", "completed", "cancelled"];
+  const statusLabels: Record<string, string> = {
+    new: "Новые", in_progress: "В работе", shipped: "Отправлены", completed: "Выполнены", cancelled: "Отменены",
+  };
+  const deliveryLabels: Record<string, string> = {
+    pickup: "Самовывоз", cdek: "СДЭК", yandex: "Яндекс.Доставка", pek: "ПЭК", russianpost: "Почта России",
+  };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {cards.map((c) => (
-        <button
-          key={c.label}
-          onClick={() => onNavigate(c.tab)}
-          className={`${ui.card} text-left hover:border-[#666] transition-colors`}
-        >
-          <div className="text-[14px] uppercase tracking-wider text-[#888] mb-3">{c.label}</div>
-          <div className={`text-5xl font-bold ${c.hot && Number(c.value) > 0 ? "text-[#f5b15a]" : ""}`}>
-            {c.value}
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className={ui.h2}>Сводка</h2>
+        <button onClick={load} className={`${ui.btn} ${ui.btnSecondary}`}>Обновить</button>
+      </div>
+
+      {/* Заказы за периоды */}
+      <div>
+        <div className="text-[13px] uppercase tracking-wider text-[#888] mb-3">Заказы</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <StatCard label="Сегодня" value={stats.ordersToday} sub={fmtRub(stats.revenueToday)} tab="orders" />
+          <StatCard label="За 7 дней" value={stats.orders7d} sub={fmtRub(stats.revenue7d)} tab="orders" />
+          <StatCard label="За 30 дней" value={stats.orders30d} sub={fmtRub(stats.revenue30d)} tab="orders" />
+          <StatCard label="Всего" value={stats.ordersTotal} sub={`Выручка: ${fmtRub(stats.revenueTotal)}`} tab="orders" />
+        </div>
+      </div>
+
+      {/* Требуют внимания */}
+      <div>
+        <div className="text-[13px] uppercase tracking-wider text-[#888] mb-3">Требуют внимания</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <StatCard label="Новых заказов" value={stats.ordersNew} tab="orders" hot />
+          <StatCard label="Непрочитанных заявок" value={stats.requestsUnread} tab="requests" hot />
+          <StatCard label="Ошибок писем" value={stats.emailsFailed} tab="emails" hot />
+          <StatCard label="Заявок сегодня" value={stats.requestsToday} tab="requests" />
+        </div>
+      </div>
+
+      {/* Заказы по статусам */}
+      {stats.ordersTotal > 0 && (
+        <div className={ui.card}>
+          <div className="text-[13px] uppercase tracking-wider text-[#888] mb-3">Заказы по статусам</div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {statusOrder.map((s) => (
+              <div key={s} className="bg-[#1a1a1a] rounded-lg p-4">
+                <div className="text-[12px] text-[#888] uppercase">{statusLabels[s]}</div>
+                <div className="text-2xl font-bold mt-1">{stats.byStatus[s] ?? 0}</div>
+              </div>
+            ))}
           </div>
-        </button>
-      ))}
+        </div>
+      )}
+
+      {/* Способы доставки */}
+      {Object.keys(stats.byDelivery).length > 0 && (
+        <div className={ui.card}>
+          <div className="text-[13px] uppercase tracking-wider text-[#888] mb-3">Способы доставки</div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {Object.entries(stats.byDelivery)
+              .sort((a, b) => b[1] - a[1])
+              .map(([k, v]) => (
+                <div key={k} className="bg-[#1a1a1a] rounded-lg p-4">
+                  <div className="text-[12px] text-[#888] uppercase">{deliveryLabels[k] ?? k}</div>
+                  <div className="text-2xl font-bold mt-1">{v}</div>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* Прочее */}
+      <div>
+        <div className="text-[13px] uppercase tracking-wider text-[#888] mb-3">Каталог и клиенты</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <StatCard label="Товаров активных" value={stats.productsActive} sub={`Всего: ${stats.productsTotal}`} tab="products" />
+          <StatCard label="Пользователей" value={stats.usersTotal} tab="users" />
+          <StatCard label="Заявок всего" value={stats.requestsTotal} sub={`За 7 дней: ${stats.requests7d}`} tab="requests" />
+          <StatCard label="Писем за 7 дней" value={stats.emails7d} sub={`Всего: ${stats.emailsTotal}`} tab="emails" />
+        </div>
+      </div>
     </div>
   );
 };
+
 
 // ===================================================================
 // ТОВАРЫ
