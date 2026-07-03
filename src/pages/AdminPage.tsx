@@ -27,6 +27,11 @@ import {
   Layout,
   Copy,
   Image as ImageLucide,
+  Users,
+  Search,
+  Mail,
+  Phone,
+  Key,
 } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 
@@ -50,7 +55,7 @@ const ui = {
   tabIdle: "bg-[#2a2a2a] text-[#bbb] hover:bg-[#333]",
 };
 
-type Tab = "dashboard" | "products" | "orders" | "requests" | "vacancies" | "blog" | "gallery" | "media" | "content" | "settings";
+type Tab = "dashboard" | "products" | "orders" | "requests" | "users" | "vacancies" | "blog" | "gallery" | "media" | "content" | "settings";
 
 const AdminPage = () => {
   const [authed, setAuthed] = useState(adminAuth.isLoggedIn());
@@ -63,6 +68,7 @@ const AdminPage = () => {
     { id: "products", label: "Товары", icon: Package },
     { id: "orders", label: "Заказы", icon: ShoppingBag },
     { id: "requests", label: "Заявки", icon: MessageSquare },
+    { id: "users", label: "Пользователи", icon: Users },
     { id: "vacancies", label: "Вакансии", icon: Briefcase },
     { id: "blog", label: "Блог", icon: FileText },
     { id: "gallery", label: "Галерея", icon: ImageIcon },
@@ -109,6 +115,7 @@ const AdminPage = () => {
         {tab === "products" && <ProductsPanel />}
         {tab === "orders" && <OrdersPanel />}
         {tab === "requests" && <RequestsPanel />}
+        {tab === "users" && <UsersPanel />}
         {tab === "vacancies" && <VacanciesPanel />}
         {tab === "blog" && <BlogPanel />}
         {tab === "gallery" && <GalleryPanel />}
