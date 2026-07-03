@@ -101,6 +101,39 @@ export type Database = {
         }
         Relationships: []
       }
+      gallery_items: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string
+          is_active: boolean
+          sort_order: number
+          span: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url: string
+          is_active?: boolean
+          sort_order?: number
+          span?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string
+          is_active?: boolean
+          sort_order?: number
+          span?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           comment: string | null
