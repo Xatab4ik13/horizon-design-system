@@ -594,10 +594,13 @@ Deno.serve(async (req) => {
         let requests: any[] = [];
         if (email || phone) {
           const orClauses: string[] = [];
-          if (email) orClauses.push(`email.eq.${email}`);
-          if (phone) orClauses.push(`phone.eq.${phone}`);
-          const q = admin.from("contact_requests").select("*").order("created_at", { ascending: false });
-          const { data: reqRows } = await q.or(orClauses.join(","));
+          if (email) orClauses.push(`contact.ilike.%${email}%`);
+          if (phone) orClauses.push(`contact.ilike.%${phone}%`);
+          const { data: reqRows } = await admin
+            .from("contact_requests")
+            .select("*")
+            .or(orClauses.join(","))
+            .order("created_at", { ascending: false });
           requests = reqRows ?? [];
         }
 
