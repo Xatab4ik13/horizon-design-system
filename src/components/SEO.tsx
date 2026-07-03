@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { useSeoPage, type SeoPageKey } from "@/hooks/useSiteContent";
 
 const SITE_URL = "https://faktura-wood.com";
 const SITE_NAME = "FAKTURA";
@@ -20,6 +21,11 @@ interface SEOProps {
     author?: string;
     section?: string;
   };
+  /**
+   * Ключ страницы для оверрайда title/description/ogImage из админки
+   * (app_settings.seo[pageKey]). Значения из БД перекрывают пропсы.
+   */
+  pageKey?: SeoPageKey;
 }
 
 const SEO = ({
@@ -31,16 +37,29 @@ const SEO = ({
   noindex = false,
   jsonLd,
   article,
+  pageKey,
 }: SEOProps) => {
   const location = useLocation();
-  const fullTitle = title ? `${title} | ${SITE_NAME}` : DEFAULT_TITLE;
+  const override = useSeoPage(pageKey);
+
+  // Оверрайд из админки перекрывает пропсы, если задан.
+  const overriddenRawTitle = (override?.title || "").trim();
+  const effectiveTitle = overriddenRawTitle || title;
+  const effectiveDescription = (override?.description || "").trim() || description;
+  const effectiveImage = (override?.ogImage || "").trim() || image;
+  const effectiveNoindex = typeof override?.noindex === "boolean" ? override.noindex : noindex;
+
+  // Если админ задал полный title — используем как есть, без суффикса.
+  const fullTitle = overriddenRawTitle
+    ? overriddenRawTitle
+    : effectiveTitle
+      ? `${effectiveTitle} | ${SITE_NAME}`
+      : DEFAULT_TITLE;
   const canonicalUrl = canonical || `${SITE_URL}${location.pathname}`;
 
   useEffect(() => {
-    // Title
     document.title = fullTitle;
 
-    // Helper to set/create meta tags
     const setMeta = (attr: string, key: string, content: string) => {
       let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement;
       if (!el) {
@@ -51,38 +70,33 @@ const SEO = ({
       el.setAttribute("content", content);
     };
 
-    // Basic meta
-    setMeta("name", "description", description);
-    if (noindex) {
+    setMeta("name", "description", effectiveDescription);
+    if (effectiveNoindex) {
       setMeta("name", "robots", "noindex, nofollow");
     } else {
       const robotsEl = document.querySelector('meta[name="robots"]');
       if (robotsEl) robotsEl.remove();
     }
 
-    // Open Graph
     setMeta("property", "og:title", fullTitle);
-    setMeta("property", "og:description", description);
+    setMeta("property", "og:description", effectiveDescription);
     setMeta("property", "og:type", type);
     setMeta("property", "og:url", canonicalUrl);
-    setMeta("property", "og:image", image);
+    setMeta("property", "og:image", effectiveImage);
     setMeta("property", "og:site_name", SITE_NAME);
     setMeta("property", "og:locale", "ru_RU");
 
-    // Article OG
     if (article) {
       if (article.publishedTime) setMeta("property", "article:published_time", article.publishedTime);
       if (article.author) setMeta("property", "article:author", article.author);
       if (article.section) setMeta("property", "article:section", article.section);
     }
 
-    // Twitter Card
     setMeta("name", "twitter:card", "summary_large_image");
     setMeta("name", "twitter:title", fullTitle);
-    setMeta("name", "twitter:description", description);
-    setMeta("name", "twitter:image", image);
+    setMeta("name", "twitter:description", effectiveDescription);
+    setMeta("name", "twitter:image", effectiveImage);
 
-    // Canonical
     let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
     if (!link) {
       link = document.createElement("link");
@@ -91,13 +105,10 @@ const SEO = ({
     }
     link.setAttribute("href", canonicalUrl);
 
-    // JSON-LD
-    // Remove old ones
     document.querySelectorAll('script[data-seo-jsonld]').forEach((el) => el.remove());
 
     const schemas = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
 
-    // Always add Organization
     const orgSchema = {
       "@context": "https://schema.org",
       "@type": "Organization",
@@ -147,7 +158,7 @@ const SEO = ({
     return () => {
       document.querySelectorAll('script[data-seo-jsonld]').forEach((el) => el.remove());
     };
-  }, [fullTitle, description, image, type, canonicalUrl, noindex, jsonLd, article]);
+  }, [fullTitle, effectiveDescription, effectiveImage, type, canonicalUrl, effectiveNoindex, jsonLd, article]);
 
   return null;
 };

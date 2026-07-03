@@ -64,7 +64,7 @@ const BlogPage = () => {
           "linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(25 15% 8%) 40%, hsl(30 12% 6%) 70%, hsl(0 0% 0%) 100%)",
       }}
     >
-      <SEO
+      <SEO pageKey="blog"
         title="Блог о дереве и интерьере"
         description="Статьи о породах дерева, уходе за мебелью, трендах дизайна интерьера и процессах мастерской FAKTURA."
         type="website"

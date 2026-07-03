@@ -17,7 +17,7 @@
 **3. Страница «Доставка и оплата»**
 Ключ `delivery_page` в `app_settings`: партнёры (лого + название + описание), способы оплаты, FAQ (вопрос/ответ, массив). Редактор в разделе «Контент сайта». Убираю хардкод из `DeliveryPaymentPage.tsx`.
 
-**4. SEO / мета-теги страниц**
+**4. SEO / мета-теги страниц** ✅
 Ключ `seo` в `app_settings`: для каждой страницы (`home`, `catalog`, `gallery`, `services`, `delivery`, `blog`, `contacts`, `about`) — title, description, og:image. Компонент `SEO` читает из хука, редактор в «Контенте сайта».
 
 ---

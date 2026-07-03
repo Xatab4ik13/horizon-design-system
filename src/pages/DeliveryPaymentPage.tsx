@@ -96,7 +96,7 @@ const DeliveryPaymentPage = () => {
           "linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(25 15% 8%) 40%, hsl(30 12% 6%) 70%, hsl(0 0% 0%) 100%)",
       }}
     >
-      <SEO
+      <SEO pageKey="delivery"
         title="Доставка и оплата"
         description="Доставка по всей России: СДЭК, Boxberry, ПЭК, Деловые Линии, Почта России. Оплата картой, онлайн-чеки 54-ФЗ."
         jsonLd={[buildFAQJsonLd(faq.map((f) => ({ question: f.q ?? "", answer: f.a ?? "" })).filter((x) => x.question && x.answer))]}

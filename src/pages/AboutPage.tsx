@@ -35,7 +35,7 @@ const AboutPage = () => {
           "linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(25 15% 8%) 40%, hsl(30 12% 6%) 70%, hsl(0 0% 0%) 100%)",
       }}
     >
-      <SEO title="О компании" description="FAKTURA — мастерская изделий из натурального дерева. Панно, зеркала, двери, мебель ручной работы." />
+      <SEO pageKey="about" title="О компании" description="FAKTURA — мастерская изделий из натурального дерева. Панно, зеркала, двери, мебель ручной работы." />
       <Header />
       <main className="pt-32 pb-20">
         <div className="container mx-auto px-4 max-w-3xl">

@@ -91,7 +91,7 @@ const ContactsPage = () => {
           "linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(25 15% 8%) 40%, hsl(30 12% 6%) 70%, hsl(0 0% 0%) 100%)",
       }}
     >
-      <SEO
+      <SEO pageKey="contacts"
         title="Контакты"
         description="Свяжитесь с мастерской FAKTURA: телефон, email, адрес в Москве. Оставьте заявку на изготовление изделия из дерева."
       />

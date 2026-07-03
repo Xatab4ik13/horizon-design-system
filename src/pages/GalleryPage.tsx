@@ -67,7 +67,7 @@ const GalleryPage = () => {
           "linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(25 15% 8%) 40%, hsl(30 12% 6%) 70%, hsl(0 0% 0%) 100%)",
       }}
     >
-      <SEO
+      <SEO pageKey="gallery"
         title="Галерея работ"
         description="Галерея интерьеров с мебелью и декором FAKTURA. Реальные проекты наших мастеров — вдохновляйтесь примерами."
       />

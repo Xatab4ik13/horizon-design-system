@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { parse1CFile } from "@/lib/import1c";
 import { exportProductsTo1CXlsx, downloadBlob } from "@/lib/export1c";
 import { toast } from "sonner";
-import { invalidateHomepageContent, invalidateNavMenu, invalidateHomepageBlocks, invalidatePagesContent, invalidateContactsContent, invalidateServicesContent, invalidateDeliveryContent, type PageKey } from "@/hooks/useSiteContent";
+import { invalidateHomepageContent, invalidateNavMenu, invalidateHomepageBlocks, invalidatePagesContent, invalidateContactsContent, invalidateServicesContent, invalidateDeliveryContent, invalidateSeoContent, type PageKey, type SeoPageKey, type SeoContent } from "@/hooks/useSiteContent";
 import {
   Package,
   ShoppingBag,
@@ -1789,6 +1789,7 @@ const ContentPanel = () => {
       "contacts_page",
       "services_page",
       "delivery_page",
+      "seo",
     ]);
   }, []);
 
@@ -1810,6 +1811,148 @@ const ContentPanel = () => {
       <DeliveryPageEditor />
       <AboutPageEditor />
       <ServicesDocsEditor />
+      <SeoEditor />
+    </div>
+  );
+};
+
+// ===================================================================
+// SEO EDITOR — title / description / og:image per page
+// ===================================================================
+const SEO_PAGES: { key: SeoPageKey; label: string; path: string }[] = [
+  { key: "home",     label: "Главная",              path: "/" },
+  { key: "catalog",  label: "Каталог",              path: "/catalog" },
+  { key: "gallery",  label: "Галерея",              path: "/gallery" },
+  { key: "services", label: "Услуги",               path: "/services" },
+  { key: "delivery", label: "Доставка и оплата",    path: "/delivery" },
+  { key: "blog",     label: "Блог",                 path: "/blog" },
+  { key: "contacts", label: "Контакты",             path: "/contacts" },
+  { key: "about",    label: "О компании",           path: "/about" },
+];
+
+const SeoEditor = () => {
+  const [val, setVal] = useState<SeoContent>({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState<string | null>(null);
+
+  useEffect(() => {
+    adminCallSWR("settings.get", { key: "seo" })
+      .then((r) => {
+        setVal(((r.data ?? {}) as SeoContent) || {});
+        setLoading(false);
+      })
+      .catch((e) => { toast.error(e.message); setLoading(false); });
+  }, []);
+
+  const update = (key: SeoPageKey, patch: Partial<SeoContent[SeoPageKey]>) => {
+    setVal((prev) => ({ ...prev, [key]: { ...(prev[key] ?? {}), ...patch } }));
+  };
+
+  const uploadOg = async (key: SeoPageKey, file: File) => {
+    setUploading(key);
+    try {
+      const url = await adminUploadFile("site-images", file, { prefix: `seo/${key}-` });
+      update(key, { ogImage: url });
+      toast.success("Изображение загружено");
+    } catch (e: any) { toast.error(e.message); }
+    setUploading(null);
+  };
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await adminCall("settings.set", { key: "seo", value: val });
+      invalidateSeoContent();
+      toast.success("SEO сохранён");
+    } catch (e: any) { toast.error(e.message); }
+    setSaving(false);
+  };
+
+  if (loading) return null;
+
+  return (
+    <div className={ui.card}>
+      <h2 className={`${ui.h2} mb-2`}>SEO — мета-теги страниц</h2>
+      <p className="text-[14px] text-[#888] mb-6">
+        Title и Description для поисковиков и соц-сетей. Пусто — используется значение по умолчанию из кода.
+        Рекомендации: title ≤ 60 символов, description ≤ 160. og:image — 1200×630px.
+      </p>
+      <div className="grid gap-6">
+        {SEO_PAGES.map((p) => {
+          const v = val[p.key] ?? {};
+          const titleLen = (v.title ?? "").length;
+          const descLen = (v.description ?? "").length;
+          return (
+            <div key={p.key} className="grid gap-3 pb-6 border-b border-[#3a3a3a] last:border-0 last:pb-0">
+              <div className="flex items-center justify-between">
+                <h3 className="text-[16px] font-semibold text-white">{p.label}</h3>
+                <span className="text-[12px] text-[#666]">{p.path}</span>
+              </div>
+              <div>
+                <label className={ui.label}>Title <span className={titleLen > 60 ? "text-[#ff6b6b]" : "text-[#666]"}>({titleLen}/60)</span></label>
+                <input
+                  value={v.title ?? ""}
+                  onChange={(e) => update(p.key, { title: e.target.value })}
+                  className={ui.input}
+                  placeholder="Заголовок страницы для вкладки браузера и поиска"
+                />
+              </div>
+              <div>
+                <label className={ui.label}>Description <span className={descLen > 160 ? "text-[#ff6b6b]" : "text-[#666]"}>({descLen}/160)</span></label>
+                <textarea
+                  value={v.description ?? ""}
+                  onChange={(e) => update(p.key, { description: e.target.value })}
+                  className={`${ui.input} min-h-[70px]`}
+                  placeholder="Короткое описание для сниппета в поиске"
+                />
+              </div>
+              <div>
+                <label className={ui.label}>OG-image (URL или загрузить)</label>
+                <div className="flex gap-3 items-start flex-wrap">
+                  <input
+                    value={v.ogImage ?? ""}
+                    onChange={(e) => update(p.key, { ogImage: e.target.value })}
+                    className={`${ui.input} flex-1 min-w-[240px]`}
+                    placeholder="https://…"
+                  />
+                  <label className={`${ui.btn} ${ui.btnSecondary} cursor-pointer`}>
+                    <Upload size={16} />
+                    {uploading === p.key ? "Загрузка…" : "Загрузить"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={uploading === p.key}
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) uploadOg(p.key, f);
+                        e.currentTarget.value = "";
+                      }}
+                    />
+                  </label>
+                  {v.ogImage ? (
+                    <img src={v.ogImage} alt="" className="w-24 h-24 object-cover rounded border border-[#3a3a3a]" />
+                  ) : null}
+                </div>
+              </div>
+              <label className="flex items-center gap-2 text-[14px] text-[#ccc] cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!!v.noindex}
+                  onChange={(e) => update(p.key, { noindex: e.target.checked })}
+                />
+                Скрыть страницу от поисковых систем (noindex)
+              </label>
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex gap-3 mt-6 pt-6 border-t border-[#3a3a3a]">
+        <button onClick={save} disabled={saving} className={`${ui.btn} ${ui.btnPrimary} ${saving ? "opacity-50" : ""}`}>
+          <Check size={18} /> {saving ? "Сохранение…" : "Сохранить SEO"}
+        </button>
+      </div>
     </div>
   );
 };
