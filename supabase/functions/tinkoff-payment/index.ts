@@ -7,6 +7,7 @@
 //  - без action + JSON от Тинькофф: приходит серверный Notification (webhook).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { renderPaymentConfirmed, sendEmail } from "../_shared/email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
