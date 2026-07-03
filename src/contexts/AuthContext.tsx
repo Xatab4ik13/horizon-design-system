@@ -2,6 +2,10 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
+// Production-URL сайта. Используется в письмах Supabase Auth,
+// чтобы ссылки вели на faktura-wood.com, а не на превью-домен (lovable и т.п.).
+const SITE_URL = "https://faktura-wood.com";
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -53,7 +57,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/`,
+        emailRedirectTo: `${SITE_URL}/`,
         data: meta,
       },
     });
@@ -66,7 +70,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const resetPassword = async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${SITE_URL}/reset-password`,
     });
     return { error: error?.message ?? null };
   };
