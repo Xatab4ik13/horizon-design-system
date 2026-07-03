@@ -69,6 +69,7 @@ const AdminPage = () => {
     { id: "orders", label: "Заказы", icon: ShoppingBag },
     { id: "requests", label: "Заявки", icon: MessageSquare },
     { id: "users", label: "Пользователи", icon: Users },
+    { id: "emails", label: "Письма", icon: Mail },
     { id: "vacancies", label: "Вакансии", icon: Briefcase },
     { id: "blog", label: "Блог", icon: FileText },
     { id: "gallery", label: "Галерея", icon: ImageIcon },
@@ -76,6 +77,7 @@ const AdminPage = () => {
     { id: "content", label: "Контент сайта", icon: Layout },
     { id: "settings", label: "Настройки", icon: Settings },
   ];
+
 
   return (
     <div className={ui.page}>
