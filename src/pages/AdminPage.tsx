@@ -27,6 +27,11 @@ import {
   Layout,
   Copy,
   Image as ImageLucide,
+  Users,
+  Search,
+  Mail,
+  Phone,
+  Key,
 } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 
@@ -50,7 +55,7 @@ const ui = {
   tabIdle: "bg-[#2a2a2a] text-[#bbb] hover:bg-[#333]",
 };
 
-type Tab = "dashboard" | "products" | "orders" | "requests" | "vacancies" | "blog" | "gallery" | "media" | "content" | "settings";
+type Tab = "dashboard" | "products" | "orders" | "requests" | "users" | "vacancies" | "blog" | "gallery" | "media" | "content" | "settings";
 
 const AdminPage = () => {
   const [authed, setAuthed] = useState(adminAuth.isLoggedIn());
@@ -63,6 +68,7 @@ const AdminPage = () => {
     { id: "products", label: "Товары", icon: Package },
     { id: "orders", label: "Заказы", icon: ShoppingBag },
     { id: "requests", label: "Заявки", icon: MessageSquare },
+    { id: "users", label: "Пользователи", icon: Users },
     { id: "vacancies", label: "Вакансии", icon: Briefcase },
     { id: "blog", label: "Блог", icon: FileText },
     { id: "gallery", label: "Галерея", icon: ImageIcon },
@@ -109,6 +115,7 @@ const AdminPage = () => {
         {tab === "products" && <ProductsPanel />}
         {tab === "orders" && <OrdersPanel />}
         {tab === "requests" && <RequestsPanel />}
+        {tab === "users" && <UsersPanel />}
         {tab === "vacancies" && <VacanciesPanel />}
         {tab === "blog" && <BlogPanel />}
         {tab === "gallery" && <GalleryPanel />}
@@ -1317,6 +1324,303 @@ const RequestsPanel = () => {
           ))}
         </div>
       )}
+    </div>
+  );
+};
+
+// ===================================================================
+// ПОЛЬЗОВАТЕЛИ
+// ===================================================================
+type UserRow = {
+  id: string;
+  email: string;
+  phone: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  createdAt: string;
+  lastSignInAt: string | null;
+  emailConfirmed: boolean;
+  ordersCount: number;
+  ordersSum: number;
+  provider: string;
+};
+
+const formatDateTime = (iso: string | null | undefined) => {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleString("ru-RU", {
+      day: "2-digit", month: "2-digit", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    });
+  } catch { return iso; }
+};
+
+const formatRub = (n: number) => `${Math.round(n).toLocaleString("ru-RU")} ₽`;
+
+const UsersPanel = () => {
+  const [items, setItems] = useState<UserRow[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [perPage] = useState(50);
+  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<string | null>(null);
+
+  const load = async (p = page, q = search) => {
+    setLoading(true);
+    try {
+      const r = await adminCall<{ data: { items: UserRow[]; total: number } }>(
+        "users.list",
+        { page: p, perPage, search: q },
+      );
+      setItems(r.data.items);
+      setTotal(r.data.total);
+    } catch (e: any) { toast.error(e.message); }
+    setLoading(false);
+  };
+
+  useEffect(() => { load(1, ""); /* eslint-disable-next-line */ }, []);
+
+  const applySearch = () => {
+    setSearch(searchInput.trim());
+    setPage(1);
+    load(1, searchInput.trim());
+  };
+
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+        <h2 className={ui.h2}>Пользователи ({total})</h2>
+        <div className="flex gap-2 items-center">
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666]" />
+            <input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") applySearch(); }}
+              placeholder="Email, ФИО, телефон…"
+              className={`${ui.input} pl-9 w-64`}
+            />
+          </div>
+          <button onClick={applySearch} className={`${ui.btn} ${ui.btnPrimary}`}>Искать</button>
+          {search && (
+            <button onClick={() => { setSearchInput(""); setSearch(""); setPage(1); load(1, ""); }} className={`${ui.btn} ${ui.btnSecondary}`}>Сброс</button>
+          )}
+        </div>
+      </div>
+
+      <div className={`${ui.card} p-0 overflow-hidden`}>
+        <div className="overflow-x-auto">
+          <table className="w-full text-[14px]">
+            <thead className="bg-[#1a1a1a] text-[#888] text-left">
+              <tr>
+                <th className="p-3 font-normal">Email</th>
+                <th className="p-3 font-normal">ФИО</th>
+                <th className="p-3 font-normal">Телефон</th>
+                <th className="p-3 font-normal">Регистрация</th>
+                <th className="p-3 font-normal">Последний вход</th>
+                <th className="p-3 font-normal text-right">Заказы</th>
+                <th className="p-3 font-normal text-right">Сумма</th>
+                <th className="p-3 font-normal"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading && items.length === 0 && (
+                <tr><td colSpan={8} className="p-8 text-center text-[#666]">Загрузка…</td></tr>
+              )}
+              {!loading && items.length === 0 && (
+                <tr><td colSpan={8} className="p-8 text-center text-[#666]">Пользователи не найдены</td></tr>
+              )}
+              {items.map((u) => (
+                <tr key={u.id} className="border-t border-[#3a3a3a] hover:bg-[#252525]">
+                  <td className="p-3">
+                    <div className="flex items-center gap-2">
+                      <span>{u.email || <span className="text-[#666]">—</span>}</span>
+                      {u.emailConfirmed && <Check size={14} className="text-[#4ade80]" />}
+                    </div>
+                    {u.provider !== "email" && (
+                      <div className="text-[11px] text-[#888] uppercase">{u.provider}</div>
+                    )}
+                  </td>
+                  <td className="p-3">{u.fullName || <span className="text-[#666]">—</span>}</td>
+                  <td className="p-3">{u.phone || <span className="text-[#666]">—</span>}</td>
+                  <td className="p-3 text-[#aaa]">{formatDateTime(u.createdAt)}</td>
+                  <td className="p-3 text-[#aaa]">{formatDateTime(u.lastSignInAt)}</td>
+                  <td className="p-3 text-right">{u.ordersCount}</td>
+                  <td className="p-3 text-right">{u.ordersSum > 0 ? formatRub(u.ordersSum) : "—"}</td>
+                  <td className="p-3 text-right">
+                    <button onClick={() => setSelected(u.id)} className={`${ui.btn} ${ui.btnSecondary}`}>
+                      Открыть
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between p-3 border-t border-[#3a3a3a] text-[13px] text-[#888]">
+            <span>Стр. {page} из {totalPages}</span>
+            <div className="flex gap-2">
+              <button
+                disabled={page <= 1}
+                onClick={() => { const p = page - 1; setPage(p); load(p, search); }}
+                className={`${ui.btn} ${ui.btnSecondary} ${page <= 1 ? "opacity-40" : ""}`}
+              >Назад</button>
+              <button
+                disabled={page >= totalPages}
+                onClick={() => { const p = page + 1; setPage(p); load(p, search); }}
+                className={`${ui.btn} ${ui.btnSecondary} ${page >= totalPages ? "opacity-40" : ""}`}
+              >Вперёд</button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {selected && (
+        <UserDetailsModal
+          id={selected}
+          onClose={() => setSelected(null)}
+          onDeleted={() => { setSelected(null); load(page, search); }}
+        />
+      )}
+    </div>
+  );
+};
+
+const UserDetailsModal = ({ id, onClose, onDeleted }: { id: string; onClose: () => void; onDeleted: () => void }) => {
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<any | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    adminCall<{ data: any }>("users.get", { id })
+      .then((r) => { if (alive) { setData(r.data); setLoading(false); } })
+      .catch((e) => { toast.error(e.message); onClose(); });
+    return () => { alive = false; };
+    // eslint-disable-next-line
+  }, [id]);
+
+  const sendReset = async () => {
+    if (!data?.user?.email) { toast.error("У пользователя нет email"); return; }
+    setBusy("reset");
+    try {
+      await adminCall("users.sendPasswordReset", { email: data.user.email });
+      toast.success("Ссылка для сброса пароля отправлена на email");
+    } catch (e: any) { toast.error(e.message); }
+    setBusy(null);
+  };
+
+  const del = async () => {
+    if (!confirm("Удалить пользователя? История заказов будет сохранена (без привязки к аккаунту).")) return;
+    setBusy("delete");
+    try {
+      await adminCall("users.delete", { id });
+      toast.success("Пользователь удалён");
+      onDeleted();
+    } catch (e: any) { toast.error(e.message); setBusy(null); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
+      <div className={`${ui.card} w-full max-w-3xl my-8 max-h-[90vh] overflow-y-auto`} onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className={ui.h2}>Карточка пользователя</h2>
+          <button onClick={onClose} className={`${ui.btn} ${ui.btnSecondary}`}><X size={18} /></button>
+        </div>
+
+        {loading || !data ? (
+          <div className="py-12 text-center text-[#666]">Загрузка…</div>
+        ) : (
+          <div className="grid gap-6">
+            {/* Инфо */}
+            <div className="grid gap-2">
+              <div className="flex items-center gap-2 text-[15px]">
+                <Mail size={16} className="text-[#888]" />
+                <span>{data.user.email || <span className="text-[#666]">—</span>}</span>
+                {data.user.emailConfirmed && <span className="text-[11px] px-2 py-0.5 bg-[#1e3a2e] text-[#4ade80] rounded">Подтверждён</span>}
+              </div>
+              {data.user.phone && (
+                <div className="flex items-center gap-2 text-[15px]">
+                  <Phone size={16} className="text-[#888]" />
+                  <span>{data.user.phone}</span>
+                </div>
+              )}
+              <div className="text-[14px] text-[#aaa]">
+                ФИО: <span className="text-white">{`${data.user.firstName} ${data.user.lastName}`.trim() || "—"}</span>
+              </div>
+              <div className="text-[13px] text-[#888]">
+                Регистрация: {formatDateTime(data.user.createdAt)} · Последний вход: {formatDateTime(data.user.lastSignInAt)} · Метод входа: {data.user.provider}
+              </div>
+            </div>
+
+            {/* Действия */}
+            <div className="flex gap-2 flex-wrap pb-4 border-b border-[#3a3a3a]">
+              <button onClick={sendReset} disabled={!!busy} className={`${ui.btn} ${ui.btnSecondary} ${busy ? "opacity-50" : ""}`}>
+                <Key size={16} /> {busy === "reset" ? "Отправка…" : "Сбросить пароль"}
+              </button>
+              <button onClick={del} disabled={!!busy} className={`${ui.btn} ${ui.btnDanger} ${busy ? "opacity-50" : ""}`}>
+                <Trash2 size={16} /> {busy === "delete" ? "Удаление…" : "Удалить пользователя"}
+              </button>
+            </div>
+
+            {/* Заказы */}
+            <div>
+              <h3 className={`${ui.h3} mb-3`}>Заказы ({data.orders.length})</h3>
+              {data.orders.length === 0 ? (
+                <p className="text-[#666] text-[14px]">Заказов нет.</p>
+              ) : (
+                <div className="grid gap-2">
+                  {data.orders.map((o: any) => (
+                    <div key={o.id} className="p-3 bg-[#1a1a1a] rounded border border-[#3a3a3a]">
+                      <div className="flex justify-between items-start gap-3 flex-wrap">
+                        <div>
+                          <div className="text-[13px] text-[#888]">№ {o.id.slice(0, 8)} · {formatDateTime(o.created_at)}</div>
+                          <div className="text-[14px] mt-1">
+                            {o.customer_name} · {o.delivery_method === "pickup" ? "Самовывоз" : o.delivery_provider ?? o.delivery_method}
+                            {o.delivery_city ? ` · ${o.delivery_city}` : ""}
+                          </div>
+                          <div className="text-[12px] text-[#888] mt-1">
+                            Оплата: {o.payment_method} · Статус: <span className="text-white">{o.status}</span>
+                            {o.delivery_tracking ? ` · Трек: ${o.delivery_tracking}` : ""}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-[16px] font-semibold">{formatRub(Number(o.total_amount ?? 0))}</div>
+                          <div className="text-[11px] text-[#888]">{Array.isArray(o.items) ? o.items.length : 0} позиций</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Заявки */}
+            <div>
+              <h3 className={`${ui.h3} mb-3`}>Заявки с сайта ({data.requests.length})</h3>
+              {data.requests.length === 0 ? (
+                <p className="text-[#666] text-[14px]">Заявок нет.</p>
+              ) : (
+                <div className="grid gap-2">
+                  {data.requests.map((r: any) => (
+                    <div key={r.id} className="p-3 bg-[#1a1a1a] rounded border border-[#3a3a3a]">
+                      <div className="text-[13px] text-[#888]">{formatDateTime(r.created_at)} · {r.subject ?? "—"}</div>
+                      <div className="text-[14px] mt-1">{r.name}{r.email ? ` · ${r.email}` : ""}{r.phone ? ` · ${r.phone}` : ""}</div>
+                      {r.message && <div className="text-[13px] text-[#ccc] mt-1 whitespace-pre-wrap">{r.message}</div>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

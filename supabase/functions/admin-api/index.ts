@@ -491,6 +491,158 @@ Deno.serve(async (req) => {
         });
       }
 
+      // ===== USERS =====
+      // Список зарегистрированных пользователей + агрегаты по заказам.
+      // payload: { page?: number, perPage?: number, search?: string }
+      case "users.list": {
+        const page = Math.max(1, Number(payload?.page ?? 1) | 0);
+        const perPage = Math.min(200, Math.max(1, Number(payload?.perPage ?? 50) | 0));
+        const search = String(payload?.search ?? "").trim().toLowerCase();
+
+        // auth.admin.listUsers страничкует по 50 сам; чтобы искать по всем полям,
+        // сначала тянем всех, фильтруем/страничкуем на нашей стороне.
+        const all: any[] = [];
+        let p = 1;
+        // страховка: не более 20 страниц (1000 пользователей)
+        while (p <= 20) {
+          const { data, error } = await admin.auth.admin.listUsers({ page: p, perPage: 200 });
+          if (error) throw error;
+          const users = data?.users ?? [];
+          all.push(...users);
+          if (users.length < 200) break;
+          p++;
+        }
+
+        // profiles
+        const ids = all.map((u) => u.id);
+        const { data: profiles } = ids.length
+          ? await admin.from("profiles").select("user_id, first_name, last_name, phone").in("user_id", ids)
+          : { data: [] as any[] };
+        const profileMap = new Map<string, any>();
+        for (const pr of profiles ?? []) profileMap.set(pr.user_id, pr);
+
+        // orders aggregates
+        const { data: orderRows } = ids.length
+          ? await admin.from("orders").select("user_id, total_amount, customer_email, customer_phone").in("user_id", ids)
+          : { data: [] as any[] };
+        const orderAgg = new Map<string, { count: number; sum: number }>();
+        for (const o of orderRows ?? []) {
+          const uid = o.user_id as string;
+          if (!uid) continue;
+          const cur = orderAgg.get(uid) ?? { count: 0, sum: 0 };
+          cur.count += 1;
+          cur.sum += Number(o.total_amount ?? 0);
+          orderAgg.set(uid, cur);
+        }
+
+        let merged = all.map((u) => {
+          const pr = profileMap.get(u.id) ?? {};
+          const ag = orderAgg.get(u.id) ?? { count: 0, sum: 0 };
+          const first = pr.first_name ?? u.user_metadata?.first_name ?? "";
+          const last = pr.last_name ?? u.user_metadata?.last_name ?? "";
+          const phone = pr.phone ?? u.user_metadata?.phone ?? u.phone ?? "";
+          return {
+            id: u.id,
+            email: u.email ?? "",
+            phone,
+            firstName: first,
+            lastName: last,
+            fullName: `${first} ${last}`.trim(),
+            createdAt: u.created_at,
+            lastSignInAt: u.last_sign_in_at,
+            emailConfirmed: !!u.email_confirmed_at,
+            ordersCount: ag.count,
+            ordersSum: ag.sum,
+            provider: u.app_metadata?.provider ?? "email",
+          };
+        });
+
+        if (search) {
+          merged = merged.filter((u) =>
+            u.email.toLowerCase().includes(search) ||
+            u.fullName.toLowerCase().includes(search) ||
+            String(u.phone).toLowerCase().includes(search)
+          );
+        }
+
+        merged.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+
+        const total = merged.length;
+        const start = (page - 1) * perPage;
+        const items = merged.slice(start, start + perPage);
+        return json({ data: { items, total, page, perPage } });
+      }
+
+      // Один пользователь + его заказы + заявки по email/phone.
+      case "users.get": {
+        const id = String(payload?.id ?? "");
+        if (!id) return json({ error: "id required" }, 400);
+        const { data: u, error } = await admin.auth.admin.getUserById(id);
+        if (error) throw error;
+        const user = u?.user;
+        if (!user) return json({ error: "User not found" }, 404);
+
+        const { data: pr } = await admin
+          .from("profiles").select("first_name, last_name, phone").eq("user_id", id).maybeSingle();
+
+        const { data: orders } = await admin
+          .from("orders").select("*").eq("user_id", id).order("created_at", { ascending: false });
+
+        // связанные заявки: по email или телефону (если есть)
+        const email = user.email ?? "";
+        const phone = pr?.phone ?? user.user_metadata?.phone ?? user.phone ?? "";
+        let requests: any[] = [];
+        if (email || phone) {
+          const orClauses: string[] = [];
+          if (email) orClauses.push(`email.eq.${email}`);
+          if (phone) orClauses.push(`phone.eq.${phone}`);
+          const q = admin.from("contact_requests").select("*").order("created_at", { ascending: false });
+          const { data: reqRows } = await q.or(orClauses.join(","));
+          requests = reqRows ?? [];
+        }
+
+        return json({
+          data: {
+            user: {
+              id: user.id,
+              email,
+              phone,
+              firstName: pr?.first_name ?? user.user_metadata?.first_name ?? "",
+              lastName: pr?.last_name ?? user.user_metadata?.last_name ?? "",
+              createdAt: user.created_at,
+              lastSignInAt: user.last_sign_in_at,
+              emailConfirmed: !!user.email_confirmed_at,
+              provider: user.app_metadata?.provider ?? "email",
+            },
+            orders: orders ?? [],
+            requests,
+          },
+        });
+      }
+
+      // Отправить ссылку восстановления пароля (magic link для сброса).
+      case "users.sendPasswordReset": {
+        const email = String(payload?.email ?? "").trim();
+        if (!email) return json({ error: "email required" }, 400);
+        const { error } = await admin.auth.admin.generateLink({
+          type: "recovery",
+          email,
+        });
+        if (error) throw error;
+        return json({ ok: true });
+      }
+
+      // Удалить пользователя (auth.users + каскадом profiles). Заказы остаются (user_id обнулится).
+      case "users.delete": {
+        const id = String(payload?.id ?? "");
+        if (!id) return json({ error: "id required" }, 400);
+        // Отвязываем заказы, чтобы не терять историю
+        await admin.from("orders").update({ user_id: null }).eq("user_id", id);
+        const { error } = await admin.auth.admin.deleteUser(id);
+        if (error) throw error;
+        return json({ ok: true });
+      }
+
       default:
         return json({ error: `Unknown action: ${action}` }, 400);
     }
