@@ -32,6 +32,8 @@ import {
   Mail,
   Phone,
   Key,
+  CreditCard,
+
 } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 
