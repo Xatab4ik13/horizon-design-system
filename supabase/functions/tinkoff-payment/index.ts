@@ -243,6 +243,25 @@ Deno.serve(async (req) => {
           patch.status = "cancelled";
         }
         await admin.from("orders").update(patch).eq("id", orderRow.id);
+
+        // Письмо "оплата получена" — только при первом переходе в CONFIRMED
+        if (body.Status === "CONFIRMED") {
+          const { data: full } = await admin
+            .from("orders")
+            .select("*")
+            .eq("id", orderRow.id)
+            .maybeSingle();
+          if (full?.customer_email) {
+            const t = renderPaymentConfirmed(full);
+            await sendEmail({
+              to: full.customer_email,
+              subject: t.subject,
+              html: t.html,
+              template: "payment-confirmed",
+              related_order_id: full.id,
+            }).catch((e) => console.error("payment email failed", e));
+          }
+        }
       }
 
       // Тинькофф ждёт ответ "OK" (plain text)
