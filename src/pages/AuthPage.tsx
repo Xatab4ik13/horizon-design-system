@@ -84,7 +84,9 @@ const AuthPage = () => {
           <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-8">
             <Link to="/" className="hover:text-primary transition-colors">Главная</Link>
             <ChevronRight className="h-3 w-3" />
-            <span className="text-foreground">{mode === "signin" ? "Вход" : "Регистрация"}</span>
+            <span className="text-foreground">
+              {mode === "signin" ? "Вход" : mode === "signup" ? "Регистрация" : "Восстановление пароля"}
+            </span>
           </nav>
 
           <div className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-6 md:p-8">
@@ -162,26 +164,52 @@ const AuthPage = () => {
                 />
               </div>
 
-              <div>
-                <label className="text-sm text-muted-foreground mb-1.5 block">Пароль *</label>
-                <input
-                  required
-                  type="password"
-                  minLength={6}
-                  value={form.password}
-                  onChange={update("password")}
-                  className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground focus:border-primary focus:outline-none transition-colors"
-                  placeholder="Не менее 6 символов"
-                />
-              </div>
+              {mode !== "reset" && (
+                <div>
+                  <label className="text-sm text-muted-foreground mb-1.5 block">Пароль *</label>
+                  <input
+                    required
+                    type="password"
+                    minLength={6}
+                    value={form.password}
+                    onChange={update("password")}
+                    className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground focus:border-primary focus:outline-none transition-colors"
+                    placeholder="Не менее 6 символов"
+                  />
+                </div>
+              )}
+
+              {mode === "signin" && (
+                <div className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => setMode("reset")}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Забыли пароль?
+                  </button>
+                </div>
+              )}
 
               <Button type="submit" size="lg" disabled={submitting} className="w-full rounded-xl">
                 {submitting
                   ? "..."
                   : mode === "signin"
                     ? "Войти"
-                    : "Зарегистрироваться"}
+                    : mode === "signup"
+                      ? "Зарегистрироваться"
+                      : "Отправить письмо"}
               </Button>
+
+              {mode === "reset" && (
+                <button
+                  type="button"
+                  onClick={() => setMode("signin")}
+                  className="w-full text-center text-xs text-muted-foreground hover:text-primary"
+                >
+                  ← Вернуться ко входу
+                </button>
+              )}
             </form>
           </div>
         </div>
