@@ -68,6 +68,13 @@ if [[ ! -d "$FUNCTIONS_DST/main" ]]; then
 fi
 
 echo "==> Копирую Edge Functions в self-hosted runtime"
+# _shared используется всеми функциями (email.ts и т.п.) — синхронизируем первым
+if [[ -d "$FUNCTIONS_SRC/_shared" ]]; then
+  rm -rf "$FUNCTIONS_DST/_shared"
+  mkdir -p "$FUNCTIONS_DST/_shared"
+  cp -R "$FUNCTIONS_SRC/_shared/." "$FUNCTIONS_DST/_shared/"
+  echo "  -> _shared"
+fi
 for fn in admin-api delivery-quote delivery-create order-place tinkoff-payment; do
   if [[ ! -d "$FUNCTIONS_SRC/$fn" ]]; then
     echo "ERROR: функция $FUNCTIONS_SRC/$fn не найдена" >&2

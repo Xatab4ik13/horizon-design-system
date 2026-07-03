@@ -4,6 +4,12 @@
 // и в orders сохраняются delivery_external_id / delivery_tracking / delivery_payload.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import {
+  ADMIN_EMAIL,
+  renderAdminNewOrder,
+  renderOrderConfirmation,
+  sendEmail,
+} from "../_shared/email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -292,6 +298,32 @@ Deno.serve(async (req) => {
         console.error("Auto delivery claim failed:", e?.message ?? e);
         deliveryResult = { ok: false, error: e?.message ?? String(e) };
       }
+    }
+
+    // 3) Отправляем письма (клиенту "спасибо за заказ", админу — уведомление)
+    try {
+      if (order.customer_email) {
+        const t = renderOrderConfirmation(order);
+        await sendEmail({
+          to: order.customer_email,
+          subject: t.subject,
+          html: t.html,
+          template: "order-confirmation",
+          related_order_id: order.id,
+        });
+      }
+      if (ADMIN_EMAIL) {
+        const t = renderAdminNewOrder(order);
+        await sendEmail({
+          to: ADMIN_EMAIL,
+          subject: t.subject,
+          html: t.html,
+          template: "admin-new-order",
+          related_order_id: order.id,
+        });
+      }
+    } catch (e) {
+      console.error("order emails failed", e);
     }
 
     return json({ data: { order_id: order.id, delivery: deliveryResult } });
