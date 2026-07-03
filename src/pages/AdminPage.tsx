@@ -65,6 +65,7 @@ const AdminPage = () => {
     { id: "requests", label: "Заявки", icon: MessageSquare },
     { id: "vacancies", label: "Вакансии", icon: Briefcase },
     { id: "blog", label: "Блог", icon: FileText },
+    { id: "media", label: "Медиа", icon: ImageLucide },
     { id: "content", label: "Контент сайта", icon: Layout },
     { id: "settings", label: "Настройки", icon: Settings },
   ];
