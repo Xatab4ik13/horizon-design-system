@@ -306,6 +306,51 @@ Deno.serve(async (req) => {
         return json({ ok: true });
       }
 
+      // ===== GALLERY =====
+      case "gallery.list": {
+        const { data, error } = await admin
+          .from("gallery_items")
+          .select("*")
+          .order("sort_order", { ascending: true })
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        return json({ data });
+      }
+      case "gallery.create": {
+        const { data, error } = await admin.from("gallery_items").insert(payload).select().single();
+        if (error) throw error;
+        return json({ data });
+      }
+      case "gallery.update": {
+        const { id, ...patch } = payload;
+        const { data, error } = await admin
+          .from("gallery_items")
+          .update(patch)
+          .eq("id", id)
+          .select()
+          .single();
+        if (error) throw error;
+        return json({ data });
+      }
+      case "gallery.delete": {
+        const { error } = await admin.from("gallery_items").delete().eq("id", payload.id);
+        if (error) throw error;
+        return json({ ok: true });
+      }
+      case "gallery.reorder": {
+        const items: { id: string; sort_order: number }[] = Array.isArray(payload?.items) ? payload.items : [];
+        for (const it of items) {
+          const { error } = await admin
+            .from("gallery_items")
+            .update({ sort_order: it.sort_order })
+            .eq("id", it.id);
+          if (error) throw error;
+        }
+        return json({ ok: true, count: items.length });
+      }
+
+
+
       // ===== STORAGE: signed upload URL (для больших файлов, минуя 6МБ-лимит invoke) =====
       case "storage.signUpload": {
         const { bucket, path } = payload;
