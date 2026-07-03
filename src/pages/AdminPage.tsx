@@ -1113,11 +1113,64 @@ const orderStatuses = [
   { value: "cancelled", label: "Отменён" },
 ];
 
+const orderStatusLabel = (v: string) => orderStatuses.find((s) => s.value === v)?.label ?? v;
+
+const deliveryMethodLabel = (v: string) => {
+  const m: Record<string, string> = {
+    pickup: "Самовывоз",
+    cdek: "СДЭК",
+    yandex: "Яндекс Доставка",
+    pek: "ПЭК",
+    courier: "Курьер",
+    post: "Почта",
+  };
+  return m[v] ?? v;
+};
+
+const paymentMethodLabel = (v: string) => {
+  const m: Record<string, string> = {
+    card: "Картой онлайн",
+    tinkoff: "Тинькофф",
+    cash: "Наличные при получении",
+    invoice: "Счёт для юр. лица",
+    transfer: "Перевод на счёт",
+  };
+  return m[v] ?? v;
+};
+
+const csvEscape = (v: unknown) => {
+  const s = v == null ? "" : String(v);
+  if (/[",;\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+};
+
+const downloadCsv = (filename: string, rows: (string | number)[][]) => {
+  const csv = rows.map((r) => r.map(csvEscape).join(";")).join("\n");
+  // BOM для Excel, чтобы корректно читал кириллицу
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
 const OrdersPanel = () => {
   const cached = getCachedAdminCall<{ data: any[] }>("orders.list");
   const [items, setItems] = useState<any[]>(cached?.data ?? []);
   const [loading, setLoading] = useState(!cached);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
+
+  // фильтры
+  const [status, setStatus] = useState<string>("all");
+  const [delivery, setDelivery] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+  const [search, setSearch] = useState<string>("");
+  const [page, setPage] = useState(1);
+  const perPage = 20;
 
   const load = async (silent = false) => {
     if (!silent && !getCachedAdminCall("orders.list")) setLoading(true);
@@ -1132,7 +1185,6 @@ const OrdersPanel = () => {
     setLoading(false);
   };
   useEffect(() => {
-    // п.7: всегда сбрасываем кеш при открытии вкладки, иначе видны устаревшие данные
     invalidateAdminCache("orders.");
     load();
     const t = setInterval(() => {
@@ -1142,8 +1194,8 @@ const OrdersPanel = () => {
     return () => clearInterval(t);
   }, []);
 
-  const setStatus = async (id: string, status: string) => {
-    await adminCall("orders.updateStatus", { id, status });
+  const setStatusFn = async (id: string, s: string) => {
+    await adminCall("orders.updateStatus", { id, status: s });
     invalidateAdminCache("orders.");
     toast.success("Статус обновлён");
     load();
@@ -1156,95 +1208,256 @@ const OrdersPanel = () => {
     load();
   };
 
+  // Фильтрация
+  const filtered = items.filter((o) => {
+    if (status !== "all" && o.status !== status) return false;
+    if (delivery !== "all") {
+      const m = o.delivery_provider || o.delivery_method;
+      if (m !== delivery) return false;
+    }
+    if (dateFrom) {
+      if (new Date(o.created_at) < new Date(dateFrom)) return false;
+    }
+    if (dateTo) {
+      // Включительно до конца дня
+      const end = new Date(dateTo); end.setHours(23, 59, 59, 999);
+      if (new Date(o.created_at) > end) return false;
+    }
+    if (search) {
+      const q = search.toLowerCase();
+      const hay = `${o.customer_name ?? ""} ${o.customer_phone ?? ""} ${o.customer_email ?? ""} ${o.id}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const pageSafe = Math.min(page, totalPages);
+  const visible = filtered.slice((pageSafe - 1) * perPage, pageSafe * perPage);
+
+  useEffect(() => { setPage(1); }, [status, delivery, dateFrom, dateTo, search]);
+
+  // Уникальные способы доставки для фильтра
+  const deliveryOptions = Array.from(new Set(items.map((o) => o.delivery_provider || o.delivery_method).filter(Boolean)));
+
+  const exportCsv = () => {
+    const header = [
+      "ID", "Дата", "Статус", "Клиент", "Телефон", "Email",
+      "Способ доставки", "Провайдер", "Город", "Адрес", "Трек",
+      "Оплата", "Сумма", "Комментарий", "Состав",
+    ];
+    const rows = filtered.map((o) => [
+      o.id,
+      new Date(o.created_at).toLocaleString("ru-RU"),
+      orderStatusLabel(o.status),
+      o.customer_name ?? "",
+      o.customer_phone ?? "",
+      o.customer_email ?? "",
+      deliveryMethodLabel(o.delivery_method),
+      o.delivery_provider ?? "",
+      o.delivery_city ?? "",
+      o.delivery_address ?? "",
+      o.delivery_tracking ?? "",
+      paymentMethodLabel(o.payment_method),
+      Number(o.total_amount ?? 0),
+      o.comment ?? "",
+      Array.isArray(o.items)
+        ? o.items.map((i: any) => `${i.name} × ${i.quantity} = ${Number(i.price * i.quantity)}`).join(" | ")
+        : "",
+    ]);
+    downloadCsv(`orders-${new Date().toISOString().slice(0, 10)}.csv`, [header, ...rows]);
+  };
+
+  const resetFilters = () => {
+    setStatus("all"); setDelivery("all"); setDateFrom(""); setDateTo(""); setSearch("");
+  };
+
+  const hasFilters = status !== "all" || delivery !== "all" || dateFrom || dateTo || search;
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
-        <h2 className={ui.h2}>Заказы ({items.length})</h2>
-        <button
-          onClick={() => { invalidateAdminCache("orders."); load(); }}
-          className={`${ui.btn} ${ui.btnSecondary}`}
-        >
-          Обновить
-        </button>
+      <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+        <h2 className={ui.h2}>Заказы ({filtered.length}{hasFilters ? ` из ${items.length}` : ""})</h2>
+        <div className="flex gap-2">
+          <button onClick={exportCsv} disabled={!filtered.length} className={`${ui.btn} ${ui.btnSecondary} ${!filtered.length ? "opacity-40" : ""}`}>
+            <Download size={16} /> Экспорт CSV
+          </button>
+          <button onClick={() => { invalidateAdminCache("orders."); load(); }} className={`${ui.btn} ${ui.btnSecondary}`}>
+            Обновить
+          </button>
+        </div>
       </div>
+
+      {/* Фильтры */}
+      <div className={`${ui.card} mb-4`}>
+        <div className="grid gap-3 md:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto] items-end">
+          <div>
+            <label className={ui.label}>Поиск</label>
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666]" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="ФИО, телефон, email, № заказа"
+                className={`${ui.input} pl-8`}
+              />
+            </div>
+          </div>
+          <div>
+            <label className={ui.label}>Статус</label>
+            <select value={status} onChange={(e) => setStatus(e.target.value)} className={ui.input}>
+              <option value="all">Все</option>
+              {orderStatuses.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={ui.label}>Доставка</label>
+            <select value={delivery} onChange={(e) => setDelivery(e.target.value)} className={ui.input}>
+              <option value="all">Все</option>
+              {deliveryOptions.map((d) => <option key={d} value={d}>{deliveryMethodLabel(d)}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={ui.label}>С даты</label>
+            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={ui.input} />
+          </div>
+          <div>
+            <label className={ui.label}>По дату</label>
+            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={ui.input} />
+          </div>
+          {hasFilters && (
+            <button onClick={resetFilters} className={`${ui.btn} ${ui.btnSecondary}`}>
+              <X size={14} /> Сброс
+            </button>
+          )}
+        </div>
+      </div>
+
       {loading ? (
         <p className="text-[#888]">Загрузка…</p>
-      ) : items.length === 0 ? (
-        <div className={`${ui.card} text-center text-[#888]`}>Заказов пока нет.</div>
-      ) : (
-        <div className="grid gap-3">
-          {items.map((o) => (
-            <div key={o.id} className={ui.card}>
-              <div className="flex items-start justify-between gap-4 flex-wrap">
-                <div className="flex-1 min-w-[250px]">
-                  <div className="text-[14px] text-[#888]">
-                    {new Date(o.created_at).toLocaleString("ru-RU")}
-                  </div>
-                  <div className="font-bold text-[18px] mt-1">{o.customer_name}</div>
-                  <div className="text-[15px] text-[#bbb]">
-                    {o.customer_phone}
-                    {o.customer_email && ` • ${o.customer_email}`}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold">
-                    {Number(o.total_amount).toLocaleString("ru-RU")} ₽
-                  </div>
-                  <select
-                    value={o.status}
-                    onChange={(e) => setStatus(o.id, e.target.value)}
-                    className={`${ui.input} mt-2 max-w-[200px]`}
-                  >
-                    {orderStatuses.map((s) => (
-                      <option key={s.value} value={s.value}>
-                        {s.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="flex gap-3 mt-4">
-                <button
-                  onClick={() => setExpanded(expanded === o.id ? null : o.id)}
-                  className={`${ui.btn} ${ui.btnSecondary}`}
-                >
-                  {expanded === o.id ? "Скрыть детали" : "Подробнее"}
-                </button>
-                <button onClick={() => remove(o.id)} className={`${ui.btn} ${ui.btnDanger}`}>
-                  <Trash2 size={16} />
-                </button>
-              </div>
-              {expanded === o.id && (
-                <div className="mt-4 pt-4 border-t border-[#3a3a3a] grid gap-3 text-[15px]">
-                  <div>
-                    <b className="text-[#888]">Доставка:</b> {o.delivery_method}
-                    {o.delivery_address && ` — ${o.delivery_address}`}
-                  </div>
-                  <div>
-                    <b className="text-[#888]">Оплата:</b> {o.payment_method}
-                  </div>
-                  {o.comment && (
-                    <div>
-                      <b className="text-[#888]">Комментарий:</b> {o.comment}
-                    </div>
-                  )}
-                  <div>
-                    <b className="text-[#888]">Состав:</b>
-                    <ul className="mt-2 grid gap-1">
-                      {(o.items as any[]).map((i, idx) => (
-                        <li key={idx} className="bg-[#1a1a1a] p-3 rounded">
-                          {i.name} × {i.quantity} —{" "}
-                          {Number(i.price * i.quantity).toLocaleString("ru-RU")} ₽
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+      ) : filtered.length === 0 ? (
+        <div className={`${ui.card} text-center text-[#888]`}>
+          {items.length === 0 ? "Заказов пока нет." : "Ничего не найдено по фильтрам."}
         </div>
+      ) : (
+        <>
+          <div className="grid gap-3">
+            {visible.map((o) => (
+              <div key={o.id} className={ui.card}>
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div className="flex-1 min-w-[250px]">
+                    <div className="text-[14px] text-[#888] flex items-center gap-2">
+                      <span>№ {o.id.slice(0, 8)}</span>
+                      <span>·</span>
+                      <span>{new Date(o.created_at).toLocaleString("ru-RU")}</span>
+                    </div>
+                    <div className="font-bold text-[18px] mt-1 flex items-center gap-2 flex-wrap">
+                      {o.customer_name}
+                      {o.user_id && (
+                        <button
+                          onClick={() => setSelectedUser(o.user_id)}
+                          className="text-[12px] px-2 py-0.5 bg-[#1e2e3a] text-[#7dd3fc] rounded hover:bg-[#243a4a]"
+                          title="Открыть карточку клиента"
+                        >
+                          <Users size={12} className="inline mr-1" />Клиент сайта
+                        </button>
+                      )}
+                    </div>
+                    <div className="text-[15px] text-[#bbb]">
+                      {o.customer_phone}
+                      {o.customer_email && ` • ${o.customer_email}`}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold">
+                      {Number(o.total_amount).toLocaleString("ru-RU")} ₽
+                    </div>
+                    <select
+                      value={o.status}
+                      onChange={(e) => setStatusFn(o.id, e.target.value)}
+                      className={`${ui.input} mt-2 max-w-[200px]`}
+                    >
+                      {orderStatuses.map((s) => (
+                        <option key={s.value} value={s.value}>
+                          {s.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="flex gap-3 mt-4">
+                  <button
+                    onClick={() => setExpanded(expanded === o.id ? null : o.id)}
+                    className={`${ui.btn} ${ui.btnSecondary}`}
+                  >
+                    {expanded === o.id ? "Скрыть детали" : "Подробнее"}
+                  </button>
+                  <button onClick={() => remove(o.id)} className={`${ui.btn} ${ui.btnDanger}`}>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+                {expanded === o.id && (
+                  <div className="mt-4 pt-4 border-t border-[#3a3a3a] grid gap-3 text-[15px]">
+                    <div>
+                      <b className="text-[#888]">Доставка:</b> {deliveryMethodLabel(o.delivery_method)}
+                      {o.delivery_provider && ` (${o.delivery_provider})`}
+                      {o.delivery_city && ` — ${o.delivery_city}`}
+                      {o.delivery_address && `, ${o.delivery_address}`}
+                      {o.delivery_tracking && (
+                        <div className="text-[13px] text-[#888] mt-1">Трек: {o.delivery_tracking}</div>
+                      )}
+                    </div>
+                    <div>
+                      <b className="text-[#888]">Оплата:</b> {paymentMethodLabel(o.payment_method)}
+                    </div>
+                    {o.comment && (
+                      <div>
+                        <b className="text-[#888]">Комментарий:</b> {o.comment}
+                      </div>
+                    )}
+                    <div>
+                      <b className="text-[#888]">Состав:</b>
+                      <ul className="mt-2 grid gap-1">
+                        {(o.items as any[]).map((i, idx) => (
+                          <li key={idx} className="bg-[#1a1a1a] p-3 rounded">
+                            {i.name} × {i.quantity} —{" "}
+                            {Number(i.price * i.quantity).toLocaleString("ru-RU")} ₽
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4 text-[13px] text-[#888]">
+              <span>Стр. {pageSafe} из {totalPages} · показано {visible.length} из {filtered.length}</span>
+              <div className="flex gap-2">
+                <button
+                  disabled={pageSafe <= 1}
+                  onClick={() => setPage(pageSafe - 1)}
+                  className={`${ui.btn} ${ui.btnSecondary} ${pageSafe <= 1 ? "opacity-40" : ""}`}
+                >Назад</button>
+                <button
+                  disabled={pageSafe >= totalPages}
+                  onClick={() => setPage(pageSafe + 1)}
+                  className={`${ui.btn} ${ui.btnSecondary} ${pageSafe >= totalPages ? "opacity-40" : ""}`}
+                >Вперёд</button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {selectedUser && (
+        <UserDetailsModal
+          id={selectedUser}
+          onClose={() => setSelectedUser(null)}
+          onDeleted={() => setSelectedUser(null)}
+        />
       )}
     </div>
   );
