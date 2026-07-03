@@ -1,1 +1,4 @@
 project_id = "idxvfrhajimayhoruvww"
+
+[functions.tinkoff-payment]
+verify_jwt = false
