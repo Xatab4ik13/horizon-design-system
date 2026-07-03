@@ -25,6 +25,8 @@ import {
   ExternalLink,
   ImageIcon,
   Layout,
+  Copy,
+  Image as ImageLucide,
 } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 
@@ -48,7 +50,7 @@ const ui = {
   tabIdle: "bg-[#2a2a2a] text-[#bbb] hover:bg-[#333]",
 };
 
-type Tab = "dashboard" | "products" | "orders" | "requests" | "vacancies" | "blog" | "content" | "settings";
+type Tab = "dashboard" | "products" | "orders" | "requests" | "vacancies" | "blog" | "media" | "content" | "settings";
 
 const AdminPage = () => {
   const [authed, setAuthed] = useState(adminAuth.isLoggedIn());
@@ -63,6 +65,7 @@ const AdminPage = () => {
     { id: "requests", label: "Заявки", icon: MessageSquare },
     { id: "vacancies", label: "Вакансии", icon: Briefcase },
     { id: "blog", label: "Блог", icon: FileText },
+    { id: "media", label: "Медиа", icon: ImageLucide },
     { id: "content", label: "Контент сайта", icon: Layout },
     { id: "settings", label: "Настройки", icon: Settings },
   ];
@@ -107,6 +110,7 @@ const AdminPage = () => {
         {tab === "requests" && <RequestsPanel />}
         {tab === "vacancies" && <VacanciesPanel />}
         {tab === "blog" && <BlogPanel />}
+        {tab === "media" && <MediaPanel />}
         {tab === "content" && <ContentPanel />}
         {tab === "settings" && <SettingsPanel />}
       </div>
@@ -3233,3 +3237,208 @@ const ServicesPageEditor = () => {
   );
 };
 
+
+// ===================================================================
+// MEDIA — библиотека файлов из Storage
+// ===================================================================
+const MEDIA_BUCKETS: { id: string; label: string; kind: "image" | "file" | "model" }[] = [
+  { id: "product-images", label: "Товары", kind: "image" },
+  { id: "blog-images", label: "Блог", kind: "image" },
+  { id: "site-images", label: "Сайт", kind: "image" },
+  { id: "product-models", label: "3D-модели", kind: "model" },
+  { id: "site-documents", label: "Документы", kind: "file" },
+];
+
+type MediaFile = {
+  name: string;
+  path: string;
+  size: number | null;
+  mimeType: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+  publicUrl: string;
+};
+
+const formatSize = (b: number | null) => {
+  if (b == null) return "—";
+  if (b < 1024) return `${b} B`;
+  if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
+  return `${(b / 1024 / 1024).toFixed(2)} MB`;
+};
+
+const isImageFile = (f: MediaFile) => {
+  if (f.mimeType?.startsWith("image/")) return true;
+  return /\.(jpe?g|png|webp|gif|svg|avif)$/i.test(f.name);
+};
+
+const MediaPanel = () => {
+  const [bucket, setBucket] = useState<string>(MEDIA_BUCKETS[0].id);
+  const [files, setFiles] = useState<MediaFile[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const load = async (b: string = bucket) => {
+    setLoading(true);
+    try {
+      const r = await adminCall<{ data: MediaFile[] }>("storage.list", { bucket: b, limit: 1000 });
+      setFiles(r.data ?? []);
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    load(bucket);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bucket]);
+
+  const onFilePicked = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const list = Array.from(e.target.files ?? []);
+    if (!list.length) return;
+    setUploading(true);
+    let ok = 0;
+    let fail = 0;
+    for (const f of list) {
+      try {
+        await adminUploadFile(bucket, f);
+        ok++;
+      } catch (err: any) {
+        fail++;
+        toast.error(`${f.name}: ${err?.message ?? err}`);
+      }
+    }
+    setUploading(false);
+    e.target.value = "";
+    if (ok) toast.success(`Загружено файлов: ${ok}${fail ? `, ошибок: ${fail}` : ""}`);
+    load(bucket);
+  };
+
+  const copyUrl = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("URL скопирован");
+    } catch {
+      toast.error("Не удалось скопировать");
+    }
+  };
+
+  const remove = async (f: MediaFile) => {
+    if (!confirm(`Удалить файл «${f.name}»? Действие необратимо.`)) return;
+    try {
+      await adminCall("storage.delete", { bucket, path: f.path });
+      toast.success("Файл удалён");
+      setFiles((prev) => prev.filter((x) => x.path !== f.path));
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  const filtered = search.trim()
+    ? files.filter((f) => f.name.toLowerCase().includes(search.trim().toLowerCase()))
+    : files;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
+        <h2 className={ui.h2}>Медиа-библиотека</h2>
+        <div className="flex gap-2 items-center">
+          <input
+            type="text"
+            placeholder="Поиск по имени…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className={`${ui.input} max-w-[240px]`}
+          />
+          <label className={`${ui.btn} ${ui.btnPrimary} cursor-pointer ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+            <Upload size={18} /> {uploading ? "Загрузка…" : "Загрузить"}
+            <input
+              type="file"
+              multiple
+              className="hidden"
+              onChange={onFilePicked}
+              accept={MEDIA_BUCKETS.find((b) => b.id === bucket)?.kind === "image" ? "image/*" : undefined}
+            />
+          </label>
+          <button onClick={() => load()} className={`${ui.btn} ${ui.btnSecondary}`}>Обновить</button>
+        </div>
+      </div>
+
+      <div className="flex gap-2 mb-6 flex-wrap">
+        {MEDIA_BUCKETS.map((b) => (
+          <button
+            key={b.id}
+            onClick={() => setBucket(b.id)}
+            className={`${ui.btn} ${bucket === b.id ? ui.tabActive : ui.tabIdle}`}
+          >
+            {b.label}
+            <span className="ml-2 text-[13px] opacity-70">
+              {bucket === b.id ? files.length : ""}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <p className="text-[#888]">Загрузка…</p>
+      ) : filtered.length === 0 ? (
+        <div className={`${ui.card} text-center text-[#888]`}>
+          {search ? "Ничего не найдено." : "В этом бакете пока нет файлов."}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {filtered.map((f) => (
+            <div key={f.path} className={`${ui.card} !p-3 flex flex-col gap-2`}>
+              <div className="aspect-square rounded-lg overflow-hidden bg-[#1a1a1a] flex items-center justify-center">
+                {isImageFile(f) ? (
+                  <img
+                    src={f.publicUrl}
+                    alt={f.name}
+                    loading="lazy"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <FileText size={40} className="text-[#666]" />
+                )}
+              </div>
+              <div className="text-[13px] truncate" title={f.name}>{f.name}</div>
+              <div className="text-[12px] text-[#888] flex justify-between">
+                <span>{formatSize(f.size)}</span>
+                <span>{f.createdAt ? new Date(f.createdAt).toLocaleDateString("ru-RU") : ""}</span>
+              </div>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => copyUrl(f.publicUrl)}
+                  className={`${ui.btn} ${ui.btnSecondary} !px-2 !py-1.5 !text-[12px] flex-1`}
+                  title="Копировать URL"
+                >
+                  <Copy size={14} /> URL
+                </button>
+                <a
+                  href={f.publicUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`${ui.btn} ${ui.btnSecondary} !px-2 !py-1.5 !text-[12px]`}
+                  title="Открыть в новой вкладке"
+                >
+                  <ExternalLink size={14} />
+                </a>
+                <button
+                  onClick={() => remove(f)}
+                  className={`${ui.btn} ${ui.btnDanger} !px-2 !py-1.5 !text-[12px]`}
+                  title="Удалить"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};

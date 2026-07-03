@@ -1,152 +1,68 @@
+# План: закрыть 12 пробелов админки
 
-# План переноса бэкенда на свой сервер (Yandex Cloud, Ubuntu)
+Работаем **строго по одному пункту за итерацию**. Каждый пункт = самостоятельный законченный кусок: миграция (если нужна) → edge-функция admin-api (если нужна) → раздел/редактор в `/admin` → проверка на фронте. Ты после каждого пункта говоришь «ок, дальше» — я беру следующий. Ничего лишнего сверх пункта не трогаю.
 
-## Что переносим
+Порядок выбран по принципу: сначала то, что даёт максимум пользы и не зависит от других пунктов; спорные/тяжёлые — в конце.
 
-Сейчас бэкенд = Lovable Cloud (управляемый Supabase). В нём:
+---
 
-- **Postgres** с таблицами: `products`, `orders`, `profiles`, `blog_posts`, `contact_requests`, `vacancies`, `app_settings` + функции/триггеры (`handle_new_user`, `update_updated_at_column`).
-- **Auth** (email/password, JWT).
-- **Storage** (бакеты: `product-images`, `blog-images`, `product-models`, `site-images`, `site-documents`).
-- **Edge Functions** (Deno): `admin-api`, `order-place`, `delivery-quote`, `delivery-create`.
-- **Секреты**: `ADMIN_PASSWORD`, `TINKOFF_TERMINAL_KEY`, `TINKOFF_PASSWORD`, `YANDEX_DELIVERY_TOKEN`, `PEK_API_LOGIN`, `PEK_API_KEY`, `CDEK_ACCOUNT`, `CDEK_SECURE_PASSWORD`.
+## Этап 1 — данные, которых сейчас вообще нет в БД
 
-Frontend (React/Vite) остаётся как есть — меняется только адрес API и ключи.
+**1. Медиа-библиотека (Storage браузер)**
+Раздел «Медиа» в админке: список файлов по бакетам (`product-images`, `blog-images`, `site-images`, `product-models`, `site-documents`), превью, копирование URL, удаление, загрузка. Без новых таблиц — читаем `storage.objects` через admin-api.
 
-## Целевая архитектура
+**2. Галерея `/gallery`**
+Новая таблица `gallery_items` (image_url, title, span, sort_order, is_active). Убираю хардкод из `GalleryPage.tsx`, тяну из БД. В админке — раздел «Галерея»: загрузка (через бакет `site-images`), подпись, размер плитки (normal/tall/wide), сортировка drag-n-drop, вкл/выкл.
 
-На арендуемом Ubuntu-сервере поднимаем **self-hosted Supabase** (официальный docker-compose). Это даёт 1-в-1 те же API (PostgREST, GoTrue, Storage, Edge Runtime), поэтому фронт почти не переписываем.
+**3. Страница «Доставка и оплата»**
+Ключ `delivery_page` в `app_settings`: партнёры (лого + название + описание), способы оплаты, FAQ (вопрос/ответ, массив). Редактор в разделе «Контент сайта». Убираю хардкод из `DeliveryPaymentPage.tsx`.
 
-```text
-Yandex Cloud VM (Ubuntu 22.04, статический IP, домен api.faktura.ru)
- └── Docker
-     ├── nginx (reverse proxy + TLS от Let's Encrypt)
-     └── supabase-stack (docker-compose)
-         ├── postgres        (данные в /var/lib/faktura/postgres)
-         ├── gotrue          (auth)
-         ├── postgrest       (data API)
-         ├── storage-api     (+ imgproxy)
-         ├── edge-runtime    (наши Deno-функции)
-         ├── realtime, meta, studio
-         └── kong (API gateway)
-```
+**4. SEO / мета-теги страниц**
+Ключ `seo` в `app_settings`: для каждой страницы (`home`, `catalog`, `gallery`, `services`, `delivery`, `blog`, `contacts`, `about`) — title, description, og:image. Компонент `SEO` читает из хука, редактор в «Контенте сайта».
 
-Репозиторий: в существующий GitHub-репо добавляем папку `server/` с compose-файлом, конфигами nginx, скриптами бэкапа и `README`. Функции уже лежат в `supabase/functions/*` — их прокидываем в edge-runtime как volume.
+---
 
-## Этапы
+## Этап 2 — пользователи и заказы
 
-### 1. Подготовка сервера (Yandex Cloud)
+**5. Раздел «Пользователи» в админке**
+Список зарегистрированных (`auth.users` через service_role + join c `profiles`): email, ФИО, телефон, дата регистрации, кол-во заказов, сумма. Поиск, пагинация. Карточка пользователя → его заказы. Действия: сброс пароля (magic link), удаление, назначение роли админа (через `user_roles`).
 
-1. VM Ubuntu 22.04, минимум 2 vCPU / 4 GB RAM / 40 GB SSD, статический публичный IP.
-2. DNS: A-запись `api.faktura.ru` → IP сервера.
-3. Базовая настройка: пользователь без root, SSH по ключу, `ufw` (22, 80, 443), `fail2ban`, автообновления.
-4. Установить Docker + docker compose plugin.
+**6. OrdersPanel: фильтры, поиск, связка с пользователем**
+Добавляю в существующий OrdersPanel: фильтр по статусу, способу доставки, диапазону дат; поиск по имени/телефону/email; пагинацию; колонку «Клиент» с ссылкой на карточку пользователя из п.5; экспорт списка в CSV.
 
-### 2. Экспорт данных из Lovable Cloud
+**7. RequestsPanel: фильтры, поиск, экспорт**
+В существующий раздел «Заявки»: фильтр по теме и дате, поиск по имени/телефону, экспорт в CSV. Мелкий пункт, но нужный.
 
-1. Через Lovable: **Cloud → Advanced settings → Export data** — получаем дамп Postgres.
-2. Файлы Storage: скачиваем содержимое всех 5 бакетов (скрипт на клиенте, через service-role ключ; выгружаю подготовленный скрипт `server/scripts/export-storage.ts`).
-3. Список пользователей `auth.users` попадает в дамп; сохраняются хэши паролей — пользователям **не придётся сбрасывать пароль**.
+---
 
-### 3. Развёртывание self-hosted Supabase
+## Этап 3 — журналы (логи)
 
-1. `git clone https://github.com/supabase/supabase` → копируем `docker/` в наш репозиторий как `server/supabase/`.
-2. Генерируем секреты: `POSTGRES_PASSWORD`, `JWT_SECRET`, `ANON_KEY`, `SERVICE_ROLE_KEY`, `DASHBOARD_PASSWORD`, ключ Storage.
-3. `.env` кладём **только на сервер** (в репо — `.env.example`).
-4. Volume-маунт наших функций: `./supabase/functions:/home/deno/functions:ro`.
-5. Запуск: `docker compose up -d`.
+**8. Журнал email**
+Таблица `email_log` (recipient, subject, template, status, error, created_at). Edge-функция отправки пишет туда каждое письмо. В админке — раздел «Письма»: фильтр по статусу/шаблону/дате, поиск по адресу, детали ошибки.
 
-### 4. Импорт данных
+**9. Журнал расчётов доставки**
+Таблица `delivery_quote_log` (провайдер, город, вес/габариты, ответ, ошибка, created_at). Edge-функции `delivery-quote`/`delivery-create` пишут туда. В админке — раздел «Доставка → журнал»: видно, какие запросы шли к СДЭК/ЯД/ПЭК и с какими ошибками.
 
-1. `psql` — восстановление дампа в контейнер `postgres` (включая схемы `auth`, `storage`, `public`).
-2. Раскладка файлов Storage в `/var/lib/faktura/storage` через `storage-api` (либо `s3` backend, если решим хранить в Object Storage Яндекса — рекомендую, отдельный шаг).
-3. Проверка `select count(*)` по всем таблицам, тест логина существующим пользователем.
+**10. Журнал платежей Тинькофф**
+Таблица `payment_log` (order_id, provider, amount, status, tinkoff_payment_id, raw_response, created_at). Пишем при инициации и в вебхуке. В админке — раздел «Платежи»: список транзакций, привязка к заказу, статус, сумма, возврат (кнопка Refund через API).
 
-### 5. nginx + HTTPS
+---
 
-- `nginx` перед kong: `api.faktura.ru` → `kong:8000`.
-- TLS: `certbot` с автопродлением.
-- CORS уже настроен внутри edge-функций.
+## Этап 4 — справочники и опциональное
 
-### 6. Секреты edge-функций
+**11. Справочник категорий каталога**
+Таблица `product_categories` (slug, name, image_url, sort_order, is_active). Сейчас категории живут внутри `products.category` строкой. Миграция: собрать уникальные значения, создать записи. Раздел админки «Категории каталога» (не путать с блоком «Категории» на главной). Фильтры каталога начинают читать из этой таблицы.
 
-Переносим через `supabase secrets set` (или напрямую в `.env` edge-runtime) те же 8 ключей: `ADMIN_PASSWORD`, `TINKOFF_*`, `YANDEX_DELIVERY_TOKEN`, `PEK_*`, `CDEK_*`.
+**12. Отзывы к товарам**
+Таблица `product_reviews` (product_id, user_id, rating, text, is_approved, created_at). На странице товара — форма отзыва (для авторизованных), список одобренных. В админке — раздел «Отзывы»: модерация (одобрить/отклонить/удалить), фильтр по товару. Этот пункт — если реально нужен; можем и выкинуть.
 
-### 7. Переключение фронтенда
+---
 
-В `.env` фронта меняем 3 переменные:
+## Как работаем
 
-```env
-VITE_SUPABASE_URL=https://api.faktura.ru
-VITE_SUPABASE_PUBLISHABLE_KEY=<новый ANON_KEY>
-VITE_SUPABASE_PROJECT_ID=faktura-selfhosted
-```
+- Ты говоришь «ок, п.1» — я делаю **только** п.1 целиком (миграция + бэк + фронт админки + правка публичной части, если нужна) и останавливаюсь.
+- Никаких «заодно поправлю ещё вот это».
+- После каждого пункта — короткий отчёт: что добавил, где смотреть в админке, что проверить руками.
+- Если по ходу пункта всплывает что-то незапланированное (например, RLS-политика мешает) — пишу тебе, не делаю молча.
 
-Код `src/integrations/supabase/client.ts` не трогаем — он уже читает из env. Файл `src/integrations/supabase/types.ts` регенерируем от новой БД.
-
-### 8. Бэкапы и мониторинг
-
-- `pg_dump` ежедневно cron'ом в Yandex Object Storage (7 дней hot, 30 cold).
-- Snapshot диска VM раз в неделю средствами Yandex Cloud.
-- Логи: `docker compose logs` → `journald`; опционально Grafana/Loki позже.
-- Healthcheck: uptime-мониторинг на `https://api.faktura.ru/rest/v1/`.
-
-### 9. Переезд без даунтайма
-
-1. Поднять self-hosted **параллельно** с Lovable Cloud.
-2. Прогнать полный smoke-тест на staging-домене (`api-stage.faktura.ru`).
-3. Заморозить админку на Lovable Cloud (баннер «идут работы»).
-4. Финальный дельта-дамп → импорт → переключение фронта → DNS/переменные окружения.
-5. Lovable Cloud держим read-only ещё 1–2 недели как страховку.
-
-## Что понадобится от вас
-
-- IP и SSH-доступ к VM (пользователь с sudo).
-- Домен/поддомен для API (`api.faktura.ru` или другой) с доступом к DNS.
-- Подтверждение: хранить файлы Storage **локально на диске VM** или в **Yandex Object Storage** (S3-совместимо, надёжнее и дешевле для роста). Рекомендую второй вариант.
-- Согласие: после переезда Lovable Cloud отключаем (в Lovable нет кнопки «удалить Cloud из проекта» — просто перестаём им пользоваться, фронт смотрит на новый URL).
-
-## Что появится в репозитории
-
-```text
-server/
-├── README.md                    # шаг-в-шаг деплой
-├── .env.example
-├── docker-compose.yml           # supabase stack + nginx
-├── nginx/
-│   ├── nginx.conf
-│   └── faktura.conf
-├── scripts/
-│   ├── export-storage.ts        # выгрузка бакетов из Lovable Cloud
-│   ├── import-storage.ts        # заливка в self-hosted
-│   ├── backup.sh                # pg_dump → S3
-│   └── restore.sh
-└── supabase/                    # docker-конфиги из upstream, с нашими правками
-```
-
-Функции (`supabase/functions/*`) и миграции (`supabase/migrations/*`) остаются на месте — их и подхватит self-hosted стек.
-
-## Оценка
-
-- Подготовка сервера + деплой стека: ~0.5 дня.
-- Экспорт/импорт данных + storage: ~0.5 дня (зависит от объёма файлов).
-- nginx/TLS/бэкапы: ~0.5 дня.
-- Тесты и переключение: ~0.5 дня.
-
-Итого: ~2 рабочих дня, из них даунтайм при финальном переключении — 15–30 минут.
-
-## Риски
-
-- **Storage-миграция**: если файлов много (сотни МБ+), экспорт из Lovable Cloud идёт через API, лимиты по времени — делаем чанками.
-- **Пароли пользователей** переезжают только если экспорт включает `auth.users` с полем `encrypted_password` (в Lovable-экспорте — да).
-- **Edge-runtime self-hosted** чуть отличается от Lovable-версии Deno; наши функции написаны на стандартных API, но потребуется прогнать все 4 функции на dev-стенде.
-- **Обратной дороги нет**: после отключения фронта от Lovable Cloud обновлять данные там смысла не будет.
-
-## Что делаю дальше после вашего «ок»
-
-1. Создаю `server/` с compose-файлом, nginx-конфигом, `.env.example`, README.
-2. Пишу скрипты `export-storage.ts` / `import-storage.ts` / `backup.sh`.
-3. Даю чеклист команд для запуска на вашей VM (по шагам, копипастой).
-4. Регенерирую `src/integrations/supabase/types.ts` после того, как поднимете стек.
-
-Жду подтверждения + ответ по хранилищу файлов (локально vs Yandex Object Storage) + IP/домен, когда будут готовы.
+Пиши, с какого пункта начинаем. По умолчанию предлагаю **п.1 (Медиа-библиотека)** — она пригодится следующим пунктам (галерея, партнёры доставки, SEO og-images грузить в неё же).
