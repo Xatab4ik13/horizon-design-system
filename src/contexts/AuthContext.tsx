@@ -2,6 +2,10 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
+// Production-URL сайта. Используется в письмах Supabase Auth,
+// чтобы ссылки вели на faktura-wood.com, а не на превью-домен (lovable и т.п.).
+const SITE_URL = "https://faktura-wood.com";
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
