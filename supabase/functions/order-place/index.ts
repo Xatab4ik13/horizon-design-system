@@ -300,6 +300,32 @@ Deno.serve(async (req) => {
       }
     }
 
+    // 3) Отправляем письма (клиенту "спасибо за заказ", админу — уведомление)
+    try {
+      if (order.customer_email) {
+        const t = renderOrderConfirmation(order);
+        await sendEmail({
+          to: order.customer_email,
+          subject: t.subject,
+          html: t.html,
+          template: "order-confirmation",
+          related_order_id: order.id,
+        });
+      }
+      if (ADMIN_EMAIL) {
+        const t = renderAdminNewOrder(order);
+        await sendEmail({
+          to: ADMIN_EMAIL,
+          subject: t.subject,
+          html: t.html,
+          template: "admin-new-order",
+          related_order_id: order.id,
+        });
+      }
+    } catch (e) {
+      console.error("order emails failed", e);
+    }
+
     return json({ data: { order_id: order.id, delivery: deliveryResult } });
   } catch (e: any) {
     console.error("order-place error", e);
