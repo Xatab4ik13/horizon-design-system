@@ -1679,8 +1679,289 @@ const RequestsPanel = () => {
 };
 
 // ===================================================================
-// ПОЛЬЗОВАТЕЛИ
+// ПИСЬМА (ЖУРНАЛ EMAIL)
 // ===================================================================
+type EmailRow = {
+  id: string;
+  recipient: string;
+  subject: string;
+  template: string | null;
+  status: string;
+  error: string | null;
+  related_order_id: string | null;
+  related_request_id: string | null;
+  metadata: any;
+  created_at: string;
+};
+
+const emailStatusLabel: Record<string, string> = {
+  sent: "Отправлено",
+  failed: "Ошибка",
+  pending: "В очереди",
+  bounced: "Отклонено",
+  suppressed: "Заблокировано",
+};
+
+const emailStatusColor: Record<string, string> = {
+  sent: "bg-[#2a4a2a] text-[#a7e0a7]",
+  failed: "bg-[#5a2a2a] text-[#ffd0d0]",
+  pending: "bg-[#4a4a2a] text-[#f5e5a7]",
+  bounced: "bg-[#5a2a2a] text-[#ffd0d0]",
+  suppressed: "bg-[#4a3a2a] text-[#f5c58a]",
+};
+
+const EmailsPanel = () => {
+  const [items, setItems] = useState<EmailRow[]>([]);
+  const [templates, setTemplates] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<EmailRow | null>(null);
+
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<string>("all");
+  const [template, setTemplate] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [page, setPage] = useState(1);
+  const perPage = 25;
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const r = await adminCall<{ items: EmailRow[]; templates: string[] }>("emails.list", {
+        search,
+        status: status === "all" ? "" : status,
+        template: template === "all" ? "" : template,
+        dateFrom,
+        dateTo,
+      });
+      setItems(r.items ?? []);
+      setTemplates(r.templates ?? []);
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
+  useEffect(() => { setPage(1); }, [search, status, template, dateFrom, dateTo]);
+
+  const filtered = items; // Фильтры применяются на бэке
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const pageSafe = Math.min(page, totalPages);
+  const visible = filtered.slice((pageSafe - 1) * perPage, pageSafe * perPage);
+
+  const stats = {
+    total: items.length,
+    sent: items.filter((i) => i.status === "sent").length,
+    failed: items.filter((i) => i.status === "failed" || i.status === "bounced").length,
+    pending: items.filter((i) => i.status === "pending").length,
+  };
+
+  const hasFilters = !!(search || status !== "all" || template !== "all" || dateFrom || dateTo);
+  const resetFilters = () => {
+    setSearch(""); setStatus("all"); setTemplate("all"); setDateFrom(""); setDateTo("");
+  };
+
+  const exportCsv = () => {
+    const header = ["ID", "Дата", "Получатель", "Тема", "Шаблон", "Статус", "Ошибка", "Заказ", "Заявка"];
+    const rows = filtered.map((r) => [
+      r.id,
+      new Date(r.created_at).toLocaleString("ru-RU"),
+      r.recipient,
+      r.subject,
+      r.template ?? "",
+      emailStatusLabel[r.status] ?? r.status,
+      r.error ?? "",
+      r.related_order_id ?? "",
+      r.related_request_id ?? "",
+    ]);
+    downloadCsv(`emails-${new Date().toISOString().slice(0, 10)}.csv`, [header, ...rows]);
+  };
+
+  const purge = async () => {
+    const daysStr = prompt("Удалить записи старше скольких дней?", "90");
+    if (!daysStr) return;
+    const days = parseInt(daysStr, 10);
+    if (!Number.isFinite(days) || days < 1) return;
+    if (!confirm(`Удалить все записи старше ${days} дн.? Это действие необратимо.`)) return;
+    try {
+      const r = await adminCall<{ deleted: number }>("emails.purge", { days });
+      toast.success(`Удалено записей: ${r.deleted}`);
+      load();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+        <h2 className={ui.h2}>Журнал писем ({filtered.length})</h2>
+        <div className="flex gap-2">
+          <button onClick={exportCsv} disabled={!filtered.length} className={`${ui.btn} ${ui.btnSecondary} ${!filtered.length ? "opacity-40" : ""}`}>
+            <Download size={16} /> Экспорт CSV
+          </button>
+          <button onClick={purge} className={`${ui.btn} ${ui.btnDanger}`}>
+            <Trash2 size={16} /> Очистить старые
+          </button>
+          <button onClick={load} className={`${ui.btn} ${ui.btnSecondary}`}>Обновить</button>
+        </div>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-4 mb-4">
+        <div className={ui.card}>
+          <div className="text-[13px] text-[#888] uppercase tracking-wide">Всего</div>
+          <div className="text-3xl font-bold mt-1">{stats.total}</div>
+        </div>
+        <div className={ui.card}>
+          <div className="text-[13px] text-[#888] uppercase tracking-wide">Отправлено</div>
+          <div className="text-3xl font-bold mt-1 text-[#a7e0a7]">{stats.sent}</div>
+        </div>
+        <div className={ui.card}>
+          <div className="text-[13px] text-[#888] uppercase tracking-wide">Ошибки</div>
+          <div className="text-3xl font-bold mt-1 text-[#ffd0d0]">{stats.failed}</div>
+        </div>
+        <div className={ui.card}>
+          <div className="text-[13px] text-[#888] uppercase tracking-wide">В очереди</div>
+          <div className="text-3xl font-bold mt-1 text-[#f5e5a7]">{stats.pending}</div>
+        </div>
+      </div>
+
+      <div className={`${ui.card} mb-4`}>
+        <div className="grid gap-3 md:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto_auto] items-end">
+          <div>
+            <label className={ui.label}>Поиск</label>
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666]" />
+              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Email или тема" className={`${ui.input} pl-8`} />
+            </div>
+          </div>
+          <div>
+            <label className={ui.label}>Статус</label>
+            <select value={status} onChange={(e) => setStatus(e.target.value)} className={ui.input}>
+              <option value="all">Все</option>
+              <option value="sent">Отправлено</option>
+              <option value="failed">Ошибка</option>
+              <option value="pending">В очереди</option>
+              <option value="bounced">Отклонено</option>
+              <option value="suppressed">Заблокировано</option>
+            </select>
+          </div>
+          <div>
+            <label className={ui.label}>Шаблон</label>
+            <select value={template} onChange={(e) => setTemplate(e.target.value)} className={ui.input}>
+              <option value="all">Все</option>
+              {templates.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={ui.label}>С даты</label>
+            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={ui.input} />
+          </div>
+          <div>
+            <label className={ui.label}>По дату</label>
+            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={ui.input} />
+          </div>
+          <button onClick={load} className={`${ui.btn} ${ui.btnPrimary}`}>Применить</button>
+          {hasFilters && (
+            <button onClick={() => { resetFilters(); setTimeout(load, 0); }} className={`${ui.btn} ${ui.btnSecondary}`}>
+              <X size={14} /> Сброс
+            </button>
+          )}
+        </div>
+      </div>
+
+      {loading ? (
+        <p className="text-[#888]">Загрузка…</p>
+      ) : filtered.length === 0 ? (
+        <div className={`${ui.card} text-center text-[#888]`}>
+          Писем пока нет. Как только сайт начнёт отправлять уведомления, они появятся здесь.
+        </div>
+      ) : (
+        <>
+          <div className={`${ui.card} overflow-x-auto p-0`}>
+            <table className="w-full text-[14px]">
+              <thead>
+                <tr className="text-left text-[#888] border-b border-[#3a3a3a]">
+                  <th className="px-4 py-3">Дата</th>
+                  <th className="px-4 py-3">Получатель</th>
+                  <th className="px-4 py-3">Тема</th>
+                  <th className="px-4 py-3">Шаблон</th>
+                  <th className="px-4 py-3">Статус</th>
+                  <th className="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map((r) => (
+                  <tr key={r.id} className="border-b border-[#333] hover:bg-[#2f2f2f]">
+                    <td className="px-4 py-3 whitespace-nowrap text-[#bbb]">{new Date(r.created_at).toLocaleString("ru-RU")}</td>
+                    <td className="px-4 py-3 font-mono text-[13px]">{r.recipient}</td>
+                    <td className="px-4 py-3 max-w-[300px] truncate" title={r.subject}>{r.subject}</td>
+                    <td className="px-4 py-3 text-[#888]">{r.template ?? "—"}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-block px-2 py-1 rounded text-[12px] font-semibold ${emailStatusColor[r.status] ?? "bg-[#3a3a3a]"}`}>
+                        {emailStatusLabel[r.status] ?? r.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <button onClick={() => setSelected(r)} className="text-[#e8e8e8] hover:underline">Открыть</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4 text-[13px] text-[#888]">
+              <span>Стр. {pageSafe} из {totalPages} · показано {visible.length} из {filtered.length}</span>
+              <div className="flex gap-2">
+                <button disabled={pageSafe <= 1} onClick={() => setPage(pageSafe - 1)} className={`${ui.btn} ${ui.btnSecondary} ${pageSafe <= 1 ? "opacity-40" : ""}`}>Назад</button>
+                <button disabled={pageSafe >= totalPages} onClick={() => setPage(pageSafe + 1)} className={`${ui.btn} ${ui.btnSecondary} ${pageSafe >= totalPages ? "opacity-40" : ""}`}>Вперёд</button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {selected && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50" onClick={() => setSelected(null)}>
+          <div className={`${ui.card} max-w-2xl w-full max-h-[85vh] overflow-y-auto`} onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-start mb-4">
+              <h3 className={ui.h3}>Письмо</h3>
+              <button onClick={() => setSelected(null)} className={`${ui.btn} ${ui.btnSecondary}`}><X size={16} /></button>
+            </div>
+            <dl className="grid grid-cols-[140px_1fr] gap-y-3 gap-x-4 text-[15px]">
+              <dt className="text-[#888]">Дата</dt><dd>{new Date(selected.created_at).toLocaleString("ru-RU")}</dd>
+              <dt className="text-[#888]">Получатель</dt><dd className="font-mono">{selected.recipient}</dd>
+              <dt className="text-[#888]">Тема</dt><dd>{selected.subject}</dd>
+              <dt className="text-[#888]">Шаблон</dt><dd>{selected.template ?? "—"}</dd>
+              <dt className="text-[#888]">Статус</dt>
+              <dd>
+                <span className={`inline-block px-2 py-1 rounded text-[12px] font-semibold ${emailStatusColor[selected.status] ?? "bg-[#3a3a3a]"}`}>
+                  {emailStatusLabel[selected.status] ?? selected.status}
+                </span>
+              </dd>
+              {selected.error && (<><dt className="text-[#888]">Ошибка</dt><dd className="text-[#ffd0d0] whitespace-pre-wrap">{selected.error}</dd></>)}
+              {selected.related_order_id && (<><dt className="text-[#888]">Заказ</dt><dd className="font-mono text-[12px]">{selected.related_order_id}</dd></>)}
+              {selected.related_request_id && (<><dt className="text-[#888]">Заявка</dt><dd className="font-mono text-[12px]">{selected.related_request_id}</dd></>)}
+              {selected.metadata && Object.keys(selected.metadata ?? {}).length > 0 && (
+                <>
+                  <dt className="text-[#888]">Данные</dt>
+                  <dd><pre className="bg-[#1a1a1a] p-3 rounded text-[12px] overflow-x-auto">{JSON.stringify(selected.metadata, null, 2)}</pre></dd>
+                </>
+              )}
+            </dl>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ===================================================================
+
 type UserRow = {
   id: string;
   email: string;
