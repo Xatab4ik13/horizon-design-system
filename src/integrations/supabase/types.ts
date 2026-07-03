@@ -206,7 +206,11 @@ export type Database = {
           delivery_tracking: string | null
           id: string
           items: Json
+          payment_id: string | null
           payment_method: string
+          payment_status: string | null
+          payment_url: string | null
+          refunded_amount: number | null
           status: string
           total_amount: number
           updated_at: string
@@ -229,7 +233,11 @@ export type Database = {
           delivery_tracking?: string | null
           id?: string
           items?: Json
+          payment_id?: string | null
           payment_method: string
+          payment_status?: string | null
+          payment_url?: string | null
+          refunded_amount?: number | null
           status?: string
           total_amount?: number
           updated_at?: string
@@ -252,13 +260,73 @@ export type Database = {
           delivery_tracking?: string | null
           id?: string
           items?: Json
+          payment_id?: string | null
           payment_method?: string
+          payment_status?: string | null
+          payment_url?: string | null
+          refunded_amount?: number | null
           status?: string
           total_amount?: number
           updated_at?: string
           user_id?: string | null
         }
         Relationships: []
+      }
+      payment_log: {
+        Row: {
+          amount: number | null
+          created_at: string
+          currency: string | null
+          error: string | null
+          event: string
+          id: string
+          order_id: string | null
+          order_key: string | null
+          payment_id: string | null
+          provider: string
+          raw_request: Json | null
+          raw_response: Json | null
+          status: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          currency?: string | null
+          error?: string | null
+          event: string
+          id?: string
+          order_id?: string | null
+          order_key?: string | null
+          payment_id?: string | null
+          provider?: string
+          raw_request?: Json | null
+          raw_response?: Json | null
+          status?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          currency?: string | null
+          error?: string | null
+          event?: string
+          id?: string
+          order_id?: string | null
+          order_key?: string | null
+          payment_id?: string | null
+          provider?: string
+          raw_request?: Json | null
+          raw_response?: Json | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_log_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {
