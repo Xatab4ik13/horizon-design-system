@@ -1471,6 +1471,14 @@ const RequestsPanel = () => {
   const [items, setItems] = useState<any[]>(cached?.data ?? []);
   const [loading, setLoading] = useState(!cached);
 
+  const [subject, setSubject] = useState<string>("all");
+  const [readState, setReadState] = useState<"all" | "unread" | "read">("all");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+  const [search, setSearch] = useState<string>("");
+  const [page, setPage] = useState(1);
+  const perPage = 20;
+
   const load = async () => {
     if (!getCachedAdminCall("requests.list")) setLoading(true);
     try {
@@ -1483,9 +1491,7 @@ const RequestsPanel = () => {
     }
     setLoading(false);
   };
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
 
   const toggleRead = async (it: any) => {
     await adminCall("requests.markRead", { id: it.id, is_read: !it.is_read });
@@ -1499,43 +1505,170 @@ const RequestsPanel = () => {
     load();
   };
 
+  // Уникальные темы для фильтра
+  const subjectOptions = Array.from(new Set(items.map((r) => r.subject).filter(Boolean))) as string[];
+
+  const filtered = items.filter((r) => {
+    if (subject !== "all" && r.subject !== subject) return false;
+    if (readState === "unread" && r.is_read) return false;
+    if (readState === "read" && !r.is_read) return false;
+    if (dateFrom && new Date(r.created_at) < new Date(dateFrom)) return false;
+    if (dateTo) {
+      const end = new Date(dateTo); end.setHours(23, 59, 59, 999);
+      if (new Date(r.created_at) > end) return false;
+    }
+    if (search) {
+      const q = search.toLowerCase();
+      const hay = `${r.name ?? ""} ${r.contact ?? ""} ${r.subject ?? ""} ${r.message ?? ""}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  useEffect(() => { setPage(1); }, [subject, readState, dateFrom, dateTo, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const pageSafe = Math.min(page, totalPages);
+  const visible = filtered.slice((pageSafe - 1) * perPage, pageSafe * perPage);
+
+  const unreadCount = items.filter((r) => !r.is_read).length;
+  const hasFilters = subject !== "all" || readState !== "all" || dateFrom || dateTo || search;
+
+  const resetFilters = () => {
+    setSubject("all"); setReadState("all"); setDateFrom(""); setDateTo(""); setSearch("");
+  };
+
+  const exportCsv = () => {
+    const header = ["ID", "Дата", "Прочитано", "Имя", "Контакт", "Тема", "Сообщение"];
+    const rows = filtered.map((r) => [
+      r.id,
+      new Date(r.created_at).toLocaleString("ru-RU"),
+      r.is_read ? "да" : "нет",
+      r.name ?? "",
+      r.contact ?? "",
+      r.subject ?? "",
+      r.message ?? "",
+    ]);
+    downloadCsv(`requests-${new Date().toISOString().slice(0, 10)}.csv`, [header, ...rows]);
+  };
 
   return (
     <div>
-      <h2 className={`${ui.h2} mb-6`}>Заявки ({items.length})</h2>
+      <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+        <h2 className={ui.h2}>
+          Заявки ({filtered.length}{hasFilters ? ` из ${items.length}` : ""})
+          {unreadCount > 0 && <span className="ml-3 text-[13px] font-normal text-[#f5b15a]">· непрочитанных: {unreadCount}</span>}
+        </h2>
+        <div className="flex gap-2">
+          <button onClick={exportCsv} disabled={!filtered.length} className={`${ui.btn} ${ui.btnSecondary} ${!filtered.length ? "opacity-40" : ""}`}>
+            <Download size={16} /> Экспорт CSV
+          </button>
+          <button onClick={() => { invalidateAdminCache("requests."); load(); }} className={`${ui.btn} ${ui.btnSecondary}`}>
+            Обновить
+          </button>
+        </div>
+      </div>
+
+      <div className={`${ui.card} mb-4`}>
+        <div className="grid gap-3 md:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto] items-end">
+          <div>
+            <label className={ui.label}>Поиск</label>
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666]" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Имя, контакт, текст"
+                className={`${ui.input} pl-8`}
+              />
+            </div>
+          </div>
+          <div>
+            <label className={ui.label}>Тема</label>
+            <select value={subject} onChange={(e) => setSubject(e.target.value)} className={ui.input}>
+              <option value="all">Все</option>
+              {subjectOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={ui.label}>Статус</label>
+            <select value={readState} onChange={(e) => setReadState(e.target.value as any)} className={ui.input}>
+              <option value="all">Все</option>
+              <option value="unread">Непрочитанные</option>
+              <option value="read">Прочитанные</option>
+            </select>
+          </div>
+          <div>
+            <label className={ui.label}>С даты</label>
+            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={ui.input} />
+          </div>
+          <div>
+            <label className={ui.label}>По дату</label>
+            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={ui.input} />
+          </div>
+          {hasFilters && (
+            <button onClick={resetFilters} className={`${ui.btn} ${ui.btnSecondary}`}>
+              <X size={14} /> Сброс
+            </button>
+          )}
+        </div>
+      </div>
+
       {loading ? (
         <p className="text-[#888]">Загрузка…</p>
-      ) : items.length === 0 ? (
-        <div className={`${ui.card} text-center text-[#888]`}>Заявок пока нет.</div>
+      ) : filtered.length === 0 ? (
+        <div className={`${ui.card} text-center text-[#888]`}>
+          {items.length === 0 ? "Заявок пока нет." : "Ничего не найдено по фильтрам."}
+        </div>
       ) : (
-        <div className="grid gap-3">
-          {items.map((r) => (
-            <div
-              key={r.id}
-              className={`${ui.card} ${!r.is_read ? "border-l-4 border-l-[#f5b15a]" : ""}`}
-            >
-              <div className="flex justify-between gap-4 flex-wrap">
-                <div className="flex-1">
-                  <div className="text-[14px] text-[#888]">
-                    {new Date(r.created_at).toLocaleString("ru-RU")}
+        <>
+          <div className="grid gap-3">
+            {visible.map((r) => (
+              <div
+                key={r.id}
+                className={`${ui.card} ${!r.is_read ? "border-l-4 border-l-[#f5b15a]" : ""}`}
+              >
+                <div className="flex justify-between gap-4 flex-wrap">
+                  <div className="flex-1">
+                    <div className="text-[14px] text-[#888]">
+                      {new Date(r.created_at).toLocaleString("ru-RU")}
+                    </div>
+                    <div className="font-bold text-[18px] mt-1">{r.name}</div>
+                    <div className="text-[15px] text-[#bbb]">{r.contact}</div>
+                    {r.subject && <div className="text-[15px] mt-2 font-semibold">{r.subject}</div>}
+                    <div className="text-[15px] mt-2 whitespace-pre-wrap">{r.message}</div>
                   </div>
-                  <div className="font-bold text-[18px] mt-1">{r.name}</div>
-                  <div className="text-[15px] text-[#bbb]">{r.contact}</div>
-                  {r.subject && <div className="text-[15px] mt-2 font-semibold">{r.subject}</div>}
-                  <div className="text-[15px] mt-2 whitespace-pre-wrap">{r.message}</div>
+                </div>
+                <div className="flex gap-3 mt-4">
+                  <button onClick={() => toggleRead(r)} className={`${ui.btn} ${ui.btnSecondary}`}>
+                    {r.is_read ? "Отметить как новое" : "Отметить прочитанным"}
+                  </button>
+                  <button onClick={() => remove(r.id)} className={`${ui.btn} ${ui.btnDanger}`}>
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               </div>
-              <div className="flex gap-3 mt-4">
-                <button onClick={() => toggleRead(r)} className={`${ui.btn} ${ui.btnSecondary}`}>
-                  {r.is_read ? "Отметить как новое" : "Отметить прочитанным"}
-                </button>
-                <button onClick={() => remove(r.id)} className={`${ui.btn} ${ui.btnDanger}`}>
-                  <Trash2 size={16} />
-                </button>
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4 text-[13px] text-[#888]">
+              <span>Стр. {pageSafe} из {totalPages} · показано {visible.length} из {filtered.length}</span>
+              <div className="flex gap-2">
+                <button
+                  disabled={pageSafe <= 1}
+                  onClick={() => setPage(pageSafe - 1)}
+                  className={`${ui.btn} ${ui.btnSecondary} ${pageSafe <= 1 ? "opacity-40" : ""}`}
+                >Назад</button>
+                <button
+                  disabled={pageSafe >= totalPages}
+                  onClick={() => setPage(pageSafe + 1)}
+                  className={`${ui.btn} ${ui.btnSecondary} ${pageSafe >= totalPages ? "opacity-40" : ""}`}
+                >Вперёд</button>
               </div>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );
