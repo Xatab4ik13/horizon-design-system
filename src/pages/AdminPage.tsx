@@ -123,6 +123,8 @@ const AdminPage = () => {
         {tab === "requests" && <RequestsPanel />}
         {tab === "users" && <UsersPanel />}
         {tab === "emails" && <EmailsPanel />}
+        {tab === "payments" && <PaymentsPanel />}
+
         {tab === "vacancies" && <VacanciesPanel />}
 
         {tab === "blog" && <BlogPanel />}
