@@ -1788,6 +1788,7 @@ const ContentPanel = () => {
       "about_page",
       "contacts_page",
       "services_page",
+      "delivery_page",
     ]);
   }, []);
 
@@ -1806,6 +1807,7 @@ const ContentPanel = () => {
       <PagesHeadersEditor />
       <ContactsPageEditor />
       <ServicesPageEditor />
+      <DeliveryPageEditor />
       <AboutPageEditor />
       <ServicesDocsEditor />
     </div>
