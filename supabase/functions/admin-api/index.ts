@@ -747,9 +747,78 @@ Deno.serve(async (req) => {
         return json({ ok: true, deleted: count ?? 0 });
       }
 
+      // ==================== ПЛАТЕЖИ ====================
+
+      // Список записей платёжного журнала с фильтрами. Возвращаем + краткую инфу по заказу.
+      case "payments.list": {
+        const search = String(payload?.search ?? "").trim();
+        const status = String(payload?.status ?? "").trim();
+        const event = String(payload?.event ?? "").trim();
+        const dateFrom = String(payload?.dateFrom ?? "").trim();
+        const dateTo = String(payload?.dateTo ?? "").trim();
+        const limit = Math.min(Math.max(Number(payload?.limit ?? 500), 1), 2000);
+
+        let q = admin.from("payment_log").select("*").order("created_at", { ascending: false }).limit(limit);
+        if (status) q = q.eq("status", status);
+        if (event) q = q.eq("event", event);
+        if (dateFrom) q = q.gte("created_at", `${dateFrom}T00:00:00`);
+        if (dateTo) q = q.lte("created_at", `${dateTo}T23:59:59`);
+        if (search) q = q.or(`payment_id.ilike.%${search}%,order_key.ilike.%${search}%`);
+
+        const { data, error } = await q;
+        if (error) throw error;
+
+        // Подтягиваем номера заказов
+        const orderIds = Array.from(new Set((data ?? []).map((r: any) => r.order_id).filter(Boolean)));
+        const { data: orders } = orderIds.length
+          ? await admin.from("orders").select("id, order_number, customer_name, total_amount, payment_status, refunded_amount").in("id", orderIds)
+          : { data: [] as any[] };
+        const orderMap = new Map((orders ?? []).map((o: any) => [o.id, o]));
+
+        const items = (data ?? []).map((r: any) => ({
+          ...r,
+          order: r.order_id ? (orderMap.get(r.order_id) ?? null) : null,
+        }));
+
+        return json({ items });
+      }
+
+      // Выполнить возврат через Т-Кассу. Проксируем в tinkoff-payment.
+      case "payments.refund": {
+        const paymentId = String(payload?.paymentId ?? "").trim();
+        const amount = Number(payload?.amount ?? 0);
+        if (!paymentId) return json({ error: "paymentId required" }, 400);
+
+        const url = `${SUPABASE_URL}/functions/v1/tinkoff-payment`;
+        const resp = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-password": ADMIN_PASSWORD,
+            "Authorization": `Bearer ${SERVICE_ROLE}`,
+          },
+          body: JSON.stringify({ action: "refund", paymentId, amount, password: ADMIN_PASSWORD }),
+        });
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok) return json({ error: data?.error ?? "refund failed", details: data }, resp.status);
+        return json(data);
+      }
+
+      // Сводка по платежам для дашборда.
+      case "payments.stats": {
+        const { data } = await admin.from("payment_log").select("event, status, amount, created_at");
+        const rows = data ?? [];
+        const inits = rows.filter((r: any) => r.event === "init").length;
+        const confirmed = rows.filter((r: any) => r.status === "CONFIRMED").length;
+        const refunded = rows.filter((r: any) => r.event === "refund").length;
+        const errors = rows.filter((r: any) => r.event === "error" || (r.status && String(r.status).startsWith("REJECTED"))).length;
+        return json({ data: { inits, confirmed, refunded, errors, total: rows.length } });
+      }
+
       default:
         return json({ error: `Unknown action: ${action}` }, 400);
     }
+
 
   } catch (err: any) {
     console.error("admin-api error", err);

@@ -32,6 +32,8 @@ import {
   Mail,
   Phone,
   Key,
+  CreditCard,
+
 } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 
@@ -55,7 +57,7 @@ const ui = {
   tabIdle: "bg-[#2a2a2a] text-[#bbb] hover:bg-[#333]",
 };
 
-type Tab = "dashboard" | "products" | "orders" | "requests" | "users" | "emails" | "vacancies" | "blog" | "gallery" | "media" | "content" | "settings";
+type Tab = "dashboard" | "products" | "orders" | "requests" | "users" | "emails" | "payments" | "vacancies" | "blog" | "gallery" | "media" | "content" | "settings";
 
 const AdminPage = () => {
   const [authed, setAuthed] = useState(adminAuth.isLoggedIn());
@@ -70,6 +72,8 @@ const AdminPage = () => {
     { id: "requests", label: "Заявки", icon: MessageSquare },
     { id: "users", label: "Пользователи", icon: Users },
     { id: "emails", label: "Письма", icon: Mail },
+    { id: "payments", label: "Платежи", icon: CreditCard },
+
     { id: "vacancies", label: "Вакансии", icon: Briefcase },
     { id: "blog", label: "Блог", icon: FileText },
     { id: "gallery", label: "Галерея", icon: ImageIcon },
@@ -119,6 +123,8 @@ const AdminPage = () => {
         {tab === "requests" && <RequestsPanel />}
         {tab === "users" && <UsersPanel />}
         {tab === "emails" && <EmailsPanel />}
+        {tab === "payments" && <PaymentsPanel />}
+
         {tab === "vacancies" && <VacanciesPanel />}
 
         {tab === "blog" && <BlogPanel />}
@@ -2046,6 +2052,327 @@ const EmailsPanel = () => {
 };
 
 // ===================================================================
+// ПЛАТЕЖИ (ЖУРНАЛ ТИНЬКОФФ)
+// ===================================================================
+type PaymentRow = {
+  id: string;
+  order_id: string | null;
+  provider: string;
+  event: string;
+  amount: number | null;
+  currency: string;
+  status: string | null;
+  payment_id: string | null;
+  order_key: string | null;
+  raw_request: any;
+  raw_response: any;
+  error: string | null;
+  created_at: string;
+  order?: {
+    id: string; order_number: string; customer_name: string;
+    total_amount: number; payment_status: string | null; refunded_amount: number | null;
+  } | null;
+};
+
+const paymentEventLabel: Record<string, string> = {
+  init: "Инициация", notification: "Webhook", refund: "Возврат", error: "Ошибка",
+};
+
+const paymentStatusColor = (s: string | null): string => {
+  if (!s) return "bg-[#3a3a3a]";
+  if (s === "CONFIRMED" || s === "AUTHORIZED") return "bg-[#2a4a2a] text-[#a7e0a7]";
+  if (s === "REFUNDED" || s === "REVERSED") return "bg-[#4a3a2a] text-[#f5c58a]";
+  if (s === "REJECTED" || s.startsWith("REJECTED") || s === "CANCELED" || s === "FAILED") return "bg-[#5a2a2a] text-[#ffd0d0]";
+  return "bg-[#3a3a3a] text-[#ccc]";
+};
+
+const PaymentsPanel = () => {
+  const [items, setItems] = useState<PaymentRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<PaymentRow | null>(null);
+  const [refunding, setRefunding] = useState<string | null>(null);
+
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("all");
+  const [event, setEvent] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [page, setPage] = useState(1);
+  const perPage = 25;
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const r = await adminCall<{ items: PaymentRow[] }>("payments.list", {
+        search,
+        status: status === "all" ? "" : status,
+        event: event === "all" ? "" : event,
+        dateFrom, dateTo,
+      });
+      setItems(r.items ?? []);
+    } catch (e: any) { toast.error(e.message); }
+    setLoading(false);
+  };
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
+  useEffect(() => { setPage(1); }, [search, status, event, dateFrom, dateTo]);
+
+  const totalPages = Math.max(1, Math.ceil(items.length / perPage));
+  const pageSafe = Math.min(page, totalPages);
+  const visible = items.slice((pageSafe - 1) * perPage, pageSafe * perPage);
+
+  const stats = {
+    inits: items.filter((i) => i.event === "init").length,
+    confirmed: items.filter((i) => i.status === "CONFIRMED").length,
+    refunds: items.filter((i) => i.event === "refund").length,
+    errors: items.filter((i) => i.event === "error" || (i.status ?? "").startsWith("REJECTED")).length,
+  };
+
+  const hasFilters = !!(search || status !== "all" || event !== "all" || dateFrom || dateTo);
+  const resetFilters = () => { setSearch(""); setStatus("all"); setEvent("all"); setDateFrom(""); setDateTo(""); };
+
+  const exportCsv = () => {
+    const header = ["Дата", "Событие", "Статус", "Заказ", "PaymentId", "Сумма", "Ошибка"];
+    const rows = items.map((r) => [
+      new Date(r.created_at).toLocaleString("ru-RU"),
+      paymentEventLabel[r.event] ?? r.event,
+      r.status ?? "",
+      r.order?.order_number ?? r.order_key ?? "",
+      r.payment_id ?? "",
+      r.amount != null ? String(r.amount) : "",
+      r.error ?? "",
+    ]);
+    downloadCsv(`payments-${new Date().toISOString().slice(0, 10)}.csv`, [header, ...rows]);
+  };
+
+  const doRefund = async (r: PaymentRow) => {
+    if (!r.payment_id) { toast.error("Нет PaymentId"); return; }
+    const orderAmount = r.order?.total_amount ?? r.amount ?? 0;
+    const alreadyRefunded = Number(r.order?.refunded_amount ?? 0);
+    const maxRefundable = orderAmount - alreadyRefunded;
+    if (maxRefundable <= 0) { toast.error("Уже возвращено полностью"); return; }
+    const input = prompt(`Сумма возврата в рублях (макс. ${maxRefundable}). Оставь пустым для полного возврата.`, "");
+    if (input === null) return;
+    const amount = input.trim() ? parseFloat(input.replace(",", ".")) : 0;
+    if (input.trim() && (!Number.isFinite(amount) || amount <= 0 || amount > maxRefundable)) {
+      toast.error("Некорректная сумма"); return;
+    }
+    if (!confirm(`Оформить возврат ${amount > 0 ? amount + " ₽" : "полной суммы"} по PaymentId ${r.payment_id}?`)) return;
+    setRefunding(r.id);
+    try {
+      await adminCall("payments.refund", { paymentId: r.payment_id, amount });
+      toast.success("Возврат отправлен в Тинькофф");
+      load();
+    } catch (e: any) { toast.error(e.message); }
+    setRefunding(null);
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+        <h2 className={ui.h2}>Платежи ({items.length})</h2>
+        <div className="flex gap-2">
+          <button onClick={exportCsv} disabled={!items.length} className={`${ui.btn} ${ui.btnSecondary} ${!items.length ? "opacity-40" : ""}`}>
+            <Download size={16} /> Экспорт CSV
+          </button>
+          <button onClick={load} className={`${ui.btn} ${ui.btnSecondary}`}>Обновить</button>
+        </div>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-4 mb-4">
+        <div className={ui.card}>
+          <div className="text-[13px] text-[#888] uppercase tracking-wide">Инициации</div>
+          <div className="text-3xl font-bold mt-1">{stats.inits}</div>
+        </div>
+        <div className={ui.card}>
+          <div className="text-[13px] text-[#888] uppercase tracking-wide">Оплачено</div>
+          <div className="text-3xl font-bold mt-1 text-[#a7e0a7]">{stats.confirmed}</div>
+        </div>
+        <div className={ui.card}>
+          <div className="text-[13px] text-[#888] uppercase tracking-wide">Возвраты</div>
+          <div className="text-3xl font-bold mt-1 text-[#f5c58a]">{stats.refunds}</div>
+        </div>
+        <div className={ui.card}>
+          <div className="text-[13px] text-[#888] uppercase tracking-wide">Ошибки</div>
+          <div className="text-3xl font-bold mt-1 text-[#ffd0d0]">{stats.errors}</div>
+        </div>
+      </div>
+
+      <div className={`${ui.card} mb-4`}>
+        <div className="grid gap-3 md:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto_auto] items-end">
+          <div>
+            <label className={ui.label}>Поиск</label>
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666]" />
+              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="PaymentId / № заказа" className={`${ui.input} pl-8`} />
+            </div>
+          </div>
+          <div>
+            <label className={ui.label}>Событие</label>
+            <select value={event} onChange={(e) => setEvent(e.target.value)} className={ui.input}>
+              <option value="all">Все</option>
+              <option value="init">Инициация</option>
+              <option value="notification">Webhook</option>
+              <option value="refund">Возврат</option>
+              <option value="error">Ошибка</option>
+            </select>
+          </div>
+          <div>
+            <label className={ui.label}>Статус</label>
+            <select value={status} onChange={(e) => setStatus(e.target.value)} className={ui.input}>
+              <option value="all">Все</option>
+              <option value="NEW">NEW</option>
+              <option value="AUTHORIZED">AUTHORIZED</option>
+              <option value="CONFIRMED">CONFIRMED</option>
+              <option value="REJECTED">REJECTED</option>
+              <option value="REFUNDED">REFUNDED</option>
+              <option value="REVERSED">REVERSED</option>
+              <option value="CANCELED">CANCELED</option>
+            </select>
+          </div>
+          <div>
+            <label className={ui.label}>С даты</label>
+            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={ui.input} />
+          </div>
+          <div>
+            <label className={ui.label}>По дату</label>
+            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={ui.input} />
+          </div>
+          <button onClick={load} className={`${ui.btn} ${ui.btnPrimary}`}>Применить</button>
+          {hasFilters && (
+            <button onClick={() => { resetFilters(); setTimeout(load, 0); }} className={`${ui.btn} ${ui.btnSecondary}`}>
+              <X size={14} /> Сброс
+            </button>
+          )}
+        </div>
+      </div>
+
+      {loading ? (
+        <p className="text-[#888]">Загрузка…</p>
+      ) : items.length === 0 ? (
+        <div className={`${ui.card} text-center text-[#888]`}>
+          Платежей пока нет. Как только клиенты начнут оплачивать заказы через Т-Кассу, они появятся здесь.
+        </div>
+      ) : (
+        <>
+          <div className={`${ui.card} overflow-x-auto p-0`}>
+            <table className="w-full text-[14px]">
+              <thead>
+                <tr className="text-left text-[#888] border-b border-[#3a3a3a]">
+                  <th className="px-4 py-3">Дата</th>
+                  <th className="px-4 py-3">Событие</th>
+                  <th className="px-4 py-3">Статус</th>
+                  <th className="px-4 py-3">Заказ</th>
+                  <th className="px-4 py-3">PaymentId</th>
+                  <th className="px-4 py-3 text-right">Сумма</th>
+                  <th className="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map((r) => {
+                  const canRefund = r.status === "CONFIRMED" && r.payment_id && r.event !== "refund";
+                  return (
+                    <tr key={r.id} className="border-b border-[#333] hover:bg-[#2f2f2f]">
+                      <td className="px-4 py-3 whitespace-nowrap text-[#bbb]">{new Date(r.created_at).toLocaleString("ru-RU")}</td>
+                      <td className="px-4 py-3">{paymentEventLabel[r.event] ?? r.event}</td>
+                      <td className="px-4 py-3">
+                        {r.status ? (
+                          <span className={`inline-block px-2 py-1 rounded text-[11px] font-semibold ${paymentStatusColor(r.status)}`}>
+                            {r.status}
+                          </span>
+                        ) : "—"}
+                      </td>
+                      <td className="px-4 py-3">
+                        {r.order ? (
+                          <div>
+                            <div className="font-semibold">№ {r.order.order_number}</div>
+                            <div className="text-[12px] text-[#888]">{r.order.customer_name}</div>
+                          </div>
+                        ) : r.order_key ? <span className="text-[#888]">{r.order_key}</span> : "—"}
+                      </td>
+                      <td className="px-4 py-3 font-mono text-[12px]">{r.payment_id ?? "—"}</td>
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
+                        {r.amount != null ? formatRub(Number(r.amount)) : "—"}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <button onClick={() => setSelected(r)} className="text-[#e8e8e8] hover:underline mr-3">Открыть</button>
+                        {canRefund && (
+                          <button
+                            onClick={() => doRefund(r)}
+                            disabled={refunding === r.id}
+                            className="text-[#f5c58a] hover:underline disabled:opacity-40"
+                          >
+                            {refunding === r.id ? "…" : "Возврат"}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4 text-[13px] text-[#888]">
+              <span>Стр. {pageSafe} из {totalPages} · показано {visible.length} из {items.length}</span>
+              <div className="flex gap-2">
+                <button disabled={pageSafe <= 1} onClick={() => setPage(pageSafe - 1)} className={`${ui.btn} ${ui.btnSecondary} ${pageSafe <= 1 ? "opacity-40" : ""}`}>Назад</button>
+                <button disabled={pageSafe >= totalPages} onClick={() => setPage(pageSafe + 1)} className={`${ui.btn} ${ui.btnSecondary} ${pageSafe >= totalPages ? "opacity-40" : ""}`}>Вперёд</button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {selected && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50" onClick={() => setSelected(null)}>
+          <div className={`${ui.card} max-w-3xl w-full max-h-[85vh] overflow-y-auto`} onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-start mb-4">
+              <h3 className={ui.h3}>Платёж</h3>
+              <button onClick={() => setSelected(null)} className={`${ui.btn} ${ui.btnSecondary}`}><X size={16} /></button>
+            </div>
+            <dl className="grid grid-cols-[160px_1fr] gap-y-3 gap-x-4 text-[15px] mb-4">
+              <dt className="text-[#888]">Дата</dt><dd>{new Date(selected.created_at).toLocaleString("ru-RU")}</dd>
+              <dt className="text-[#888]">Событие</dt><dd>{paymentEventLabel[selected.event] ?? selected.event}</dd>
+              <dt className="text-[#888]">Статус</dt>
+              <dd>{selected.status ? (
+                <span className={`inline-block px-2 py-1 rounded text-[12px] font-semibold ${paymentStatusColor(selected.status)}`}>{selected.status}</span>
+              ) : "—"}</dd>
+              <dt className="text-[#888]">Сумма</dt><dd>{selected.amount != null ? formatRub(Number(selected.amount)) : "—"}</dd>
+              <dt className="text-[#888]">PaymentId</dt><dd className="font-mono text-[13px]">{selected.payment_id ?? "—"}</dd>
+              <dt className="text-[#888]">OrderId</dt><dd className="font-mono text-[13px]">{selected.order_key ?? "—"}</dd>
+              {selected.order && (
+                <>
+                  <dt className="text-[#888]">Заказ</dt>
+                  <dd>№ {selected.order.order_number} · {selected.order.customer_name} · {formatRub(Number(selected.order.total_amount))}
+                    {Number(selected.order.refunded_amount ?? 0) > 0 && (
+                      <span className="ml-2 text-[#f5c58a]">возвращено: {formatRub(Number(selected.order.refunded_amount))}</span>
+                    )}
+                  </dd>
+                </>
+              )}
+              {selected.error && (<><dt className="text-[#888]">Ошибка</dt><dd className="text-[#ffd0d0] whitespace-pre-wrap">{selected.error}</dd></>)}
+            </dl>
+            <div className="grid gap-3 md:grid-cols-2">
+              <div>
+                <div className="text-[13px] text-[#888] uppercase mb-2">Запрос</div>
+                <pre className="bg-[#1a1a1a] p-3 rounded text-[12px] overflow-x-auto max-h-[300px]">{JSON.stringify(selected.raw_request, null, 2)}</pre>
+              </div>
+              <div>
+                <div className="text-[13px] text-[#888] uppercase mb-2">Ответ</div>
+                <pre className="bg-[#1a1a1a] p-3 rounded text-[12px] overflow-x-auto max-h-[300px]">{JSON.stringify(selected.raw_response, null, 2)}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ===================================================================
+
+
 
 type UserRow = {
   id: string;
