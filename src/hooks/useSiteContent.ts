@@ -300,3 +300,68 @@ export function useServicesContent(): ServicesContent {
   return c;
 }
 
+
+// ─── Delivery & Payment page ───
+export type DeliveryContent = {
+  companies?: {
+    name?: string;
+    logo?: string;
+    description?: string;
+    timing?: string;
+    features?: string[];
+    enabled?: boolean;
+  }[];
+  pickup?: {
+    title?: string;
+    subtitle?: string;
+    description?: string;
+    features?: string[];
+    address?: string;
+    hours?: string;
+    phone?: string;
+  };
+  packaging?: {
+    title?: string;
+    items?: { title?: string; desc?: string }[];
+  };
+  paymentMethods?: {
+    name?: string;
+    description?: string;
+    icon?: "card" | "shield" | "receipt" | "tag";
+    enabled?: boolean;
+  }[];
+  faq?: { q?: string; a?: string }[];
+};
+
+let deliveryCache: DeliveryContent | null = null;
+let deliveryInflight: Promise<DeliveryContent> | null = null;
+
+export async function fetchDeliveryContent(): Promise<DeliveryContent> {
+  if (deliveryCache) return deliveryCache;
+  if (deliveryInflight) return deliveryInflight;
+  deliveryInflight = (async () => {
+    const { data } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "delivery_page")
+      .maybeSingle();
+    deliveryCache = ((data?.value as DeliveryContent) ?? {}) as DeliveryContent;
+    return deliveryCache;
+  })();
+  return deliveryInflight;
+}
+
+export function invalidateDeliveryContent() {
+  deliveryCache = null;
+  deliveryInflight = null;
+}
+
+export function useDeliveryContent(): DeliveryContent {
+  const [c, setC] = useState<DeliveryContent>(deliveryCache ?? {});
+  useEffect(() => {
+    let alive = true;
+    fetchDeliveryContent().then((v) => { if (alive) setC(v); });
+    return () => { alive = false; };
+  }, []);
+  return c;
+}
