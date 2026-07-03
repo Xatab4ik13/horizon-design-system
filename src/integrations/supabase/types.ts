@@ -101,6 +101,60 @@ export type Database = {
         }
         Relationships: []
       }
+      email_log: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          metadata: Json | null
+          recipient: string
+          related_order_id: string | null
+          related_request_id: string | null
+          status: string
+          subject: string
+          template: string | null
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          metadata?: Json | null
+          recipient: string
+          related_order_id?: string | null
+          related_request_id?: string | null
+          status?: string
+          subject: string
+          template?: string | null
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          metadata?: Json | null
+          recipient?: string
+          related_order_id?: string | null
+          related_request_id?: string | null
+          status?: string
+          subject?: string
+          template?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_log_related_order_id_fkey"
+            columns: ["related_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_log_related_request_id_fkey"
+            columns: ["related_request_id"]
+            isOneToOne: false
+            referencedRelation: "contact_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gallery_items: {
         Row: {
           created_at: string

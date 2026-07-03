@@ -646,9 +646,61 @@ Deno.serve(async (req) => {
         return json({ ok: true });
       }
 
+      // ==================== ЖУРНАЛ EMAIL ====================
+
+      // Список записей журнала с фильтрами.
+      case "emails.list": {
+        const search = String(payload?.search ?? "").trim().toLowerCase();
+        const status = String(payload?.status ?? "").trim();
+        const template = String(payload?.template ?? "").trim();
+        const dateFrom = String(payload?.dateFrom ?? "").trim();
+        const dateTo = String(payload?.dateTo ?? "").trim();
+        const limit = Math.min(Math.max(Number(payload?.limit ?? 500), 1), 2000);
+
+        let q = admin.from("email_log").select("*").order("created_at", { ascending: false }).limit(limit);
+        if (status) q = q.eq("status", status);
+        if (template) q = q.eq("template", template);
+        if (dateFrom) q = q.gte("created_at", `${dateFrom}T00:00:00`);
+        if (dateTo) q = q.lte("created_at", `${dateTo}T23:59:59`);
+        if (search) q = q.or(`recipient.ilike.%${search}%,subject.ilike.%${search}%`);
+
+        const { data, error } = await q;
+        if (error) throw error;
+
+        // Уникальные шаблоны для фильтра
+        const { data: tpls } = await admin.from("email_log").select("template").not("template", "is", null);
+        const templates = Array.from(new Set((tpls ?? []).map((r: any) => r.template).filter(Boolean))).sort();
+
+        return json({ items: data ?? [], templates });
+      }
+
+      // Ручное добавление тестовой записи (для отладки).
+      case "emails.logTest": {
+        const { error } = await admin.from("email_log").insert({
+          recipient: String(payload?.recipient ?? "test@example.com"),
+          subject: String(payload?.subject ?? "Тестовое письмо"),
+          template: String(payload?.template ?? "test"),
+          status: String(payload?.status ?? "sent"),
+          error: payload?.error ? String(payload.error) : null,
+          metadata: payload?.metadata ?? {},
+        });
+        if (error) throw error;
+        return json({ ok: true });
+      }
+
+      // Удалить старые записи (старше N дней).
+      case "emails.purge": {
+        const days = Math.max(Number(payload?.days ?? 90), 1);
+        const cutoff = new Date(Date.now() - days * 86400_000).toISOString();
+        const { error, count } = await admin.from("email_log").delete({ count: "exact" }).lt("created_at", cutoff);
+        if (error) throw error;
+        return json({ ok: true, deleted: count ?? 0 });
+      }
+
       default:
         return json({ error: `Unknown action: ${action}` }, 400);
     }
+
   } catch (err: any) {
     console.error("admin-api error", err);
     return json({ error: err?.message ?? "Internal error" }, 500);
