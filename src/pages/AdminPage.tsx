@@ -1957,7 +1957,7 @@ const UserDetailsModal = ({ id, onClose, onDeleted }: { id: string; onClose: () 
                   {data.requests.map((r: any) => (
                     <div key={r.id} className="p-3 bg-[#1a1a1a] rounded border border-[#3a3a3a]">
                       <div className="text-[13px] text-[#888]">{formatDateTime(r.created_at)} · {r.subject ?? "—"}</div>
-                      <div className="text-[14px] mt-1">{r.name}{r.email ? ` · ${r.email}` : ""}{r.phone ? ` · ${r.phone}` : ""}</div>
+                      <div className="text-[14px] mt-1">{r.name}{r.contact ? ` · ${r.contact}` : ""}</div>
                       {r.message && <div className="text-[13px] text-[#ccc] mt-1 whitespace-pre-wrap">{r.message}</div>}
                     </div>
                   ))}
