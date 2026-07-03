@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import { usePageHeader } from "@/hooks/useSiteContent";
+import { supabase } from "@/integrations/supabase/client";
 
 import gallery1 from "@/assets/gallery-1.jpg";
 import gallery2 from "@/assets/gallery-2.jpg";
@@ -14,7 +15,10 @@ import gallery6 from "@/assets/gallery-6.jpg";
 import gallery7 from "@/assets/gallery-7.jpg";
 import gallery8 from "@/assets/gallery-8.jpg";
 
-const galleryItems = [
+type GalleryItem = { src: string; title: string; span: string };
+
+// Дефолтный набор — используется, если админ ещё не заполнил галерею в БД.
+const defaultItems: GalleryItem[] = [
   { src: gallery1, title: "Гостиная с деревянными панелями", span: "tall" },
   { src: gallery2, title: "Столовая из массива дуба", span: "wide" },
   { src: gallery3, title: "Спальня с резным зеркалом", span: "normal" },
@@ -27,7 +31,33 @@ const galleryItems = [
 
 const GalleryPage = () => {
   const [lightbox, setLightbox] = useState<number | null>(null);
+  const [items, setItems] = useState<GalleryItem[]>(defaultItems);
   const header = usePageHeader("gallery", { title: "Галерея", subtitle: "Наши изделия в интерьерах — вдохновляйтесь реальными примерами" });
+
+  useEffect(() => {
+    let cancelled = false;
+    supabase
+      .from("gallery_items")
+      .select("image_url, title, span")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (cancelled) return;
+        if (data && data.length > 0) {
+          setItems(
+            data.map((row) => ({
+              src: row.image_url,
+              title: row.title ?? "",
+              span: row.span ?? "normal",
+            })),
+          );
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div
@@ -60,7 +90,7 @@ const GalleryPage = () => {
 
           {/* Uniform grid — выровненные ряды */}
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-            {galleryItems.map((item, i) => (
+            {items.map((item, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 40 }}
@@ -93,7 +123,7 @@ const GalleryPage = () => {
 
       {/* Lightbox */}
       <AnimatePresence>
-        {lightbox !== null && (
+        {lightbox !== null && items[lightbox] && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -104,8 +134,8 @@ const GalleryPage = () => {
           >
             <motion.img
               key={lightbox}
-              src={galleryItems[lightbox].src}
-              alt={galleryItems[lightbox].title}
+              src={items[lightbox].src}
+              alt={items[lightbox].title}
               initial={{ scale: 0.85, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.85, opacity: 0 }}
@@ -118,7 +148,7 @@ const GalleryPage = () => {
               transition={{ delay: 0.3 }}
               className="absolute bottom-8 text-white/70 text-sm"
             >
-              {galleryItems[lightbox].title}
+              {items[lightbox].title}
             </motion.p>
           </motion.div>
         )}

@@ -50,7 +50,7 @@ const ui = {
   tabIdle: "bg-[#2a2a2a] text-[#bbb] hover:bg-[#333]",
 };
 
-type Tab = "dashboard" | "products" | "orders" | "requests" | "vacancies" | "blog" | "media" | "content" | "settings";
+type Tab = "dashboard" | "products" | "orders" | "requests" | "vacancies" | "blog" | "gallery" | "media" | "content" | "settings";
 
 const AdminPage = () => {
   const [authed, setAuthed] = useState(adminAuth.isLoggedIn());
@@ -65,6 +65,7 @@ const AdminPage = () => {
     { id: "requests", label: "Заявки", icon: MessageSquare },
     { id: "vacancies", label: "Вакансии", icon: Briefcase },
     { id: "blog", label: "Блог", icon: FileText },
+    { id: "gallery", label: "Галерея", icon: ImageIcon },
     { id: "media", label: "Медиа", icon: ImageLucide },
     { id: "content", label: "Контент сайта", icon: Layout },
     { id: "settings", label: "Настройки", icon: Settings },
@@ -110,6 +111,7 @@ const AdminPage = () => {
         {tab === "requests" && <RequestsPanel />}
         {tab === "vacancies" && <VacanciesPanel />}
         {tab === "blog" && <BlogPanel />}
+        {tab === "gallery" && <GalleryPanel />}
         {tab === "media" && <MediaPanel />}
         {tab === "content" && <ContentPanel />}
         {tab === "settings" && <SettingsPanel />}
@@ -3432,6 +3434,259 @@ const MediaPanel = () => {
                   className={`${ui.btn} ${ui.btnDanger} !px-2 !py-1.5 !text-[12px]`}
                   title="Удалить"
                 >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ===================================================================
+// GALLERY — управление карточками страницы /gallery
+// ===================================================================
+type GalleryRow = {
+  id: string;
+  image_url: string;
+  title: string;
+  span: "normal" | "tall" | "wide";
+  sort_order: number;
+  is_active: boolean;
+  created_at?: string;
+};
+
+const emptyGallery = { image_url: "", title: "", span: "normal" as const, sort_order: 0, is_active: true };
+
+const GalleryPanel = () => {
+  const cached = getCachedAdminCall<{ data: GalleryRow[] }>("gallery.list");
+  const [items, setItems] = useState<GalleryRow[]>(cached?.data ?? []);
+  const [loading, setLoading] = useState(!cached);
+  const [editing, setEditing] = useState<Partial<GalleryRow> | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const load = async () => {
+    if (!getCachedAdminCall("gallery.list")) setLoading(true);
+    try {
+      const r = await adminCallSWR<{ data: GalleryRow[] }>("gallery.list", undefined, (fresh) => {
+        setItems(fresh.data ?? []);
+      });
+      setItems(r.data ?? []);
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+    setLoading(false);
+  };
+  useEffect(() => {
+    load();
+  }, []);
+
+  const save = async () => {
+    if (!editing) return;
+    if (!editing.image_url) {
+      toast.error("Загрузите изображение");
+      return;
+    }
+    try {
+      if (editing.id) {
+        await adminCall("gallery.update", editing);
+      } else {
+        await adminCall("gallery.create", {
+          ...emptyGallery,
+          ...editing,
+          sort_order: editing.sort_order ?? items.length,
+        });
+      }
+      invalidateAdminCache("gallery.");
+      toast.success("Сохранено");
+      setEditing(null);
+      load();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  const remove = async (id: string) => {
+    if (!confirm("Удалить карточку?")) return;
+    try {
+      await adminCall("gallery.delete", { id });
+      invalidateAdminCache("gallery.");
+      load();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  const move = async (idx: number, dir: -1 | 1) => {
+    const j = idx + dir;
+    if (j < 0 || j >= items.length) return;
+    const a = items[idx];
+    const b = items[j];
+    const next = [...items];
+    next[idx] = b;
+    next[j] = a;
+    setItems(next);
+    try {
+      await adminCall("gallery.reorder", {
+        items: next.map((it, i) => ({ id: it.id, sort_order: i })),
+      });
+      invalidateAdminCache("gallery.");
+    } catch (e: any) {
+      toast.error(e.message);
+      load();
+    }
+  };
+
+  const toggleActive = async (it: GalleryRow) => {
+    try {
+      await adminCall("gallery.update", { id: it.id, is_active: !it.is_active });
+      invalidateAdminCache("gallery.");
+      load();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setUploading(true);
+    try {
+      const url = await adminUploadFile("site-images", f, { prefix: "gallery/" });
+      setEditing((prev) => ({ ...(prev ?? emptyGallery), image_url: url }));
+    } catch (err: any) {
+      toast.error(err?.message ?? "Ошибка загрузки");
+    }
+    setUploading(false);
+    e.target.value = "";
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
+        <h2 className={ui.h2}>Галерея ({items.length})</h2>
+        <button
+          onClick={() => setEditing({ ...emptyGallery, sort_order: items.length })}
+          className={`${ui.btn} ${ui.btnPrimary}`}
+        >
+          <Plus size={18} /> Новая карточка
+        </button>
+      </div>
+
+      {editing && (
+        <div className={`${ui.card} mb-6`}>
+          <h3 className={`${ui.h3} mb-4`}>{editing.id ? "Редактирование" : "Новая карточка"}</h3>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className={ui.label}>Изображение</label>
+              {editing.image_url ? (
+                <div className="mb-3 rounded-lg overflow-hidden bg-[#1a1a1a] aspect-[4/3]">
+                  <img src={editing.image_url} alt="" className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="mb-3 rounded-lg bg-[#1a1a1a] aspect-[4/3] flex items-center justify-center text-[#666] text-sm">
+                  нет изображения
+                </div>
+              )}
+              <label className={`${ui.btn} ${ui.btnSecondary} cursor-pointer ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+                <Upload size={16} /> {uploading ? "Загрузка…" : "Загрузить"}
+                <input type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+              </label>
+              <input
+                type="text"
+                value={editing.image_url ?? ""}
+                onChange={(e) => setEditing({ ...editing, image_url: e.target.value })}
+                placeholder="или URL напрямую"
+                className={`${ui.input} mt-3`}
+              />
+            </div>
+
+            <div className="grid gap-4">
+              <div>
+                <label className={ui.label}>Подпись</label>
+                <input
+                  value={editing.title ?? ""}
+                  onChange={(e) => setEditing({ ...editing, title: e.target.value })}
+                  className={ui.input}
+                  placeholder="Гостиная с деревянными панелями"
+                />
+              </div>
+              <div>
+                <label className={ui.label}>Размер плитки</label>
+                <select
+                  value={editing.span ?? "normal"}
+                  onChange={(e) => setEditing({ ...editing, span: e.target.value as any })}
+                  className={ui.input}
+                >
+                  <option value="normal">Обычная</option>
+                  <option value="tall">Высокая</option>
+                  <option value="wide">Широкая</option>
+                </select>
+              </div>
+              <div>
+                <label className={ui.label}>Порядок сортировки</label>
+                <input
+                  type="number"
+                  value={editing.sort_order ?? 0}
+                  onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) })}
+                  className={ui.input}
+                />
+              </div>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={editing.is_active ?? true}
+                  onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })}
+                  className="w-5 h-5"
+                />
+                <span className="text-[15px]">Показывать на сайте</span>
+              </label>
+            </div>
+          </div>
+
+          <div className="flex gap-3 mt-6 pt-6 border-t border-[#3a3a3a]">
+            <button onClick={save} className={`${ui.btn} ${ui.btnPrimary}`}>
+              <Check size={18} /> Сохранить
+            </button>
+            <button onClick={() => setEditing(null)} className={`${ui.btn} ${ui.btnSecondary}`}>
+              <X size={18} /> Отмена
+            </button>
+          </div>
+        </div>
+      )}
+
+      {loading ? (
+        <p className="text-[#888]">Загрузка…</p>
+      ) : items.length === 0 ? (
+        <div className={`${ui.card} text-center text-[#888]`}>
+          Карточек пока нет. На публичной странице пока показывается дефолтный набор.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {items.map((it, idx) => (
+            <div key={it.id} className={`${ui.card} !p-3 flex flex-col gap-2 ${!it.is_active ? "opacity-60" : ""}`}>
+              <div className="aspect-[4/3] rounded-lg overflow-hidden bg-[#1a1a1a]">
+                <img src={it.image_url} alt={it.title} loading="lazy" className="w-full h-full object-cover" />
+              </div>
+              <div className="text-[15px] truncate" title={it.title}>{it.title || <span className="text-[#666]">без подписи</span>}</div>
+              <div className="text-[12px] text-[#888] flex justify-between">
+                <span>#{it.sort_order} · {it.span}</span>
+                <span>{it.is_active ? "видно" : "скрыто"}</span>
+              </div>
+              <div className="flex gap-1 flex-wrap">
+                <button onClick={() => move(idx, -1)} disabled={idx === 0}
+                  className={`${ui.btn} ${ui.btnSecondary} !px-2 !py-1.5 !text-[12px] ${idx === 0 ? "opacity-40" : ""}`}>↑</button>
+                <button onClick={() => move(idx, 1)} disabled={idx === items.length - 1}
+                  className={`${ui.btn} ${ui.btnSecondary} !px-2 !py-1.5 !text-[12px] ${idx === items.length - 1 ? "opacity-40" : ""}`}>↓</button>
+                <button onClick={() => toggleActive(it)} className={`${ui.btn} ${ui.btnSecondary} !px-2 !py-1.5 !text-[12px] flex-1`}>
+                  {it.is_active ? "Скрыть" : "Показать"}
+                </button>
+                <button onClick={() => setEditing(it)} className={`${ui.btn} ${ui.btnSecondary} !px-2 !py-1.5 !text-[12px]`}>
+                  <Pencil size={14} />
+                </button>
+                <button onClick={() => remove(it.id)} className={`${ui.btn} ${ui.btnDanger} !px-2 !py-1.5 !text-[12px]`}>
                   <Trash2 size={14} />
                 </button>
               </div>
