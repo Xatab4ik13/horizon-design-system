@@ -1852,7 +1852,7 @@ const SeoEditor = () => {
   const uploadOg = async (key: SeoPageKey, file: File) => {
     setUploading(key);
     try {
-      const url = await adminUploadFile("site-images", `seo/${key}-${Date.now()}-${file.name}`, file);
+      const url = await adminUploadFile("site-images", file, { prefix: `seo/${key}-` });
       update(key, { ogImage: url });
       toast.success("Изображение загружено");
     } catch (e: any) { toast.error(e.message); }
@@ -1916,7 +1916,7 @@ const SeoEditor = () => {
                     className={`${ui.input} flex-1 min-w-[240px]`}
                     placeholder="https://…"
                   />
-                  <label className={`${ui.btn} ${ui.btnGhost} cursor-pointer`}>
+                  <label className={`${ui.btn} ${ui.btnSecondary} cursor-pointer`}>
                     <Upload size={16} />
                     {uploading === p.key ? "Загрузка…" : "Загрузить"}
                     <input
