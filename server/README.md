@@ -90,6 +90,17 @@ bash scripts/apply-migrations.sh
 
 ## 6. Задеплоить Edge Functions
 
+Для текущего проекта основной деплой бэкенда на сервере выполняется одной командой:
+
+```bash
+cd /opt/faktura/server && bash scripts/deploy-backend.sh
+```
+
+Скрипт обновит код из GitHub, применит новые миграции и перезапустит edge-функции:
+`admin-api`, `delivery-quote`, `delivery-create`, `order-place`, `tinkoff-payment`.
+
+Ручной вариант через CLI, если нужен отдельно:
+
 ```bash
 # Установить supabase CLI
 curl -Lo /tmp/supabase.deb https://github.com/supabase/cli/releases/latest/download/supabase_linux_amd64.deb
@@ -100,6 +111,7 @@ supabase functions deploy admin-api      --project-ref local --no-verify-jwt
 supabase functions deploy delivery-quote  --project-ref local
 supabase functions deploy delivery-create --project-ref local
 supabase functions deploy order-place     --project-ref local
+supabase functions deploy tinkoff-payment --project-ref local --no-verify-jwt
 ```
 
 ## 7. nginx + TLS
