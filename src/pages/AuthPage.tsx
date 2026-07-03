@@ -9,10 +9,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { normalizePhone } from "@/lib/phone";
 
 const AuthPage = () => {
-  const { user, signIn, signUp } = useAuth();
+  const { user, signIn, signUp, resetPassword } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup" | "reset">("signin");
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     email: "",
@@ -33,6 +33,20 @@ const AuthPage = () => {
     e.preventDefault();
     if (submitting) return;
     setSubmitting(true);
+    if (mode === "reset") {
+      const { error } = await resetPassword(form.email.trim());
+      setSubmitting(false);
+      if (error) {
+        toast({ title: "Не удалось отправить письмо", description: error, variant: "destructive" });
+        return;
+      }
+      toast({
+        title: "Письмо отправлено",
+        description: "Проверьте почту — там ссылка для смены пароля.",
+      });
+      setMode("signin");
+      return;
+    }
     const { error } =
       mode === "signin"
         ? await signIn(form.email.trim(), form.password)
