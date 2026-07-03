@@ -4,6 +4,12 @@
 // и в orders сохраняются delivery_external_id / delivery_tracking / delivery_payload.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import {
+  ADMIN_EMAIL,
+  renderAdminNewOrder,
+  renderOrderConfirmation,
+  sendEmail,
+} from "../_shared/email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
