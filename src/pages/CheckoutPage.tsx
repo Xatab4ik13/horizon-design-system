@@ -34,9 +34,8 @@ interface QuoteResult {
 }
 
 const paymentOptions = [
-  { id: "card", label: "Банковская карта", desc: "Visa, Mastercard, МИР" },
-  { id: "yookassa", label: "YooKassa", desc: "Онлайн-оплата через агрегатор" },
-  { id: "cod", label: "При получении", desc: "Наложенный платёж (комиссия ТК)" },
+  { id: "online", label: "Банковская карта / СБП", desc: "Онлайн-оплата через Т-Кассу (Тинькофф)" },
+  { id: "cod", label: "При получении", desc: "Оплата наличными или картой при выдаче/доставке" },
 ];
 
 const steps = ["Контактные данные", "Доставка", "Оплата", "Готово"];
@@ -53,7 +52,7 @@ const CheckoutPage = () => {
   const [quotes, setQuotes] = useState<{ yandex?: QuoteResult; pek?: QuoteResult; cdek?: QuoteResult } | null>(null);
   const [quoting, setQuoting] = useState(false);
 
-  const [payment, setPayment] = useState("card");
+  const [payment, setPayment] = useState("online");
   const [submitting, setSubmitting] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string>("");
   const [contact, setContact] = useState({
@@ -216,6 +215,36 @@ const CheckoutPage = () => {
           title: "Заказ принят, но заявка перевозчику не создана",
           description: "Менеджер оформит её вручную и свяжется с вами.",
         });
+      }
+    }
+
+    // Онлайн-оплата: получаем PaymentURL у Т-Кассы и уводим клиента туда
+    if (payment === "online" && orderId) {
+      try {
+        setSubmitting(true);
+        const { data: pay, error: payErr } = await supabase.functions.invoke("tinkoff-payment", {
+          body: { action: "init", orderId },
+        });
+        const payUrl = (pay as any)?.paymentUrl;
+        const errMsg2 = payErr?.message ?? (pay as any)?.error;
+        if (payUrl) {
+          clearCart();
+          window.location.href = payUrl;
+          return;
+        }
+        toast({
+          title: "Не удалось открыть оплату",
+          description: errMsg2 ?? "Попробуйте оплатить из личного кабинета.",
+          variant: "destructive",
+        });
+      } catch (e: any) {
+        toast({
+          title: "Не удалось открыть оплату",
+          description: e?.message ?? String(e),
+          variant: "destructive",
+        });
+      } finally {
+        setSubmitting(false);
       }
     }
 

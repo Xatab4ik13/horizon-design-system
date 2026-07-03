@@ -9,10 +9,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { normalizePhone } from "@/lib/phone";
 
 const AuthPage = () => {
-  const { user, signIn, signUp } = useAuth();
+  const { user, signIn, signUp, resetPassword } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup" | "reset">("signin");
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     email: "",
@@ -33,6 +33,20 @@ const AuthPage = () => {
     e.preventDefault();
     if (submitting) return;
     setSubmitting(true);
+    if (mode === "reset") {
+      const { error } = await resetPassword(form.email.trim());
+      setSubmitting(false);
+      if (error) {
+        toast({ title: "Не удалось отправить письмо", description: error, variant: "destructive" });
+        return;
+      }
+      toast({
+        title: "Письмо отправлено",
+        description: "Проверьте почту — там ссылка для смены пароля.",
+      });
+      setMode("signin");
+      return;
+    }
     const { error } =
       mode === "signin"
         ? await signIn(form.email.trim(), form.password)
@@ -70,7 +84,9 @@ const AuthPage = () => {
           <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-8">
             <Link to="/" className="hover:text-primary transition-colors">Главная</Link>
             <ChevronRight className="h-3 w-3" />
-            <span className="text-foreground">{mode === "signin" ? "Вход" : "Регистрация"}</span>
+            <span className="text-foreground">
+              {mode === "signin" ? "Вход" : mode === "signup" ? "Регистрация" : "Восстановление пароля"}
+            </span>
           </nav>
 
           <div className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-6 md:p-8">
@@ -148,26 +164,52 @@ const AuthPage = () => {
                 />
               </div>
 
-              <div>
-                <label className="text-sm text-muted-foreground mb-1.5 block">Пароль *</label>
-                <input
-                  required
-                  type="password"
-                  minLength={6}
-                  value={form.password}
-                  onChange={update("password")}
-                  className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground focus:border-primary focus:outline-none transition-colors"
-                  placeholder="Не менее 6 символов"
-                />
-              </div>
+              {mode !== "reset" && (
+                <div>
+                  <label className="text-sm text-muted-foreground mb-1.5 block">Пароль *</label>
+                  <input
+                    required
+                    type="password"
+                    minLength={6}
+                    value={form.password}
+                    onChange={update("password")}
+                    className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground focus:border-primary focus:outline-none transition-colors"
+                    placeholder="Не менее 6 символов"
+                  />
+                </div>
+              )}
+
+              {mode === "signin" && (
+                <div className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => setMode("reset")}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Забыли пароль?
+                  </button>
+                </div>
+              )}
 
               <Button type="submit" size="lg" disabled={submitting} className="w-full rounded-xl">
                 {submitting
                   ? "..."
                   : mode === "signin"
                     ? "Войти"
-                    : "Зарегистрироваться"}
+                    : mode === "signup"
+                      ? "Зарегистрироваться"
+                      : "Отправить письмо"}
               </Button>
+
+              {mode === "reset" && (
+                <button
+                  type="button"
+                  onClick={() => setMode("signin")}
+                  className="w-full text-center text-xs text-muted-foreground hover:text-primary"
+                >
+                  ← Вернуться ко входу
+                </button>
+              )}
             </form>
           </div>
         </div>
