@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { parse1CFile } from "@/lib/import1c";
 import { exportProductsTo1CXlsx, downloadBlob } from "@/lib/export1c";
 import { toast } from "sonner";
-import { invalidateHomepageContent, invalidateNavMenu, invalidateHomepageBlocks, invalidatePagesContent, invalidateContactsContent, invalidateServicesContent, type PageKey } from "@/hooks/useSiteContent";
+import { invalidateHomepageContent, invalidateNavMenu, invalidateHomepageBlocks, invalidatePagesContent, invalidateContactsContent, invalidateServicesContent, invalidateDeliveryContent, type PageKey } from "@/hooks/useSiteContent";
 import {
   Package,
   ShoppingBag,
@@ -1788,6 +1788,7 @@ const ContentPanel = () => {
       "about_page",
       "contacts_page",
       "services_page",
+      "delivery_page",
     ]);
   }, []);
 
@@ -1806,6 +1807,7 @@ const ContentPanel = () => {
       <PagesHeadersEditor />
       <ContactsPageEditor />
       <ServicesPageEditor />
+      <DeliveryPageEditor />
       <AboutPageEditor />
       <ServicesDocsEditor />
     </div>
@@ -3694,6 +3696,317 @@ const GalleryPanel = () => {
           ))}
         </div>
       )}
+    </div>
+  );
+};
+
+// ===================================================================
+// DELIVERY PAGE EDITOR — партнёры, самовывоз, упаковка, оплата, FAQ
+// ===================================================================
+const emptyDelivery = {
+  companies: [] as any[],
+  pickup: {
+    title: "Самовывоз",
+    subtitle: "Бесплатно из нашей мастерской",
+    description: "",
+    features: [] as string[],
+    address: "",
+    hours: "",
+    phone: "",
+  },
+  packaging: {
+    title: "Надёжная упаковка",
+    items: [] as { title: string; desc: string }[],
+  },
+  paymentMethods: [] as any[],
+  faq: [] as { q: string; a: string }[],
+};
+
+const paymentIconOptions = [
+  { value: "card", label: "Банковская карта" },
+  { value: "shield", label: "Щит (защита)" },
+  { value: "receipt", label: "Чек" },
+  { value: "tag", label: "Ценник / акция" },
+];
+
+const DeliveryPageEditor = () => {
+  const [data, setData] = useState<typeof emptyDelivery>(emptyDelivery);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
+
+  useEffect(() => {
+    adminCallSWR("settings.get", { key: "delivery_page" })
+      .then((r) => {
+        const v = (r.data ?? {}) as any;
+        setData({
+          companies: Array.isArray(v.companies) ? v.companies : [],
+          pickup: { ...emptyDelivery.pickup, ...(v.pickup ?? {}), features: Array.isArray(v.pickup?.features) ? v.pickup.features : [] },
+          packaging: { ...emptyDelivery.packaging, ...(v.packaging ?? {}), items: Array.isArray(v.packaging?.items) ? v.packaging.items : [] },
+          paymentMethods: Array.isArray(v.paymentMethods) ? v.paymentMethods : [],
+          faq: Array.isArray(v.faq) ? v.faq : [],
+        });
+        setLoading(false);
+      })
+      .catch((e) => { toast.error(e.message); setLoading(false); });
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await adminCall("settings.set", { key: "delivery_page", value: data });
+      invalidateDeliveryContent();
+      toast.success("Страница «Доставка и оплата» сохранена");
+    } catch (e: any) { toast.error(e.message); }
+    setSaving(false);
+  };
+
+  const uploadLogo = async (idx: number, file: File) => {
+    setUploadingIdx(idx);
+    try {
+      const url = await adminUploadFile("site-images", file, { prefix: "delivery-logos/" });
+      const next = [...data.companies];
+      next[idx] = { ...next[idx], logo: url };
+      setData({ ...data, companies: next });
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+    setUploadingIdx(null);
+  };
+
+  if (loading) return null;
+
+  return (
+    <div className={ui.card}>
+      <h2 className={`${ui.h2} mb-2`}>Страница «Доставка и оплата»</h2>
+      <p className="text-[14px] text-[#888] mb-6">
+        Партнёры-перевозчики, самовывоз, упаковка, способы оплаты и FAQ.
+        Пустые списки — используется значение по умолчанию.
+      </p>
+
+      {/* Партнёры */}
+      <details className="border border-[#3a3a3a] rounded-lg p-4 mb-4" open>
+        <summary className={`${ui.h3} cursor-pointer`}>Транспортные компании ({data.companies.length})</summary>
+        <div className="grid gap-4 mt-4">
+          {data.companies.map((c, i) => (
+            <div key={i} className="border border-[#3a3a3a] rounded-lg p-4 grid md:grid-cols-2 gap-4">
+              <div className="grid gap-3">
+                <div>
+                  <label className={ui.label}>Название</label>
+                  <input value={c.name ?? ""} onChange={(e) => {
+                    const n = [...data.companies]; n[i] = { ...n[i], name: e.target.value }; setData({ ...data, companies: n });
+                  }} className={ui.input} />
+                </div>
+                <div>
+                  <label className={ui.label}>Описание</label>
+                  <textarea value={c.description ?? ""} onChange={(e) => {
+                    const n = [...data.companies]; n[i] = { ...n[i], description: e.target.value }; setData({ ...data, companies: n });
+                  }} className={ui.textarea} rows={2} />
+                </div>
+                <div>
+                  <label className={ui.label}>Сроки</label>
+                  <input value={c.timing ?? ""} onChange={(e) => {
+                    const n = [...data.companies]; n[i] = { ...n[i], timing: e.target.value }; setData({ ...data, companies: n });
+                  }} className={ui.input} placeholder="2–7 дней" />
+                </div>
+                <div>
+                  <label className={ui.label}>Особенности (через запятую)</label>
+                  <input
+                    value={(c.features ?? []).join(", ")}
+                    onChange={(e) => {
+                      const n = [...data.companies];
+                      n[i] = { ...n[i], features: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) };
+                      setData({ ...data, companies: n });
+                    }}
+                    className={ui.input}
+                    placeholder="Пункты выдачи, Курьер, Страхование"
+                  />
+                </div>
+              </div>
+              <div className="grid gap-3">
+                <div>
+                  <label className={ui.label}>Логотип</label>
+                  {c.logo && (
+                    <div className="mb-2 rounded bg-[#1a1a1a] p-3 flex items-center justify-center h-20">
+                      <img src={c.logo} alt="" className="max-h-full object-contain" />
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <label className={`${ui.btn} ${ui.btnSecondary} cursor-pointer ${uploadingIdx === i ? "opacity-50 pointer-events-none" : ""}`}>
+                      <Upload size={14} /> {uploadingIdx === i ? "…" : "Загрузить"}
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                        const f = e.target.files?.[0]; if (f) uploadLogo(i, f); e.target.value = "";
+                      }} />
+                    </label>
+                    <input
+                      value={c.logo ?? ""}
+                      onChange={(e) => {
+                        const n = [...data.companies]; n[i] = { ...n[i], logo: e.target.value }; setData({ ...data, companies: n });
+                      }}
+                      placeholder="или URL"
+                      className={`${ui.input} flex-1`}
+                    />
+                  </div>
+                </div>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input type="checkbox" checked={c.enabled !== false}
+                    onChange={(e) => {
+                      const n = [...data.companies]; n[i] = { ...n[i], enabled: e.target.checked }; setData({ ...data, companies: n });
+                    }} className="w-5 h-5" />
+                  <span>Показывать</span>
+                </label>
+                <button
+                  onClick={() => setData({ ...data, companies: data.companies.filter((_, j) => j !== i) })}
+                  className={`${ui.btn} ${ui.btnDanger} justify-self-start`}
+                >
+                  <Trash2 size={14} /> Удалить компанию
+                </button>
+              </div>
+            </div>
+          ))}
+          <button
+            onClick={() => setData({ ...data, companies: [...data.companies, { name: "", logo: "", description: "", timing: "", features: [], enabled: true }] })}
+            className={`${ui.btn} ${ui.btnSecondary} justify-self-start`}
+          >
+            <Plus size={16} /> Добавить компанию
+          </button>
+        </div>
+      </details>
+
+      {/* Самовывоз */}
+      <details className="border border-[#3a3a3a] rounded-lg p-4 mb-4">
+        <summary className={`${ui.h3} cursor-pointer`}>Самовывоз</summary>
+        <div className="grid gap-3 mt-4">
+          <div className="grid md:grid-cols-2 gap-3">
+            <div>
+              <label className={ui.label}>Заголовок</label>
+              <input value={data.pickup.title} onChange={(e) => setData({ ...data, pickup: { ...data.pickup, title: e.target.value } })} className={ui.input} />
+            </div>
+            <div>
+              <label className={ui.label}>Подзаголовок</label>
+              <input value={data.pickup.subtitle} onChange={(e) => setData({ ...data, pickup: { ...data.pickup, subtitle: e.target.value } })} className={ui.input} />
+            </div>
+          </div>
+          <div>
+            <label className={ui.label}>Описание</label>
+            <textarea value={data.pickup.description} onChange={(e) => setData({ ...data, pickup: { ...data.pickup, description: e.target.value } })} className={ui.textarea} rows={3} />
+          </div>
+          <div>
+            <label className={ui.label}>Преимущества (по одному в строке)</label>
+            <textarea
+              value={data.pickup.features.join("\n")}
+              onChange={(e) => setData({ ...data, pickup: { ...data.pickup, features: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean) } })}
+              className={ui.textarea}
+              rows={3}
+            />
+          </div>
+          <div className="grid md:grid-cols-3 gap-3">
+            <div>
+              <label className={ui.label}>Адрес</label>
+              <input value={data.pickup.address} onChange={(e) => setData({ ...data, pickup: { ...data.pickup, address: e.target.value } })} className={ui.input} />
+            </div>
+            <div>
+              <label className={ui.label}>Часы работы</label>
+              <input value={data.pickup.hours} onChange={(e) => setData({ ...data, pickup: { ...data.pickup, hours: e.target.value } })} className={ui.input} />
+            </div>
+            <div>
+              <label className={ui.label}>Телефон</label>
+              <input value={data.pickup.phone} onChange={(e) => setData({ ...data, pickup: { ...data.pickup, phone: e.target.value } })} className={ui.input} />
+            </div>
+          </div>
+        </div>
+      </details>
+
+      {/* Упаковка */}
+      <details className="border border-[#3a3a3a] rounded-lg p-4 mb-4">
+        <summary className={`${ui.h3} cursor-pointer`}>Упаковка ({data.packaging.items.length})</summary>
+        <div className="grid gap-3 mt-4">
+          <div>
+            <label className={ui.label}>Заголовок секции</label>
+            <input value={data.packaging.title} onChange={(e) => setData({ ...data, packaging: { ...data.packaging, title: e.target.value } })} className={ui.input} />
+          </div>
+          {data.packaging.items.map((item, i) => (
+            <div key={i} className="border border-[#3a3a3a] rounded p-3 grid gap-2">
+              <div className="flex justify-between items-center">
+                <span className="text-[13px] text-[#888]">Пункт #{i + 1}</span>
+                <button onClick={() => setData({ ...data, packaging: { ...data.packaging, items: data.packaging.items.filter((_, j) => j !== i) } })} className="text-red-400 text-[13px]">удалить</button>
+              </div>
+              <input value={item.title} onChange={(e) => { const n = [...data.packaging.items]; n[i] = { ...n[i], title: e.target.value }; setData({ ...data, packaging: { ...data.packaging, items: n } }); }} placeholder="Заголовок" className={ui.input} />
+              <textarea value={item.desc} onChange={(e) => { const n = [...data.packaging.items]; n[i] = { ...n[i], desc: e.target.value }; setData({ ...data, packaging: { ...data.packaging, items: n } }); }} placeholder="Описание" className={ui.textarea} rows={2} />
+            </div>
+          ))}
+          <button
+            onClick={() => setData({ ...data, packaging: { ...data.packaging, items: [...data.packaging.items, { title: "", desc: "" }] } })}
+            className={`${ui.btn} ${ui.btnSecondary} justify-self-start`}
+          >
+            <Plus size={16} /> Добавить пункт
+          </button>
+        </div>
+      </details>
+
+      {/* Способы оплаты */}
+      <details className="border border-[#3a3a3a] rounded-lg p-4 mb-4">
+        <summary className={`${ui.h3} cursor-pointer`}>Способы оплаты ({data.paymentMethods.length})</summary>
+        <div className="grid gap-3 mt-4">
+          {data.paymentMethods.map((m, i) => (
+            <div key={i} className="border border-[#3a3a3a] rounded p-3 grid gap-2">
+              <div className="flex justify-between items-center">
+                <span className="text-[13px] text-[#888]">Способ #{i + 1}</span>
+                <div className="flex gap-3 items-center">
+                  <label className="flex items-center gap-2 text-[13px]">
+                    <input type="checkbox" checked={m.enabled !== false}
+                      onChange={(e) => { const n = [...data.paymentMethods]; n[i] = { ...n[i], enabled: e.target.checked }; setData({ ...data, paymentMethods: n }); }} />
+                    показывать
+                  </label>
+                  <button onClick={() => setData({ ...data, paymentMethods: data.paymentMethods.filter((_, j) => j !== i) })} className="text-red-400 text-[13px]">удалить</button>
+                </div>
+              </div>
+              <div className="grid md:grid-cols-2 gap-2">
+                <input value={m.name ?? ""} onChange={(e) => { const n = [...data.paymentMethods]; n[i] = { ...n[i], name: e.target.value }; setData({ ...data, paymentMethods: n }); }} placeholder="Название" className={ui.input} />
+                <select value={m.icon ?? "card"} onChange={(e) => { const n = [...data.paymentMethods]; n[i] = { ...n[i], icon: e.target.value }; setData({ ...data, paymentMethods: n }); }} className={ui.input}>
+                  {paymentIconOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+              <textarea value={m.description ?? ""} onChange={(e) => { const n = [...data.paymentMethods]; n[i] = { ...n[i], description: e.target.value }; setData({ ...data, paymentMethods: n }); }} placeholder="Описание" className={ui.textarea} rows={2} />
+            </div>
+          ))}
+          <button
+            onClick={() => setData({ ...data, paymentMethods: [...data.paymentMethods, { name: "", description: "", icon: "card", enabled: true }] })}
+            className={`${ui.btn} ${ui.btnSecondary} justify-self-start`}
+          >
+            <Plus size={16} /> Добавить способ
+          </button>
+        </div>
+      </details>
+
+      {/* FAQ */}
+      <details className="border border-[#3a3a3a] rounded-lg p-4 mb-4">
+        <summary className={`${ui.h3} cursor-pointer`}>Частые вопросы ({data.faq.length})</summary>
+        <div className="grid gap-3 mt-4">
+          {data.faq.map((f, i) => (
+            <div key={i} className="border border-[#3a3a3a] rounded p-3 grid gap-2">
+              <div className="flex justify-between items-center">
+                <span className="text-[13px] text-[#888]">Вопрос #{i + 1}</span>
+                <button onClick={() => setData({ ...data, faq: data.faq.filter((_, j) => j !== i) })} className="text-red-400 text-[13px]">удалить</button>
+              </div>
+              <input value={f.q} onChange={(e) => { const n = [...data.faq]; n[i] = { ...n[i], q: e.target.value }; setData({ ...data, faq: n }); }} placeholder="Вопрос" className={ui.input} />
+              <textarea value={f.a} onChange={(e) => { const n = [...data.faq]; n[i] = { ...n[i], a: e.target.value }; setData({ ...data, faq: n }); }} placeholder="Ответ" className={ui.textarea} rows={3} />
+            </div>
+          ))}
+          <button
+            onClick={() => setData({ ...data, faq: [...data.faq, { q: "", a: "" }] })}
+            className={`${ui.btn} ${ui.btnSecondary} justify-self-start`}
+          >
+            <Plus size={16} /> Добавить вопрос
+          </button>
+        </div>
+      </details>
+
+      <div className="flex gap-3 mt-4 pt-4 border-t border-[#3a3a3a]">
+        <button onClick={save} disabled={saving} className={`${ui.btn} ${ui.btnPrimary} ${saving ? "opacity-50" : ""}`}>
+          <Check size={18} /> {saving ? "Сохранение…" : "Сохранить"}
+        </button>
+      </div>
     </div>
   );
 };
