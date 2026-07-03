@@ -332,6 +332,50 @@ Deno.serve(async (req) => {
         return json({ data: { url: pub.publicUrl } });
       }
 
+      // ===== STORAGE: список файлов в бакете (для медиа-библиотеки) =====
+      case "storage.list": {
+        const bucket = String(payload?.bucket ?? "");
+        const prefix = String(payload?.prefix ?? "");
+        const limit = Math.min(Number(payload?.limit ?? 500), 1000);
+        if (!bucket) return json({ error: "bucket required" }, 400);
+        const { data, error } = await admin.storage.from(bucket).list(prefix, {
+          limit,
+          sortBy: { column: "created_at", order: "desc" },
+        });
+        if (error) throw error;
+        // Отфильтровываем placeholder-папки (у них id === null) и складываем публичные URL
+        const files = (data ?? [])
+          .filter((f: any) => f && f.id)
+          .map((f: any) => {
+            const path = prefix ? `${prefix.replace(/\/$/, "")}/${f.name}` : f.name;
+            const { data: pub } = admin.storage.from(bucket).getPublicUrl(path);
+            return {
+              name: f.name,
+              path,
+              size: f.metadata?.size ?? null,
+              mimeType: f.metadata?.mimetype ?? null,
+              createdAt: f.created_at ?? null,
+              updatedAt: f.updated_at ?? null,
+              publicUrl: pub.publicUrl,
+            };
+          });
+        return json({ data: files });
+      }
+
+      // ===== STORAGE: удаление файла =====
+      case "storage.delete": {
+        const bucket = String(payload?.bucket ?? "");
+        const paths: string[] = Array.isArray(payload?.paths)
+          ? payload.paths.map((p: any) => String(p))
+          : payload?.path
+            ? [String(payload.path)]
+            : [];
+        if (!bucket || !paths.length) return json({ error: "bucket/paths required" }, 400);
+        const { error } = await admin.storage.from(bucket).remove(paths);
+        if (error) throw error;
+        return json({ ok: true, removed: paths.length });
+      }
+
       // ===== APP SETTINGS (sender etc.) =====
       case "settings.get": {
         const key = String(payload?.key ?? "");
