@@ -436,8 +436,8 @@ Deno.serve(async (req) => {
           .from(bucket)
           .upload(path, bytes, { contentType: mime, upsert: true });
         if (error) throw error;
-        const { data: pub } = admin.storage.from(bucket).getPublicUrl(path);
-        return json({ data: { url: pub.publicUrl } });
+        return json({ data: { url: buildPublicUrl(bucket, path) } });
+
       }
 
       // ===== STORAGE: список файлов в бакете (для медиа-библиотеки) =====
