@@ -1090,6 +1090,43 @@ const ProductEditor = ({
         </div>
 
         {/* AR-модели */}
+        <div className="border border-[#3a3a3a] rounded-xl bg-[#181818] p-4 space-y-2">
+          <div className="text-[13px] font-semibold text-white flex items-center gap-2">
+            📱 3D-модель для дополненной реальности (AR)
+          </div>
+          <div className="text-[12px] text-[#bbb] leading-relaxed space-y-1.5">
+            <p>
+              Загрузите <b>две версии одной и той же модели</b> — по одной для Android и iOS.
+              Тогда на телефоне у пользователя появится кнопка «Посмотреть в AR»:
+              он наведёт камеру, и мебель встанет прямо в его комнате.
+            </p>
+            <ul className="list-disc pl-5 space-y-0.5">
+              <li>
+                <b>Android — файл <code className="text-primary">.glb</code></b> (glTF Binary).
+                До <b>10 МБ</b>. Открывается в Google Scene Viewer (уже встроен в Android).
+              </li>
+              <li>
+                <b>iOS — файл <code className="text-primary">.usdz</code></b> (USDZ).
+                До <b>25 МБ</b>. Открывается в Apple Quick Look только через <b>Safari</b>.
+              </li>
+              <li>
+                Обе модели должны быть <b>одного объекта</b>, в <b>одном масштабе</b> (1 unit = 1 метр — иначе стол окажется размером с дом).
+              </li>
+              <li>
+                Сделать модель можно в Blender (экспорт .glb) и Apple Reality Composer (экспорт .usdz),
+                либо заказать у 3D-моделлера. Часто продавцы 3D-моделей на sketchfab/turbosquid отдают оба формата.
+              </li>
+              <li>
+                Файлы автоматически загружаются в защищённое хранилище с публичным доступом только по прямой ссылке (bucket <code>product-models</code>) — их видно только когда пользователь открыл товар.
+              </li>
+              <li>
+                На компьютере кнопка AR покажет <b>QR-код</b>: пользователь наведёт телефон и откроет AR там.
+                На самом ПК AR не запускается — так задумано.
+              </li>
+            </ul>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className={ui.label}>AR — Android (.glb)</label>
