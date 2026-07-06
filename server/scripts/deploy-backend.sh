@@ -90,6 +90,21 @@ echo "==> Перезапускаю functions runtime"
 docker compose up -d functions
 docker compose restart functions
 
+echo "==> Синхронизирую email-шаблоны GoTrue"
+TEMPLATES_SRC="$SERVER_DIR/gotrue-templates"
+TEMPLATES_DST="$SERVER_DIR/volumes/gotrue-templates"
+if [[ -d "$TEMPLATES_SRC" ]]; then
+  mkdir -p "$TEMPLATES_DST"
+  cp -f "$TEMPLATES_SRC"/*.html "$TEMPLATES_DST"/
+  echo "  -> шаблоны скопированы в $TEMPLATES_DST"
+  # Поднимаем/обновляем контейнер, раздающий шаблоны по HTTP внутри docker-сети,
+  # и перезапускаем auth, чтобы он подхватил новые env / свежий шаблон-кэш.
+  docker compose up -d email-templates auth
+  docker compose restart email-templates auth
+else
+  echo "  -> $TEMPLATES_SRC не найден, шаг пропущен"
+fi
+
 echo "==> Проверка"
-docker compose ps functions
+docker compose ps functions auth email-templates
 echo "Готово: backend обновлён. Проверь /functions/v1/admin-api и админку сайта."
