@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/contexts/CartContext";
 import SEO, { buildProductJsonLd, buildBreadcrumbJsonLd, buildFAQJsonLd } from "@/components/SEO";
+import ARModal from "@/components/ARModal";
 
 // ─── Stars ───
 const Stars = ({ rating, size = 16 }: { rating: number; size?: number }) => (
