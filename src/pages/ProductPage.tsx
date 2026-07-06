@@ -207,6 +207,7 @@ const ProductPage = () => {
   const { products: allProducts } = useDbProducts();
   const { addItem } = useCart();
   const [showAR, setShowAR] = useState(false);
+  const [arAutoLaunch, setArAutoLaunch] = useState(false);
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<"reviews" | "qa">("reviews");
   const [isFavorite, setIsFavorite] = useState(false);
