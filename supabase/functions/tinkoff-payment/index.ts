@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
         Description: `Заказ №${order.order_number ?? order.id.slice(0, 8)}`,
         SuccessURL: `${origin}/account?payment=success&order=${order.id}`,
         FailURL: `${origin}/account?payment=fail&order=${order.id}`,
-        NotificationURL: `${SUPABASE_URL}/functions/v1/tinkoff-payment`,
+        NotificationURL: `${PUBLIC_API_URL}/functions/v1/tinkoff-payment`,
         DATA: order.customer_email ? { Email: order.customer_email } : undefined,
       };
 
