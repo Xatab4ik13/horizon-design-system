@@ -25,6 +25,12 @@ const Header = () => {
   const isMobile = useIsMobile();
   const { totalItems } = useCart();
   const navItems = useNavMenu(defaultNavItems);
+  const allCategories = useProductCategories();
+  const categories = allCategories.filter((c) => c.show_in_menu).map((c) => ({
+    slug: c.slug,
+    name: c.name,
+    image: resolveCategoryImage(c),
+  }));
   const [activeTab, setActiveTab] = useState(
     navItems.find((item) => item.url === location.pathname)?.name || navItems[0].name
   );
