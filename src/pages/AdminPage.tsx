@@ -3186,8 +3186,7 @@ const SettingsPanel = () => {
 
       <div className={ui.card}>
         <div className="flex gap-3">
-      <div className={ui.card}>
-        <div className="flex gap-3">
+
           <button
             onClick={save}
             disabled={saving}
