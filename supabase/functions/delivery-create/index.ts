@@ -73,11 +73,12 @@ async function createYandexClaim(order: any, sender: Record<string, any>) {
         point_id: 1,
         visit_order: 1,
         type: "source",
-        address: { fullname: sender.address ?? "" },
+        address: { fullname: providerCfg(sender, "yandex").address || providerCfg(sender, "yandex").city },
         contact: {
           name: sender.contact_name ?? "FAKTURA",
           phone: sender.contact_phone ?? "+79991234567",
         },
+
       },
       {
         point_id: 2,
