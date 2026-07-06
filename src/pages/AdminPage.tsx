@@ -3703,10 +3703,13 @@ const PAGES_META: { key: PageKey; label: string; defTitle: string; defSubtitle: 
   { key: "contacts", label: "Контакты",           defTitle: "Контакты", defSubtitle: "Свяжитесь с нами любым удобным способом — мы всегда на связи" },
 ];
 
-const PagesHeadersEditor = () => {
+const PagesHeadersEditor = ({ only }: { only?: PageKey[] } = {}) => {
+  const pages = only ? PAGES_META.filter((p) => only.includes(p.key)) : PAGES_META;
   const [val, setVal] = useState<Record<string, { title: string; subtitle: string }>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+
 
   useEffect(() => {
     adminCallSWR("settings.get", { key: "pages" })
