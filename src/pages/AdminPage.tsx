@@ -3143,7 +3143,6 @@ const ContentPanel = () => {
       "nav_menu",
       "homepage_blocks",
       "services_docs",
-      "about_page",
       "contacts_page",
       "services_page",
       "delivery_page",
@@ -3167,7 +3166,6 @@ const ContentPanel = () => {
       <ContactsPageEditor />
       <ServicesPageEditor />
       <DeliveryPageEditor />
-      <AboutPageEditor />
       <ServicesDocsEditor />
       <SeoEditor />
     </div>
@@ -3185,7 +3183,6 @@ const SEO_PAGES: { key: SeoPageKey; label: string; path: string }[] = [
   { key: "delivery", label: "Доставка и оплата",    path: "/delivery" },
   { key: "blog",     label: "Блог",                 path: "/blog" },
   { key: "contacts", label: "Контакты",             path: "/contacts" },
-  { key: "about",    label: "О компании",           path: "/about" },
 ];
 
 const SeoEditor = () => {
@@ -3998,7 +3995,6 @@ const AVAILABLE_PAGES: { url: string; label: string }[] = [
   { url: "/blog", label: "Блог" },
   { url: "/delivery", label: "Доставка и оплата" },
   { url: "/contacts", label: "Контакты" },
-  { url: "/about", label: "О нас" },
   { url: "/cart", label: "Корзина" },
   { url: "/account", label: "Личный кабинет" },
 ];
@@ -4333,52 +4329,7 @@ const ServicesDocsEditor = () => {
   );
 };
 
-// ===================================================================
-// ABOUT PAGE EDITOR — текст страницы «О компании»
-// ===================================================================
-const AboutPageEditor = () => {
-  const [text, setText] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    adminCallSWR("settings.get", { key: "about_page" })
-      .then((r) => { setText(r.data?.text ?? ""); setLoading(false); })
-      .catch((e) => { toast.error(e.message); setLoading(false); });
-  }, []);
-
-  const save = async () => {
-    setSaving(true);
-    try {
-      await adminCall("settings.set", { key: "about_page", value: { text } });
-      toast.success("Страница «О компании» сохранена");
-    } catch (e: any) { toast.error(e.message); }
-    setSaving(false);
-  };
-
-  if (loading) return <p className="text-[#888]">Загрузка «О компании»…</p>;
-
-  return (
-    <div className={ui.card}>
-      <h2 className={`${ui.h2} mb-2`}>Страница «О компании»</h2>
-      <p className="text-[14px] text-[#888] mb-4">
-        Текст со страницы /about. Пустые строки — разделители абзацев.
-      </p>
-      <textarea
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        className={ui.textarea}
-        rows={14}
-        placeholder="FAKTURA — мастерская изделий из натурального дерева…"
-      />
-      <div className="flex gap-2 mt-4">
-        <button onClick={save} disabled={saving} className={`${ui.btn} ${ui.btnPrimary} ${saving ? "opacity-50" : ""}`}>
-          <Check size={18} /> {saving ? "Сохранение…" : "Сохранить"}
-        </button>
-      </div>
-    </div>
-  );
-};
 
 // ===================================================================
 // NOTIFICATIONS EDITOR — email для уведомлений о заявках/заказах
