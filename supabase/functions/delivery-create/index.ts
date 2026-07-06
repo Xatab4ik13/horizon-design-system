@@ -46,6 +46,14 @@ async function getSender() {
   return (data?.value ?? {}) as Record<string, any>;
 }
 
+function providerCfg(sender: Record<string, any>, prefix: "cdek" | "pek" | "yandex") {
+  return {
+    city: sender[`${prefix}_city`] || sender.city || "",
+    address: sender[`${prefix}_address`] || sender.address || "",
+  };
+}
+
+
 async function createYandexClaim(order: any, sender: Record<string, any>) {
   const items = (order.items as any[]).map((i, idx) => ({
     pickup_point: 1,
