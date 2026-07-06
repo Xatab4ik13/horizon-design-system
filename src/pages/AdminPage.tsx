@@ -3035,12 +3035,23 @@ const BlogPanel = () => {
 // НАСТРОЙКИ — отправитель (для расчёта/создания доставки)
 // ===================================================================
 const emptySender = {
-  city: "",
-  address: "",
+  // Общий контакт (используется во всех перевозчиках, если у перевозчика не указан свой)
   contact_name: "",
   contact_phone: "",
-  pek_city_id: "",
+  // Общий (legacy) — используется как фолбэк, если у перевозчика не указан свой адрес
+  city: "",
+  address: "",
+  // СДЭК
+  cdek_city: "",
+  cdek_address: "",
   cdek_city_code: "",
+  // ПЭК
+  pek_city: "",
+  pek_address: "",
+  pek_city_id: "",
+  // Яндекс.Доставка
+  yandex_city: "",
+  yandex_address: "",
 };
 
 const SettingsPanel = () => {
@@ -3049,8 +3060,6 @@ const SettingsPanel = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    // Один batch-вызов под обе панели (sender + notifications),
-    // чтобы первая отрисовка не упиралась в 2 параллельных холодных запроса.
     prefetchAdminSettings(["sender", "notifications"]);
     adminCallSWR("settings.get", { key: "sender" })
       .then((r) => {
@@ -3091,37 +3100,82 @@ const SettingsPanel = () => {
   return (
     <div className="grid gap-6">
       <div className={ui.card}>
-        <h2 className={`${ui.h2} mb-2`}>Отправитель</h2>
+        <h2 className={`${ui.h2} mb-2`}>Отправитель — контакт</h2>
         <p className="text-[14px] text-[#888] mb-6">
-          Эти данные используются для расчёта доставки в Яндекс.Доставке и ПЭК и для
-          создания заявок у перевозчиков.
+          Общее контактное лицо, которое передаётся во всех заявках у перевозчиков.
+        </p>
+        <div className="grid md:grid-cols-2 gap-4">
+          {field("contact_name", "Контактное лицо", "Иван Иванов")}
+          {field("contact_phone", "Телефон", "+79991234567")}
+        </div>
+      </div>
+
+      <div className={ui.card}>
+        <h2 className={`${ui.h2} mb-2`}>Адрес отправки — общий (фолбэк)</h2>
+        <p className="text-[14px] text-[#888] mb-6">
+          Используется, если для конкретного перевозчика ниже не указан свой адрес.
         </p>
         <div className="grid md:grid-cols-2 gap-4">
           {field("city", "Город", "Москва")}
           {field("address", "Адрес склада / пункта отправки", "ул. Мастеровая, 12")}
-          {field("contact_name", "Контактное лицо", "Иван Иванов")}
-          {field("contact_phone", "Телефон", "+79991234567")}
-          {field(
-            "pek_city_id",
-            "ID города-отправителя в ПЭК",
-            "из ЛК ПЭК (например, 50001)",
-          )}
+        </div>
+      </div>
+
+      <div className={ui.card}>
+        <h2 className={`${ui.h2} mb-2`}>СДЭК</h2>
+        <p className="text-[14px] text-[#888] mb-6">
+          Откуда СДЭК забирает груз. Если поля пустые — берётся общий адрес выше.
+        </p>
+        <div className="grid md:grid-cols-2 gap-4">
+          {field("cdek_city", "Город отправителя", "Москва")}
+          {field("cdek_address", "Адрес отправителя", "ул. Мастеровая, 12")}
           {field(
             "cdek_city_code",
-            "Код города-отправителя в СДЭК",
-            "необяз., иначе по названию города (напр. 44)",
+            "Код города СДЭК (необяз.)",
+            "если пусто — по названию (напр. 44)",
           )}
         </div>
-        <div className="flex gap-3 mt-6 pt-6 border-t border-[#3a3a3a]">
+      </div>
+
+      <div className={ui.card}>
+        <h2 className={`${ui.h2} mb-2`}>ПЭК</h2>
+        <p className="text-[14px] text-[#888] mb-6">
+          Откуда ПЭК забирает груз. Если поля пустые — берётся общий адрес.
+        </p>
+        <div className="grid md:grid-cols-2 gap-4">
+          {field("pek_city", "Город отправителя", "Москва")}
+          {field("pek_address", "Адрес отправителя", "ул. Мастеровая, 12")}
+          {field(
+            "pek_city_id",
+            "ID города в ПЭК (необяз.)",
+            "из ЛК ПЭК (напр. 50001)",
+          )}
+        </div>
+      </div>
+
+      <div className={ui.card}>
+        <h2 className={`${ui.h2} mb-2`}>Яндекс.Доставка</h2>
+        <p className="text-[14px] text-[#888] mb-6">
+          Откуда Яндекс забирает груз. Если поля пустые — берётся общий адрес.
+        </p>
+        <div className="grid md:grid-cols-2 gap-4">
+          {field("yandex_city", "Город отправителя", "Москва")}
+          {field("yandex_address", "Адрес отправителя (полный)", "Москва, ул. Мастеровая, 12")}
+        </div>
+      </div>
+
+      <div className={ui.card}>
+        <div className="flex gap-3">
           <button
             onClick={save}
             disabled={saving}
             className={`${ui.btn} ${ui.btnPrimary} ${saving ? "opacity-50" : ""}`}
           >
-            <Check size={18} /> {saving ? "Сохранение…" : "Сохранить"}
+            <Check size={18} /> {saving ? "Сохранение…" : "Сохранить все настройки"}
           </button>
         </div>
       </div>
+
 
       <NotificationsEditor />
       <PasswordPanel />

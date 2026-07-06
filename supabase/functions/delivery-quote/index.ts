@@ -46,10 +46,24 @@ async function getSender() {
   return (data?.value ?? {}) as Record<string, any>;
 }
 
+// Достаём настройки конкретного перевозчика с фолбэком на общий адрес
+function providerCfg(sender: Record<string, any>, prefix: "cdek" | "pek" | "yandex") {
+  return {
+    city: sender[`${prefix}_city`] || sender.city || "",
+    address: sender[`${prefix}_address`] || sender.address || "",
+  };
+}
+
+
 // ===== Яндекс Доставка =====
 async function quoteYandex(sender: Record<string, any>, city: string, address: string, items: Item[]) {
   if (!YANDEX_TOKEN) return { ok: false, error: "Яндекс токен не настроен" };
   try {
+    const cfg = providerCfg(sender, "yandex");
+    const fromAddress = cfg.address || cfg.city;
+    if (!fromAddress) {
+      return { ok: false, error: "Не указан адрес отправителя Яндекс в настройках админки" };
+    }
     const sizeM = (cm?: number) => Math.max(0.1, (cm ?? 30) / 100);
     const body = {
       items: items.map((i, idx) => ({
@@ -61,8 +75,8 @@ async function quoteYandex(sender: Record<string, any>, city: string, address: s
         title: `item-${idx + 1}`,
       })),
       route_points: [
-        { coordinates: undefined, fullname: sender.address ?? "" },
-        { coordinates: undefined, fullname: address || city },
+        { fullname: fromAddress },
+        { fullname: address || city },
       ],
       requirements: { taxi_class: "express" },
     };
@@ -79,11 +93,13 @@ async function quoteYandex(sender: Record<string, any>, city: string, address: s
     if (!r.ok) return { ok: false, error: `Yandex ${r.status}: ${text.slice(0, 200)}` };
     const j = JSON.parse(text);
     const cost = Number(j.price ?? j.price_raw ?? 0);
+    if (!cost) return { ok: false, error: "Яндекс не вернул стоимость (проверь адрес/тариф)" };
     return { ok: true, cost: Math.round(cost), days: "1–2 дня", raw: j };
   } catch (e: any) {
     return { ok: false, error: e?.message ?? String(e) };
   }
 }
+
 
 // ===== ПЭК =====
 // Документация: https://kabinet.pecom.ru/api/v1/
@@ -115,13 +131,15 @@ async function getPekCityId(cityName: string): Promise<number | null> {
 async function quotePek(sender: Record<string, any>, city: string, items: Item[]) {
   if (!PEK_LOGIN || !PEK_KEY) return { ok: false, error: "ПЭК ключи не настроены" };
   try {
+    const pekCfg = providerCfg(sender, "pek");
     let senderCityId = Number(sender.pek_city_id) || null;
-    if (!senderCityId && sender.city) {
-      senderCityId = await getPekCityId(String(sender.city));
+    if (!senderCityId && pekCfg.city) {
+      senderCityId = await getPekCityId(String(pekCfg.city));
     }
     if (!senderCityId) {
       return { ok: false, error: "ПЭК: не определён город отправителя (укажите его в настройках)" };
     }
+
     const receiverCityId = await getPekCityId(city);
     if (!receiverCityId) {
       return { ok: false, error: `ПЭК: город «${city}» не найден` };
@@ -227,53 +245,67 @@ async function quoteCdek(sender: Record<string, any>, city: string, items: Item[
   }
   try {
     const token = await getCdekToken();
+    const cdekCfg = providerCfg(sender, "cdek");
     const fromCode =
       Number(sender.cdek_city_code) ||
-      (await getCdekCityCode(token, String(sender.city ?? "Москва")));
+      (await getCdekCityCode(token, String(cdekCfg.city || "Москва")));
     const toCode = await getCdekCityCode(token, city);
     if (!fromCode) return { ok: false, error: "Не определён город отправителя СДЭК" };
     if (!toCode) return { ok: false, error: `СДЭК: город «${city}» не найден` };
 
     const packages = items.flatMap((i) =>
       Array.from({ length: i.quantity }, () => ({
-        weight: Math.max(100, Math.round((i.weight_kg ?? 1) * 1000)), // граммы
+        weight: Math.max(100, Math.round((i.weight_kg ?? 1) * 1000)),
         length: Math.max(1, Math.round(i.depth_cm ?? 30)),
         width: Math.max(1, Math.round(i.width_cm ?? 30)),
         height: Math.max(1, Math.round(i.height_cm ?? 30)),
       })),
     );
-    const body = {
-      tariff_code: 137, // склад-дверь
-      from_location: { code: fromCode },
-      to_location: { code: toCode },
-      packages,
-    };
-    const r = await fetch("https://api.cdek.ru/v2/calculator/tariff", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
-    const text = await r.text();
-    if (!r.ok) return { ok: false, error: `СДЭК ${r.status}: ${text.slice(0, 200)}` };
-    const j = JSON.parse(text);
-    const cost = Number(j?.total_sum ?? j?.delivery_sum ?? 0) || 0;
-    const dayMin = j?.period_min;
-    const dayMax = j?.period_max;
-    const days = dayMin && dayMax ? `${dayMin}–${dayMax} дней` : "3–7 дней";
+    // Перебираем популярные тарифы для ИМ, выбираем самый дешёвый успешный
+    // 136 — Посылка склад-склад, 137 — Посылка склад-дверь,
+    // 233 — Экономичная посылка склад-склад, 234 — Экономичная посылка склад-дверь
+    const tariffs = [137, 234, 136, 233];
+    let best: { cost: number; days: string; raw: any; tariff: number } | null = null;
+    let lastError = "";
+    for (const tariff_code of tariffs) {
+      const r = await fetch("https://api.cdek.ru/v2/calculator/tariff", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tariff_code,
+          from_location: { code: fromCode },
+          to_location: { code: toCode },
+          packages,
+        }),
+      });
+      const text = await r.text();
+      if (!r.ok) {
+        lastError = `СДЭК ${r.status}: ${text.slice(0, 200)}`;
+        continue;
+      }
+      const j = JSON.parse(text);
+      const cost = Number(j?.total_sum ?? j?.delivery_sum ?? 0) || 0;
+      if (cost > 0) {
+        const dayMin = j?.period_min;
+        const dayMax = j?.period_max;
+        const days = dayMin && dayMax ? `${dayMin}–${dayMax} дней` : "3–7 дней";
+        if (!best || cost < best.cost) best = { cost, days, raw: j, tariff: tariff_code };
+      }
+    }
+    if (!best) {
+      return { ok: false, error: lastError || "СДЭК не вернул стоимость ни по одному тарифу" };
+    }
     return {
-      ok: cost > 0,
-      cost: Math.round(cost),
-      days,
-      raw: j,
-      error: cost > 0 ? undefined : "СДЭК не вернул стоимость",
+      ok: true,
+      cost: Math.round(best.cost),
+      days: best.days,
+      raw: { ...best.raw, chosen_tariff: best.tariff },
     };
   } catch (e: any) {
     return { ok: false, error: e?.message ?? String(e) };
   }
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
