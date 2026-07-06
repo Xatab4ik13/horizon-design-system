@@ -23,9 +23,22 @@ const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ADMIN_PASSWORD = Deno.env.get("ADMIN_PASSWORD") ?? "";
 const ADMIN_EMAIL = (Deno.env.get("ADMIN_EMAIL") ?? "").trim().toLowerCase();
 
+// На self-hosted SUPABASE_URL внутри edge-runtime = http://kong:8000 (внутренний адрес).
+// Публичные ссылки, которые уходят в браузер и в БД, ДОЛЖНЫ строиться от внешнего URL —
+// иначе <img src> получает http://kong:8000/... и отображается чёрным квадратом.
+const PUBLIC_STORAGE_URL = (
+  Deno.env.get("SUPABASE_PUBLIC_URL") ||
+  Deno.env.get("API_EXTERNAL_URL") ||
+  SUPABASE_URL
+).replace(/\/$/, "");
+
+const buildPublicUrl = (bucket: string, path: string) =>
+  `${PUBLIC_STORAGE_URL}/storage/v1/object/public/${bucket}/${path.split("/").map(encodeURIComponent).join("/")}`;
+
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
+
 
 // Простое constant-time сравнение
 function safeEqual(a: string, b: string) {
