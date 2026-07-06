@@ -3383,8 +3383,14 @@ const DeliveryCredentialsPanel = () => {
 // ДИАГНОСТИКА ПЕРЕВОЗЧИКОВ — проверяет ключи и связь СДЭК/ПЭК/Яндекс
 // ===================================================================
 type DiagRow = { ok: boolean; step: string; message: string; hint?: string };
+type CredSource = "db" | "env" | "none";
 type DiagResult = {
-  env: Record<string, boolean>;
+  env: Record<string, CredSource | boolean>;
+  sources?: {
+    cdek?: { source: CredSource; environment?: string; baseUrl?: string };
+    pek?:  { source: CredSource; baseUrl?: string };
+    yandex?: { source: CredSource; environment?: string; baseUrl?: string };
+  };
   sender: Record<string, any>;
   cdek: DiagRow; pek: DiagRow; yandex: DiagRow;
 };
