@@ -90,7 +90,17 @@ async function quoteYandex(sender: Record<string, any>, city: string, address: s
       body: JSON.stringify(body),
     });
     const text = await r.text();
-    if (!r.ok) return { ok: false, error: `Yandex ${r.status}: ${text.slice(0, 200)}` };
+    if (!r.ok) {
+      // Яндекс.Экспресс работает только внутри города — межгород возвращает 409
+      if (text.includes("suitable_offer_not_found")) {
+        return {
+          ok: false,
+          error: "Яндекс.Доставка доступна только внутри города. Для межгорода — СДЭК или ПЭК.",
+        };
+      }
+      return { ok: false, error: `Yandex ${r.status}: ${text.slice(0, 200)}` };
+    }
+
     const j = JSON.parse(text);
     const cost = Number(j.price ?? j.price_raw ?? 0);
     if (!cost) return { ok: false, error: "Яндекс не вернул стоимость (проверь адрес/тариф)" };
