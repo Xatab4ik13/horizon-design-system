@@ -21,6 +21,7 @@ const json = (data: unknown, status = 200) =>
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ADMIN_PASSWORD = Deno.env.get("ADMIN_PASSWORD") ?? "";
+const ADMIN_EMAIL = (Deno.env.get("ADMIN_EMAIL") ?? "").trim().toLowerCase();
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -71,6 +72,11 @@ Deno.serve(async (req) => {
 
     // Логин — отдельная ветка без авторизации внутри
     if (action === "login") {
+      const email = String(body?.email ?? "").trim().toLowerCase();
+      // Если на сервере задан ADMIN_EMAIL — требуем совпадение
+      if (ADMIN_EMAIL && email !== ADMIN_EMAIL) {
+        return json({ ok: false, error: "Неверный email или пароль" }, 401);
+      }
       const ok = await verifyPassword(String(password));
       return json({ ok }, ok ? 200 : 401);
     }

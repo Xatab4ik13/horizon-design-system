@@ -159,28 +159,40 @@ export async function prefetchAdminSettings(keys: string[]): Promise<void> {
 }
 
 
-export async function adminLogin(password: string): Promise<boolean> {
+export async function adminLogin(email: string, password: string): Promise<boolean> {
   // 2 захода: на холодный старт edge функции первый вызов часто отваливается
   // сетевой ошибкой даже после внутренних ретраев adminCall.
   let lastErr: any = null;
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const res = await adminCall<{ ok: boolean }>("login", undefined, password);
-      if (res?.ok) {
-        adminAuth.set(password);
+      // Прокидываем email в теле запроса — adminCall его сохранит
+      const password_ = password;
+      const url = ADMIN_FUNCTION_URL;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: PUBLISHABLE_KEY,
+          Authorization: `Bearer ${PUBLISHABLE_KEY}`,
+          "x-admin-password": password_,
+        },
+        body: JSON.stringify({ action: "login", email, password: password_ }),
+      });
+      const data = await response.json().catch(() => null);
+      if (response.ok && data?.ok) {
+        adminAuth.set(password_);
         return true;
       }
-      return false;
+      if (response.status >= 400 && response.status < 500) return false;
+      lastErr = new Error(data?.error ?? `HTTP ${response.status}`);
     } catch (e: any) {
       lastErr = e;
       const msg = String(e?.message ?? "");
       const isNetwork = /Failed to send|Failed to fetch|NetworkError|timeout|aborted/i.test(msg);
-      // Если 4xx (неверный пароль) — сразу false
       if (!isNetwork) return false;
-      if (attempt === 0) await new Promise((r) => setTimeout(r, 600));
     }
+    if (attempt === 0) await new Promise((r) => setTimeout(r, 600));
   }
-  // Все попытки сетевые — пробрасываем, чтобы UI показал реальную причину
   throw lastErr ?? new Error("Сеть недоступна");
 }
 
