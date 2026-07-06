@@ -3085,17 +3085,28 @@ const SettingsPanel = () => {
 
   if (loading) return <p className="text-[#888]">Загрузка…</p>;
 
-  const field = (k: keyof typeof sender, label: string, placeholder = "") => (
+  const field = (
+    k: keyof typeof sender,
+    label: string,
+    placeholder = "",
+    opts: { numeric?: boolean } = {},
+  ) => (
     <div>
       <label className={ui.label}>{label}</label>
       <input
         value={sender[k] ?? ""}
-        onChange={(e) => setSender({ ...sender, [k]: e.target.value })}
+        onChange={(e) => {
+          let v = e.target.value;
+          if (opts.numeric) v = v.replace(/[^\d]/g, "");
+          setSender({ ...sender, [k]: v });
+        }}
+        inputMode={opts.numeric ? "numeric" : undefined}
         className={ui.input}
         placeholder={placeholder}
       />
     </div>
   );
+
 
   return (
     <div className="grid gap-6">
