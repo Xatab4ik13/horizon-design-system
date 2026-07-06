@@ -1,0 +1,37 @@
+# Кастомизации self-hosted стека FAKTURA поверх официального docker-compose.yml
+# из репозитория supabase/supabase.
+#
+# Docker Compose автоматически подхватывает этот файл, если он лежит рядом
+# с основным docker-compose.yml. Ничего вручную указывать не нужно —
+# достаточно `docker compose up -d`.
+#
+# Что здесь:
+#   1. Контейнер email-templates: nginx, раздаёт HTML-шаблоны писем GoTrue
+#      по HTTP только внутри внутренней docker-сети (наружу порты не торчат).
+#   2. Переопределение env-переменных GOTRUE_MAILER_TEMPLATES_* у сервиса auth
+#      так, чтобы GoTrue грузил шаблоны с http://email-templates/*.html.
+#
+# Почему так, а не проще (mount + file path):
+#   GoTrue в этой версии трактует значения GOTRUE_MAILER_TEMPLATES_* как URL.
+#   Если указать локальный путь без схемы — он резолвится относительно SiteURL
+#   и уходит на публичный фронт, где SPA отдаёт index.html вместо шаблона.
+#   Схему file:// эта версия не понимает и молча откатывается на встроенный
+#   английский шаблон. Единственный надёжный способ — реальный HTTP-URL,
+#   доступный из контейнера auth.
+
+services:
+  email-templates:
+    image: nginx:alpine
+    container_name: faktura-email-templates
+    restart: unless-stopped
+    volumes:
+      - ./volumes/gotrue-templates:/usr/share/nginx/html:ro,z
+    # Порты наружу НЕ пробрасываем — доступ только из docker-сети по имени сервиса.
+
+  auth:
+    environment:
+      GOTRUE_MAILER_TEMPLATES_INVITE: http://email-templates/invite.html
+      GOTRUE_MAILER_TEMPLATES_CONFIRMATION: http://email-templates/confirmation.html
+      GOTRUE_MAILER_TEMPLATES_RECOVERY: http://email-templates/recovery.html
+      GOTRUE_MAILER_TEMPLATES_MAGIC_LINK: http://email-templates/magic_link.html
+      GOTRUE_MAILER_TEMPLATES_EMAIL_CHANGE: http://email-templates/email_change.html
