@@ -131,13 +131,15 @@ async function getPekCityId(cityName: string): Promise<number | null> {
 async function quotePek(sender: Record<string, any>, city: string, items: Item[]) {
   if (!PEK_LOGIN || !PEK_KEY) return { ok: false, error: "ПЭК ключи не настроены" };
   try {
+    const pekCfg = providerCfg(sender, "pek");
     let senderCityId = Number(sender.pek_city_id) || null;
-    if (!senderCityId && sender.city) {
-      senderCityId = await getPekCityId(String(sender.city));
+    if (!senderCityId && pekCfg.city) {
+      senderCityId = await getPekCityId(String(pekCfg.city));
     }
     if (!senderCityId) {
       return { ok: false, error: "ПЭК: не определён город отправителя (укажите его в настройках)" };
     }
+
     const receiverCityId = await getPekCityId(city);
     if (!receiverCityId) {
       return { ok: false, error: `ПЭК: город «${city}» не найден` };
