@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/contexts/CartContext";
 import SEO, { buildProductJsonLd, buildBreadcrumbJsonLd, buildFAQJsonLd } from "@/components/SEO";
+import ARModal from "@/components/ARModal";
 
 // ─── Stars ───
 const Stars = ({ rating, size = 16 }: { rating: number; size?: number }) => (
@@ -206,6 +207,7 @@ const ProductPage = () => {
   const { products: allProducts } = useDbProducts();
   const { addItem } = useCart();
   const [showAR, setShowAR] = useState(false);
+  const [arAutoLaunch, setArAutoLaunch] = useState(false);
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<"reviews" | "qa">("reviews");
   const [isFavorite, setIsFavorite] = useState(false);
@@ -241,6 +243,16 @@ const ProductPage = () => {
       size: product.dimensions || "",
     });
   }, [product?.id]);
+
+  // Автоматический запуск AR при переходе с QR-кода (?ar=1)
+  useEffect(() => {
+    if (!product?.arModel) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("ar") === "1") {
+      setArAutoLaunch(true);
+      setShowAR(true);
+    }
+  }, [product?.arModel]);
 
   const handleVariationChange = useCallback(
     (type: string, value: string) => {
@@ -399,40 +411,15 @@ const ProductPage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20">
             {/* Gallery */}
             <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
-              {showAR && product.arModel ? (
-                <div className="aspect-square rounded-2xl bg-card border border-border overflow-hidden relative">
-                  <model-viewer
-                    src={product.arModel.glb}
-                    ios-src={product.arModel.usdz}
-                    alt={product.name}
-                    ar
-                    ar-modes="webxr scene-viewer quick-look"
-                    camera-controls
-                    auto-rotate
-                    shadow-intensity="1"
-                    style={{ width: "100%", height: "100%", background: "transparent" }}
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowAR(false)}
-                    className="absolute top-3 right-3 z-10"
-                  >
-                    <X className="h-4 w-4 mr-1" />
-                    Закрыть
-                  </Button>
-                </div>
-              ) : (
-                <ProductGallery
-                  images={displayImages}
-                  name={product.name}
-                  isNew={product.isNew}
-                  oldPrice={product.oldPrice}
-                  price={product.price}
-                  onARClick={() => setShowAR(true)}
-                  hasAR={!!product.arModel}
-                />
-              )}
+              <ProductGallery
+                images={displayImages}
+                name={product.name}
+                isNew={product.isNew}
+                oldPrice={product.oldPrice}
+                price={product.price}
+                onARClick={() => setShowAR(true)}
+                hasAR={!!product.arModel}
+              />
             </motion.div>
 
             {/* Info */}
@@ -745,6 +732,19 @@ const ProductPage = () => {
           </Button>
         </div>
       </main>
+      {product.arModel && (
+        <ARModal
+          open={showAR}
+          onClose={() => {
+            setShowAR(false);
+            setArAutoLaunch(false);
+          }}
+          glb={product.arModel.glb}
+          usdz={product.arModel.usdz}
+          productName={product.name}
+          autoLaunch={arAutoLaunch}
+        />
+      )}
       <Footer />
     </div>
   );
