@@ -141,6 +141,7 @@ const AdminPage = () => {
 // ЛОГИН
 // ===================================================================
 const LoginScreen = ({ onSuccess }: { onSuccess: () => void }) => {
+  const [email, setEmail] = useState("");
   const [pwd, setPwd] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -148,9 +149,9 @@ const LoginScreen = ({ onSuccess }: { onSuccess: () => void }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const ok = await adminLogin(pwd);
+      const ok = await adminLogin(email.trim(), pwd);
       if (ok) onSuccess();
-      else toast.error("Неверный пароль");
+      else toast.error("Неверный email или пароль");
     } catch (err: any) {
       toast.error("Сеть недоступна, попробуйте ещё раз");
     } finally {
@@ -165,10 +166,20 @@ const LoginScreen = ({ onSuccess }: { onSuccess: () => void }) => {
         <p className="text-center text-[#888] mb-8 text-[15px] uppercase tracking-widest">
           Панель администратора
         </p>
-        <label className={ui.label}>Пароль</label>
+        <label className={ui.label}>Email</label>
+        <input
+          type="email"
+          autoFocus
+          autoComplete="username"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className={ui.input}
+          placeholder="admin@example.com"
+        />
+        <label className={`${ui.label} mt-4`}>Пароль</label>
         <input
           type="password"
-          autoFocus
+          autoComplete="current-password"
           value={pwd}
           onChange={(e) => setPwd(e.target.value)}
           className={ui.input}
@@ -176,7 +187,7 @@ const LoginScreen = ({ onSuccess }: { onSuccess: () => void }) => {
         />
         <button
           type="submit"
-          disabled={loading || !pwd}
+          disabled={loading || !pwd || !email}
           className={`${ui.btn} ${ui.btnPrimary} w-full mt-6 disabled:opacity-50`}
         >
           {loading ? "Проверка…" : "Войти"}
