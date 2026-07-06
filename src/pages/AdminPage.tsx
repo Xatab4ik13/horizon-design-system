@@ -5265,15 +5265,16 @@ const DeliveryPageEditor = () => {
       {/* Партнёры */}
       <details className="border border-[#3a3a3a] rounded-lg p-4 mb-4" open>
         <summary className={`${ui.h3} cursor-pointer`}>Транспортные компании ({data.companies.length})</summary>
+        <p className="text-[13px] text-[#888] mt-3">
+          Фиксированный список из трёх партнёров. Название менять нельзя, остальные поля — редактируемые.
+        </p>
         <div className="grid gap-4 mt-4">
           {data.companies.map((c, i) => (
             <div key={i} className="border border-[#3a3a3a] rounded-lg p-4 grid md:grid-cols-2 gap-4">
               <div className="grid gap-3">
                 <div>
                   <label className={ui.label}>Название</label>
-                  <input value={c.name ?? ""} onChange={(e) => {
-                    const n = [...data.companies]; n[i] = { ...n[i], name: e.target.value }; setData({ ...data, companies: n });
-                  }} className={ui.input} />
+                  <input value={c.name ?? ""} readOnly className={`${ui.input} opacity-70 cursor-not-allowed`} />
                 </div>
                 <div>
                   <label className={ui.label}>Описание</label>
