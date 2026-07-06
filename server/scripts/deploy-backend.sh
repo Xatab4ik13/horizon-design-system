@@ -75,7 +75,7 @@ if [[ -d "$FUNCTIONS_SRC/_shared" ]]; then
   cp -R "$FUNCTIONS_SRC/_shared/." "$FUNCTIONS_DST/_shared/"
   echo "  -> _shared"
 fi
-for fn in admin-api delivery-quote delivery-create delivery-diagnose order-place tinkoff-payment; do
+for fn in admin-api delivery-quote delivery-create delivery-diagnose order-place tinkoff-payment contact-submit; do
   if [[ ! -d "$FUNCTIONS_SRC/$fn" ]]; then
     echo "ERROR: функция $FUNCTIONS_SRC/$fn не найдена" >&2
     exit 1
