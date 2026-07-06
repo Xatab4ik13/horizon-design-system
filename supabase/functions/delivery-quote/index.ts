@@ -245,53 +245,67 @@ async function quoteCdek(sender: Record<string, any>, city: string, items: Item[
   }
   try {
     const token = await getCdekToken();
+    const cdekCfg = providerCfg(sender, "cdek");
     const fromCode =
       Number(sender.cdek_city_code) ||
-      (await getCdekCityCode(token, String(sender.city ?? "Москва")));
+      (await getCdekCityCode(token, String(cdekCfg.city || "Москва")));
     const toCode = await getCdekCityCode(token, city);
     if (!fromCode) return { ok: false, error: "Не определён город отправителя СДЭК" };
     if (!toCode) return { ok: false, error: `СДЭК: город «${city}» не найден` };
 
     const packages = items.flatMap((i) =>
       Array.from({ length: i.quantity }, () => ({
-        weight: Math.max(100, Math.round((i.weight_kg ?? 1) * 1000)), // граммы
+        weight: Math.max(100, Math.round((i.weight_kg ?? 1) * 1000)),
         length: Math.max(1, Math.round(i.depth_cm ?? 30)),
         width: Math.max(1, Math.round(i.width_cm ?? 30)),
         height: Math.max(1, Math.round(i.height_cm ?? 30)),
       })),
     );
-    const body = {
-      tariff_code: 137, // склад-дверь
-      from_location: { code: fromCode },
-      to_location: { code: toCode },
-      packages,
-    };
-    const r = await fetch("https://api.cdek.ru/v2/calculator/tariff", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
-    const text = await r.text();
-    if (!r.ok) return { ok: false, error: `СДЭК ${r.status}: ${text.slice(0, 200)}` };
-    const j = JSON.parse(text);
-    const cost = Number(j?.total_sum ?? j?.delivery_sum ?? 0) || 0;
-    const dayMin = j?.period_min;
-    const dayMax = j?.period_max;
-    const days = dayMin && dayMax ? `${dayMin}–${dayMax} дней` : "3–7 дней";
+    // Перебираем популярные тарифы для ИМ, выбираем самый дешёвый успешный
+    // 136 — Посылка склад-склад, 137 — Посылка склад-дверь,
+    // 233 — Экономичная посылка склад-склад, 234 — Экономичная посылка склад-дверь
+    const tariffs = [137, 234, 136, 233];
+    let best: { cost: number; days: string; raw: any; tariff: number } | null = null;
+    let lastError = "";
+    for (const tariff_code of tariffs) {
+      const r = await fetch("https://api.cdek.ru/v2/calculator/tariff", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tariff_code,
+          from_location: { code: fromCode },
+          to_location: { code: toCode },
+          packages,
+        }),
+      });
+      const text = await r.text();
+      if (!r.ok) {
+        lastError = `СДЭК ${r.status}: ${text.slice(0, 200)}`;
+        continue;
+      }
+      const j = JSON.parse(text);
+      const cost = Number(j?.total_sum ?? j?.delivery_sum ?? 0) || 0;
+      if (cost > 0) {
+        const dayMin = j?.period_min;
+        const dayMax = j?.period_max;
+        const days = dayMin && dayMax ? `${dayMin}–${dayMax} дней` : "3–7 дней";
+        if (!best || cost < best.cost) best = { cost, days, raw: j, tariff: tariff_code };
+      }
+    }
+    if (!best) {
+      return { ok: false, error: lastError || "СДЭК не вернул стоимость ни по одному тарифу" };
+    }
     return {
-      ok: cost > 0,
-      cost: Math.round(cost),
-      days,
-      raw: j,
-      error: cost > 0 ? undefined : "СДЭК не вернул стоимость",
+      ok: true,
+      cost: Math.round(best.cost),
+      days: best.days,
+      raw: { ...best.raw, chosen_tariff: best.tariff },
     };
   } catch (e: any) {
     return { ok: false, error: e?.message ?? String(e) };
   }
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
