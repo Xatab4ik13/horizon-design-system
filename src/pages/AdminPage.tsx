@@ -3742,12 +3742,12 @@ const PagesHeadersEditor = ({ only }: { only?: PageKey[] } = {}) => {
 
   return (
     <div className={ui.card}>
-      <h2 className={`${ui.h2} mb-2`}>Заголовки страниц</h2>
+      <h2 className={`${ui.h2} mb-2`}>{only && only.length === 1 ? "Заголовок страницы" : "Заголовки страниц"}</h2>
       <p className="text-[14px] text-[#888] mb-6">
-        Заголовок и подзаголовок в шапке каждой страницы. Пусто — используется значение по умолчанию.
+        Заголовок и подзаголовок в шапке страницы. Пусто — используется значение по умолчанию.
       </p>
       <div className="grid gap-6">
-        {PAGES_META.map((p) => (
+        {pages.map((p) => (
           <div key={p.key} className="grid md:grid-cols-2 gap-4 pb-6 border-b border-[#3a3a3a] last:border-0 last:pb-0">
             <div>
               <label className={ui.label}>{p.label} — заголовок</label>
@@ -3770,6 +3770,7 @@ const PagesHeadersEditor = ({ only }: { only?: PageKey[] } = {}) => {
           </div>
         ))}
       </div>
+
       <div className="flex gap-3 mt-6 pt-6 border-t border-[#3a3a3a]">
         <button onClick={save} disabled={saving} className={`${ui.btn} ${ui.btnPrimary} ${saving ? "opacity-50" : ""}`}>
           <Check size={18} /> {saving ? "Сохранение…" : "Сохранить"}
