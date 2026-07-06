@@ -202,7 +202,11 @@ async function quotePek(sender: Record<string, any>, city: string, items: Item[]
       body: JSON.stringify(body),
     });
     const text = await r.text();
+    if (r.status === 401 || r.status === 403) {
+      return { ok: false, error: `ПЭК ${r.status}: ключи не приняты. Проверьте PEK_API_LOGIN/PEK_API_KEY.` };
+    }
     if (!r.ok) return { ok: false, error: `ПЭК ${r.status}: ${text.slice(0, 200)}` };
+
     const j = JSON.parse(text);
     // Ответ обычно: { transfers: { auto: { ndsCost, costWithNds, periodMin, periodMax } } }
     const auto = j?.transfers?.auto ?? j?.auto ?? {};
