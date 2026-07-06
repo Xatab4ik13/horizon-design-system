@@ -23,9 +23,22 @@ const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ADMIN_PASSWORD = Deno.env.get("ADMIN_PASSWORD") ?? "";
 const ADMIN_EMAIL = (Deno.env.get("ADMIN_EMAIL") ?? "").trim().toLowerCase();
 
+// На self-hosted SUPABASE_URL внутри edge-runtime = http://kong:8000 (внутренний адрес).
+// Публичные ссылки, которые уходят в браузер и в БД, ДОЛЖНЫ строиться от внешнего URL —
+// иначе <img src> получает http://kong:8000/... и отображается чёрным квадратом.
+const PUBLIC_STORAGE_URL = (
+  Deno.env.get("SUPABASE_PUBLIC_URL") ||
+  Deno.env.get("API_EXTERNAL_URL") ||
+  SUPABASE_URL
+).replace(/\/$/, "");
+
+const buildPublicUrl = (bucket: string, path: string) =>
+  `${PUBLIC_STORAGE_URL}/storage/v1/object/public/${bucket}/${path.split("/").map(encodeURIComponent).join("/")}`;
+
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
+
 
 // Простое constant-time сравнение
 function safeEqual(a: string, b: string) {
@@ -406,9 +419,10 @@ Deno.serve(async (req) => {
         if (!bucket || !path) return json({ error: "bucket/path required" }, 400);
         const { data, error } = await admin.storage.from(bucket).createSignedUploadUrl(path);
         if (error) throw error;
-        const { data: pub } = admin.storage.from(bucket).getPublicUrl(path);
-        return json({ data: { token: data.token, path: data.path, publicUrl: pub.publicUrl } });
+        return json({ data: { token: data.token, path: data.path, publicUrl: buildPublicUrl(bucket, path) } });
       }
+
+
 
       // ===== STORAGE: upload (data URL → bucket) — оставлен для мелких файлов =====
       case "storage.upload": {
@@ -422,8 +436,8 @@ Deno.serve(async (req) => {
           .from(bucket)
           .upload(path, bytes, { contentType: mime, upsert: true });
         if (error) throw error;
-        const { data: pub } = admin.storage.from(bucket).getPublicUrl(path);
-        return json({ data: { url: pub.publicUrl } });
+        return json({ data: { url: buildPublicUrl(bucket, path) } });
+
       }
 
       // ===== STORAGE: список файлов в бакете (для медиа-библиотеки) =====
@@ -442,7 +456,6 @@ Deno.serve(async (req) => {
           .filter((f: any) => f && f.id)
           .map((f: any) => {
             const path = prefix ? `${prefix.replace(/\/$/, "")}/${f.name}` : f.name;
-            const { data: pub } = admin.storage.from(bucket).getPublicUrl(path);
             return {
               name: f.name,
               path,
@@ -450,9 +463,10 @@ Deno.serve(async (req) => {
               mimeType: f.metadata?.mimetype ?? null,
               createdAt: f.created_at ?? null,
               updatedAt: f.updated_at ?? null,
-              publicUrl: pub.publicUrl,
+              publicUrl: buildPublicUrl(bucket, path),
             };
           });
+
         return json({ data: files });
       }
 
