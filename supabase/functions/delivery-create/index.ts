@@ -50,7 +50,8 @@ function providerCfg(sender: Record<string, any>, prefix: "cdek" | "pek" | "yand
 }
 
 
-async function createYandexClaim(order: any, sender: Record<string, any>) {
+async function createYandexClaim(order: any, sender: Record<string, any>, creds: DeliveryCreds["yandex"]) {
+  if (!creds.token) throw new Error("Яндекс токен не настроен в админке");
   const items = (order.items as any[]).map((i, idx) => ({
     pickup_point: 1,
     droppof_point: 2,
@@ -74,19 +75,13 @@ async function createYandexClaim(order: any, sender: Record<string, any>) {
           name: sender.contact_name ?? "FAKTURA",
           phone: sender.contact_phone ?? "+79991234567",
         },
-
       },
       {
         point_id: 2,
         visit_order: 2,
         type: "destination",
-        address: {
-          fullname: order.delivery_address || order.delivery_city || "",
-        },
-        contact: {
-          name: order.customer_name,
-          phone: order.customer_phone,
-        },
+        address: { fullname: order.delivery_address || order.delivery_city || "" },
+        contact: { name: order.customer_name, phone: order.customer_phone },
       },
     ],
     skip_door_to_door: false,
@@ -96,11 +91,11 @@ async function createYandexClaim(order: any, sender: Record<string, any>) {
 
   const requestId = crypto.randomUUID();
   const r = await fetch(
-    `https://b2b.taxi.yandex.net/b2b/cargo/integration/v2/claims/create?request_id=${requestId}`,
+    `${creds.baseUrl}/b2b/cargo/integration/v2/claims/create?request_id=${requestId}`,
     {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${YANDEX_TOKEN}`,
+        Authorization: `Bearer ${creds.token}`,
         "Content-Type": "application/json",
         "Accept-Language": "ru",
       },
@@ -110,16 +105,12 @@ async function createYandexClaim(order: any, sender: Record<string, any>) {
   const text = await r.text();
   if (!r.ok) throw new Error(`Yandex ${r.status}: ${text.slice(0, 300)}`);
   const j = JSON.parse(text);
-  return {
-    external_id: j.id ?? requestId,
-    tracking: j.id ?? "",
-    raw: j,
-  };
+  return { external_id: j.id ?? requestId, tracking: j.id ?? "", raw: j };
 }
 
-async function createPekOrder(order: any, sender: Record<string, any>) {
-  // Минимальный заказ ПЭК (упрощённый, для теста)
-  const auth = btoa(`${PEK_LOGIN}:${PEK_KEY}`);
+async function createPekOrder(order: any, sender: Record<string, any>, creds: DeliveryCreds["pek"]) {
+  if (!creds.login || !creds.key) throw new Error("ПЭК ключи не настроены в админке");
+  const auth = btoa(`${creds.login}:${creds.key}`);
   const totalWeight = (order.items as any[]).reduce(
     (s: number, i: any) => s + (i.weight ? Number(String(i.weight).replace(/[^0-9.]/g, "")) || 1 : 1) * (i.quantity ?? 1),
     0,
@@ -129,12 +120,9 @@ async function createPekOrder(order: any, sender: Record<string, any>) {
     receiverCityName: order.delivery_city || order.delivery_address || "",
     receiverContactName: order.customer_name,
     receiverPhone: order.customer_phone,
-    cargo: {
-      weight: Math.max(0.5, totalWeight),
-      places: order.items.length,
-    },
+    cargo: { weight: Math.max(0.5, totalWeight), places: order.items.length },
   };
-  const r = await fetch("https://kabinet.pecom.ru/api/v1/orders/create", {
+  const r = await fetch(`${creds.baseUrl}/orders/create`, {
     method: "POST",
     headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -150,14 +138,14 @@ async function createPekOrder(order: any, sender: Record<string, any>) {
 }
 
 // ===== СДЭК =====
-async function getCdekToken() {
-  const r = await fetch("https://api.cdek.ru/v2/oauth/token?parameters", {
+async function getCdekToken(creds: DeliveryCreds["cdek"]) {
+  const r = await fetch(`${creds.baseUrl}/v2/oauth/token?parameters`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       grant_type: "client_credentials",
-      client_id: CDEK_ACCOUNT,
-      client_secret: CDEK_PASSWORD,
+      client_id: creds.account,
+      client_secret: creds.password,
     }).toString(),
   });
   const text = await r.text();
@@ -167,33 +155,27 @@ async function getCdekToken() {
   return j.access_token as string;
 }
 
-async function createCdekOrder(order: any, sender: Record<string, any>) {
-  if (!CDEK_ACCOUNT || !CDEK_PASSWORD) throw new Error("СДЭК ключи не настроены");
-  const token = await getCdekToken();
+async function createCdekOrder(order: any, sender: Record<string, any>, creds: DeliveryCreds["cdek"]) {
+  if (!creds.account || !creds.password) throw new Error("СДЭК ключи не настроены в админке");
+  const token = await getCdekToken(creds);
   const packages = (order.items as any[]).map((i: any, idx: number) => ({
     number: `${order.id}-${idx + 1}`,
     weight: Math.max(
       100,
-      Math.round(
-        (i.weight ? Number(String(i.weight).replace(/[^0-9.]/g, "")) || 1 : 1) * 1000,
-      ),
+      Math.round((i.weight ? Number(String(i.weight).replace(/[^0-9.]/g, "")) || 1 : 1) * 1000),
     ),
-    length: 30,
-    width: 30,
-    height: 30,
-    items: [
-      {
-        name: i.name ?? `item-${idx + 1}`,
-        ware_key: String(i.productId ?? idx + 1),
-        cost: Number(i.price ?? 0),
-        amount: Number(i.quantity ?? 1),
-        weight: 1000,
-        payment: { value: 0 },
-      },
-    ],
+    length: 30, width: 30, height: 30,
+    items: [{
+      name: i.name ?? `item-${idx + 1}`,
+      ware_key: String(i.productId ?? idx + 1),
+      cost: Number(i.price ?? 0),
+      amount: Number(i.quantity ?? 1),
+      weight: 1000,
+      payment: { value: 0 },
+    }],
   }));
   const body = {
-    tariff_code: 137, // склад-дверь
+    tariff_code: 137,
     number: order.id,
     sender: {
       name: sender.contact_name ?? "FAKTURA",
@@ -205,10 +187,9 @@ async function createCdekOrder(order: any, sender: Record<string, any>) {
     },
     from_location: { address: providerCfg(sender, "cdek").address || providerCfg(sender, "cdek").city || "Москва" },
     to_location: { address: order.delivery_address || order.delivery_city || "" },
-
     packages,
   };
-  const r = await fetch("https://api.cdek.ru/v2/orders", {
+  const r = await fetch(`${creds.baseUrl}/v2/orders`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -232,19 +213,16 @@ Deno.serve(async (req) => {
       return json({ error: "Unknown provider" }, 400);
     }
     const { data: order, error: oErr } = await admin
-      .from("orders")
-      .select("*")
-      .eq("id", orderId)
-      .maybeSingle();
+      .from("orders").select("*").eq("id", orderId).maybeSingle();
     if (oErr || !order) return json({ error: "Order not found" }, 404);
 
-    const sender = await getSender();
+    const [sender, creds] = await Promise.all([getSender(), loadDeliveryCreds(admin)]);
     const result =
       provider === "yandex"
-        ? await createYandexClaim(order, sender)
+        ? await createYandexClaim(order, sender, creds.yandex)
         : provider === "pek"
-        ? await createPekOrder(order, sender)
-        : await createCdekOrder(order, sender);
+        ? await createPekOrder(order, sender, creds.pek)
+        : await createCdekOrder(order, sender, creds.cdek);
 
     await admin
       .from("orders")
@@ -262,3 +240,4 @@ Deno.serve(async (req) => {
     return json({ error: e?.message ?? "Internal error" }, 500);
   }
 });
+
