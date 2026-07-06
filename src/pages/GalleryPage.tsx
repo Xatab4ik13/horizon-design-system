@@ -97,13 +97,13 @@ const GalleryPage = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-80px" }}
                 transition={{ duration: 0.5, delay: Math.min(i, 5) * 0.06, ease: [0.25, 0.1, 0.25, 1] }}
-                className="group cursor-pointer relative overflow-hidden rounded-2xl aspect-[4/3]"
+                className="group cursor-pointer relative overflow-hidden rounded-2xl aspect-[4/3] bg-black/40"
                 onClick={() => setLightbox(i)}
               >
                 <img
                   src={item.src}
                   alt={item.title}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
                   loading="lazy"
                   decoding="async"
                 />
