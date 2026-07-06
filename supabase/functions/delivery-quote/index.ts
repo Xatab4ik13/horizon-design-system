@@ -46,6 +46,15 @@ async function getSender() {
   return (data?.value ?? {}) as Record<string, any>;
 }
 
+// Достаём настройки конкретного перевозчика с фолбэком на общий адрес
+function providerCfg(sender: Record<string, any>, prefix: "cdek" | "pek" | "yandex") {
+  return {
+    city: sender[`${prefix}_city`] || sender.city || "",
+    address: sender[`${prefix}_address`] || sender.address || "",
+  };
+}
+
+
 // ===== Яндекс Доставка =====
 async function quoteYandex(sender: Record<string, any>, city: string, address: string, items: Item[]) {
   if (!YANDEX_TOKEN) return { ok: false, error: "Яндекс токен не настроен" };
