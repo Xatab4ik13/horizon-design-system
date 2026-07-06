@@ -3446,13 +3446,18 @@ const DeliveryDiagnose = () => {
       {result && (
         <div className="mt-6 grid gap-3">
           <div className="p-3 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a]">
-            <p className="text-[13px] text-[#888] mb-2">Ключи на сервере (env):</p>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-1 text-[13px]">
-              {Object.entries(result.env).map(([k, v]) => (
-                <div key={k} className={v ? "text-emerald-400" : "text-red-400"}>
-                  {v ? "✓" : "✕"} {k}
-                </div>
-              ))}
+            <p className="text-[13px] text-[#888] mb-2">Источник ключей (админка → env → нет):</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-1 text-[13px]">
+              {(["cdek", "pek", "yandex"] as const).map((k) => {
+                const src = result.sources?.[k]?.source ?? (result.env[k.toUpperCase()] as any) ?? "none";
+                const cls = src === "db" ? "text-emerald-400" : src === "env" ? "text-amber-400" : "text-red-400";
+                const label = src === "db" ? "из админки" : src === "env" ? "из .env" : "не задан";
+                return (
+                  <div key={k} className={cls}>
+                    {src === "none" ? "✕" : "✓"} {k.toUpperCase()}: {label}
+                  </div>
+                );
+              })}
             </div>
           </div>
           {row("СДЭК", result.cdek)}
