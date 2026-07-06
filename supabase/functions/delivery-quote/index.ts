@@ -243,7 +243,13 @@ async function getCdekToken() {
     }).toString(),
   });
   const text = await r.text();
-  if (!r.ok) throw new Error(`CDEK auth ${r.status}: ${text.slice(0, 200)}`);
+  if (!r.ok) {
+    const hint = r.status === 401
+      ? " — ключи невалидны, перевыпустите пару Account/Secure password в ЛК СДЭК → Настройки → Интеграция"
+      : "";
+    throw new Error(`СДЭК auth ${r.status}: ${text.slice(0, 150)}${hint}`);
+  }
+
   const j = JSON.parse(text);
   if (!j.access_token) throw new Error("CDEK auth: нет access_token");
   return j.access_token as string;
