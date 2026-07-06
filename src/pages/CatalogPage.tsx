@@ -12,6 +12,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEO, { buildBreadcrumbJsonLd } from "@/components/SEO";
 import { usePageHeader } from "@/hooks/useSiteContent";
+import { useProductCategories, resolveCategoryImage } from "@/hooks/useProductCategories";
 import { cn } from "@/lib/utils";
 import categoryTable from "@/assets/category-table.png";
 import categoryChairs from "@/assets/category-chairs.png";
