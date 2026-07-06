@@ -4,10 +4,7 @@ import {
   ShieldCheck, Receipt, Tag, ChevronRight, Phone, CheckCircle2,
 } from "lucide-react";
 import logoCdek from "@/assets/logo-cdek.png";
-import logoBoxberry from "@/assets/logo-boxberry.png";
 import logoPek from "@/assets/logo-pek.png";
-import logoDelovyeLinii from "@/assets/logo-delovye-linii.png";
-import logoPochta from "@/assets/logo-pochta.png";
 import logoYandex from "@/assets/logo-yandex-delivery.png";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -18,11 +15,8 @@ import { Link } from "react-router-dom";
 
 // ─── Defaults (используются пока админ не заполнил соответствующие поля) ───
 const defaultCompanies = [
-  { name: "СДЭК", logo: logoCdek, description: "Доставка по всей России и СНГ. Более 3 000 пунктов выдачи.", timing: "2–7 дней", features: ["Пункты выдачи", "Курьерская доставка", "Примерка при получении"], enabled: true },
-  { name: "Boxberry", logo: logoBoxberry, description: "Сеть из 4 500+ пунктов выдачи по всей стране.", timing: "3–10 дней", features: ["Пункты выдачи", "Постаматы", "Частичный выкуп"], enabled: true },
   { name: "ПЭК", logo: logoPek, description: "Перевозка крупногабаритных грузов и мебели по России.", timing: "3–14 дней", features: ["Крупногабарит", "Страхование", "До терминала / до двери"], enabled: true },
-  { name: "Деловые Линии", logo: logoDelovyeLinii, description: "Транспортная компания для крупных и тяжёлых отправлений.", timing: "2–10 дней", features: ["Сборный груз", "Доставка до двери", "Жёсткая упаковка"], enabled: true },
-  { name: "Почта России", logo: logoPochta, description: "Доставка в любой населённый пункт страны, включая отдалённые.", timing: "5–21 день", features: ["Любой адрес РФ", "Наложенный платёж", "Трекинг"], enabled: true },
+  { name: "СДЭК", logo: logoCdek, description: "Доставка по всей России и СНГ. Более 3 000 пунктов выдачи.", timing: "2–7 дней", features: ["Пункты выдачи", "Курьерская доставка", "Примерка при получении"], enabled: true },
   { name: "Яндекс Доставка", logo: logoYandex, description: "Быстрая курьерская доставка в крупных городах за 1–2 дня.", timing: "1–2 дня", features: ["Экспресс-доставка", "Курьер до двери", "Отслеживание в реальном времени"], enabled: true },
 ];
 
