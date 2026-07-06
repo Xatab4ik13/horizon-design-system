@@ -218,36 +218,39 @@ const CatalogPage = () => {
 
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {categories.map((cat, i) => (
-                  <motion.div
-                    key={cat.slug}
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: i * 0.1 }}
-                  >
-                    <button
-                      onClick={() => setCategory(cat.slug)}
-                      className="group w-full text-center focus:outline-none"
+                {dbCategories.map((cat, i) => {
+                  const image = resolveCategoryImage(cat);
+                  return (
+                    <motion.div
+                      key={cat.id}
+                      initial={{ opacity: 0, y: 30 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: i * 0.1 }}
                     >
-                      <div className="relative h-64 md:h-80 flex items-center justify-center mb-4">
-                        {categoryImages[cat.slug] ? (
-                          <img
-                            src={categoryImages[cat.slug]}
-                            alt={cat.name}
-                            loading="lazy"
-                            decoding="async"
-                            className="max-w-full max-h-full object-contain transition-transform duration-700 group-hover:scale-110"
-                          />
-                        ) : (
-                          <div className="w-32 h-32 rounded-full bg-muted/20 flex items-center justify-center text-muted-foreground text-4xl">✦</div>
-                        )}
-                      </div>
-                      <h3 className="text-lg md:text-xl text-foreground group-hover:text-primary transition-colors">
-                        {cat.name}
-                      </h3>
-                    </button>
-                  </motion.div>
-                ))}
+                      <button
+                        onClick={() => setCategory(cat.slug)}
+                        className="group w-full text-center focus:outline-none"
+                      >
+                        <div className="relative h-64 md:h-80 flex items-center justify-center mb-4">
+                          {image ? (
+                            <img
+                              src={image}
+                              alt={cat.name}
+                              loading="lazy"
+                              decoding="async"
+                              className="max-w-full max-h-full object-contain transition-transform duration-700 group-hover:scale-110"
+                            />
+                          ) : (
+                            <div className="w-32 h-32 rounded-full bg-muted/20 flex items-center justify-center text-muted-foreground text-4xl">✦</div>
+                          )}
+                        </div>
+                        <h3 className="text-lg md:text-xl text-foreground group-hover:text-primary transition-colors">
+                          {cat.name}
+                        </h3>
+                      </button>
+                    </motion.div>
+                  );
+                })}
               </div>
             </div>
           </section>
