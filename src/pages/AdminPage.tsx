@@ -3063,9 +3063,14 @@ const SettingsPanel = () => {
     prefetchAdminSettings(["sender", "notifications"]);
     adminCallSWR("settings.get", { key: "sender" })
       .then((r) => {
-        setSender({ ...emptySender, ...(r.data ?? {}) });
+        const loaded = { ...emptySender, ...(r.data ?? {}) } as typeof emptySender;
+        // Санитайз: в числовых полях мог остаться мусор (email и т.п.) — вычищаем всё кроме цифр
+        loaded.pek_city_id = String(loaded.pek_city_id ?? "").replace(/[^\d]/g, "");
+        loaded.cdek_city_code = String(loaded.cdek_city_code ?? "").replace(/[^\d]/g, "");
+        setSender(loaded);
         setLoading(false);
       })
+
       .catch((e) => {
         toast.error(e.message);
         setLoading(false);
