@@ -3512,45 +3512,130 @@ const DeliveryDiagnose = () => {
 // ===================================================================
 // CONTENT PANEL — редактирование контента и страниц сайта
 // ===================================================================
+type ContentSubTab =
+  | "home" | "catalog" | "services" | "gallery" | "blog"
+  | "delivery" | "contacts" | "seo" | "nav";
+
+const CONTENT_SUBTABS: { id: ContentSubTab; label: string; hint: string }[] = [
+  { id: "home",     label: "Главная",       hint: "Hero, порядок блоков и содержание секций главной страницы." },
+  { id: "catalog",  label: "Каталог",       hint: "Заголовок страницы каталога. Сами категории — в разделе «Категории каталога»." },
+  { id: "services", label: "Услуги",        hint: "Список услуг, документы для скачивания и заголовок страницы." },
+  { id: "gallery",  label: "Галерея",       hint: "Заголовок страницы. Сами изображения — в разделе «Галерея»." },
+  { id: "blog",     label: "Блог",          hint: "Публикации редактируются в разделе «Блог»." },
+  { id: "delivery", label: "Доставка",      hint: "Условия доставки, партнёры и заголовок страницы." },
+  { id: "contacts", label: "Контакты",      hint: "Адрес, телефоны, соцсети, карта и заголовок страницы." },
+  { id: "seo",      label: "SEO",           hint: "Meta title / description для каждой страницы." },
+  { id: "nav",      label: "Меню и футер",  hint: "Пункты навигации сверху и в футере." },
+];
+
 const ContentPanel = () => {
-  // Подтягиваем все ключи настроек одним запросом и кладём в SWR-кэш,
-  // чтобы дочерние редакторы получили данные мгновенно вместо 8 параллельных
-  // вызовов settings.get на холодном старте edge-функции.
+  const [sub, setSub] = useState<ContentSubTab>(() => {
+    if (typeof window === "undefined") return "home";
+    return (localStorage.getItem("adminContentSubTab") as ContentSubTab) || "home";
+  });
+
   useEffect(() => {
     prefetchAdminSettings([
-      "homepage",
-      "pages",
-      "nav_menu",
-      "homepage_blocks",
-      "services_docs",
-      "contacts_page",
-      "services_page",
-      "delivery_page",
-      "seo",
+      "homepage", "pages", "nav_menu", "homepage_blocks",
+      "services_docs", "contacts_page", "services_page",
+      "delivery_page", "seo",
     ]);
   }, []);
+
+  useEffect(() => {
+    try { localStorage.setItem("adminContentSubTab", sub); } catch {}
+  }, [sub]);
+
+  const active = CONTENT_SUBTABS.find((s) => s.id === sub)!;
 
   return (
     <div className="grid gap-6">
       <div className={ui.card}>
         <h2 className={`${ui.h2} mb-2`}>Контент сайта</h2>
         <p className="text-[14px] text-[#888]">
-          Здесь редактируются тексты, изображения, видео и порядок блоков на всех страницах сайта.
-          Изменения применяются сразу после сохранения.
+          Разделы идут в порядке меню сайта. Выбери страницу — увидишь только её настройки.
         </p>
       </div>
-      <NavMenuEditor />
-      <BlocksOrderEditor />
-      <HomepageEditor />
-      <PagesHeadersEditor />
-      <ContactsPageEditor />
-      <ServicesPageEditor />
-      <DeliveryPageEditor />
-      <ServicesDocsEditor />
-      <SeoEditor />
+
+      <div className="flex flex-wrap gap-2 sticky top-0 z-10 bg-[#0a0a0a]/95 backdrop-blur py-2 -mx-2 px-2 rounded-xl">
+        {CONTENT_SUBTABS.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => setSub(s.id)}
+            className={`px-4 py-2 rounded-lg text-[14px] transition-colors border ${
+              sub === s.id
+                ? "bg-[#c9a961] text-black border-[#c9a961]"
+                : "bg-[#1a1a1a] text-[#ddd] border-[#3a3a3a] hover:bg-[#242424]"
+            }`}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+
+      <p className="text-[13px] text-[#888] italic -mt-3 px-1">{active.hint}</p>
+
+      {sub === "home" && (
+        <>
+          <BlocksOrderEditor />
+          <HomepageEditor />
+        </>
+      )}
+      {sub === "catalog" && (
+        <>
+          <PagesHeadersEditor only={["catalog"]} />
+          <div className={ui.card}>
+            <h2 className={`${ui.h2} mb-2`}>Категории каталога</h2>
+            <p className="text-[14px] text-[#888]">
+              Управление списком категорий — в отдельном разделе <b>«Категории каталога»</b> в левом меню админки.
+            </p>
+          </div>
+        </>
+      )}
+      {sub === "services" && (
+        <>
+          <PagesHeadersEditor only={["services"]} />
+          <ServicesPageEditor />
+          <ServicesDocsEditor />
+        </>
+      )}
+      {sub === "gallery" && (
+        <>
+          <PagesHeadersEditor only={["gallery"]} />
+          <div className={ui.card}>
+            <h2 className={`${ui.h2} mb-2`}>Изображения галереи</h2>
+            <p className="text-[14px] text-[#888]">
+              Сами фотографии — в отдельном разделе <b>«Галерея»</b> в левом меню админки.
+            </p>
+          </div>
+        </>
+      )}
+      {sub === "blog" && (
+        <div className={ui.card}>
+          <h2 className={`${ui.h2} mb-2`}>Публикации блога</h2>
+          <p className="text-[14px] text-[#888]">
+            Посты редактируются в отдельном разделе <b>«Блог»</b> в левом меню админки.
+          </p>
+        </div>
+      )}
+      {sub === "delivery" && (
+        <>
+          <PagesHeadersEditor only={["delivery"]} />
+          <DeliveryPageEditor />
+        </>
+      )}
+      {sub === "contacts" && (
+        <>
+          <PagesHeadersEditor only={["contacts"]} />
+          <ContactsPageEditor />
+        </>
+      )}
+      {sub === "seo" && <SeoEditor />}
+      {sub === "nav" && <NavMenuEditor />}
     </div>
   );
 };
+
 
 // ===================================================================
 // SEO EDITOR — title / description / og:image per page
@@ -3703,10 +3788,13 @@ const PAGES_META: { key: PageKey; label: string; defTitle: string; defSubtitle: 
   { key: "contacts", label: "Контакты",           defTitle: "Контакты", defSubtitle: "Свяжитесь с нами любым удобным способом — мы всегда на связи" },
 ];
 
-const PagesHeadersEditor = () => {
+const PagesHeadersEditor = ({ only }: { only?: PageKey[] } = {}) => {
+  const pages = only ? PAGES_META.filter((p) => only.includes(p.key)) : PAGES_META;
   const [val, setVal] = useState<Record<string, { title: string; subtitle: string }>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+
 
   useEffect(() => {
     adminCallSWR("settings.get", { key: "pages" })
@@ -3739,12 +3827,12 @@ const PagesHeadersEditor = () => {
 
   return (
     <div className={ui.card}>
-      <h2 className={`${ui.h2} mb-2`}>Заголовки страниц</h2>
+      <h2 className={`${ui.h2} mb-2`}>{only && only.length === 1 ? "Заголовок страницы" : "Заголовки страниц"}</h2>
       <p className="text-[14px] text-[#888] mb-6">
-        Заголовок и подзаголовок в шапке каждой страницы. Пусто — используется значение по умолчанию.
+        Заголовок и подзаголовок в шапке страницы. Пусто — используется значение по умолчанию.
       </p>
       <div className="grid gap-6">
-        {PAGES_META.map((p) => (
+        {pages.map((p) => (
           <div key={p.key} className="grid md:grid-cols-2 gap-4 pb-6 border-b border-[#3a3a3a] last:border-0 last:pb-0">
             <div>
               <label className={ui.label}>{p.label} — заголовок</label>
@@ -3767,6 +3855,7 @@ const PagesHeadersEditor = () => {
           </div>
         ))}
       </div>
+
       <div className="flex gap-3 mt-6 pt-6 border-t border-[#3a3a3a]">
         <button onClick={save} disabled={saving} className={`${ui.btn} ${ui.btnPrimary} ${saving ? "opacity-50" : ""}`}>
           <Check size={18} /> {saving ? "Сохранение…" : "Сохранить"}
