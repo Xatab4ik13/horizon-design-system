@@ -96,7 +96,6 @@ const ARModal = ({ open, onClose, glb, usdz, productName, autoLaunch }: ARModalP
             {/* Скрытый model-viewer запускает AR через activateAR() */}
             {hasGLB || hasIOS ? (
               <>
-                {/* @ts-expect-error web component */}
                 <model-viewer
                   ref={viewerRef}
                   src={glb || undefined}
