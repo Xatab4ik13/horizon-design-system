@@ -100,7 +100,7 @@ async function createYandexClaim(order: any, sender: Record<string, any>) {
 
   const requestId = crypto.randomUUID();
   const r = await fetch(
-    `https://b2b.taxi.yandex.net/api/b2b/cargo/integration/v2/claims/create?request_id=${requestId}`,
+    `https://b2b.taxi.yandex.net/b2b/cargo/integration/v2/claims/create?request_id=${requestId}`,
     {
       method: "POST",
       headers: {

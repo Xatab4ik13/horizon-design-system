@@ -80,7 +80,7 @@ async function quoteYandex(sender: Record<string, any>, city: string, address: s
       ],
       requirements: { taxi_class: "express" },
     };
-    const r = await fetch("https://b2b.taxi.yandex.net/api/b2b/cargo/integration/v2/check-price", {
+    const r = await fetch("https://b2b.taxi.yandex.net/b2b/cargo/integration/v2/check-price", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${YANDEX_TOKEN}`,
