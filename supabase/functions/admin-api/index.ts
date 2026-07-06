@@ -419,9 +419,10 @@ Deno.serve(async (req) => {
         if (!bucket || !path) return json({ error: "bucket/path required" }, 400);
         const { data, error } = await admin.storage.from(bucket).createSignedUploadUrl(path);
         if (error) throw error;
-        const { data: pub } = admin.storage.from(bucket).getPublicUrl(path);
-        return json({ data: { token: data.token, path: data.path, publicUrl: pub.publicUrl } });
+        return json({ data: { token: data.token, path: data.path, publicUrl: buildPublicUrl(bucket, path) } });
       }
+
+
 
       // ===== STORAGE: upload (data URL → bucket) — оставлен для мелких файлов =====
       case "storage.upload": {
