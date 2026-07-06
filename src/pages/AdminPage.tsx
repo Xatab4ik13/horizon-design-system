@@ -3186,6 +3186,8 @@ const SettingsPanel = () => {
 
       <div className={ui.card}>
         <div className="flex gap-3">
+      <div className={ui.card}>
+        <div className="flex gap-3">
           <button
             onClick={save}
             disabled={saving}
@@ -3196,12 +3198,93 @@ const SettingsPanel = () => {
         </div>
       </div>
 
+      <DeliveryDiagnose />
 
       <NotificationsEditor />
       <PasswordPanel />
     </div>
   );
 };
+
+// ===================================================================
+// ДИАГНОСТИКА ПЕРЕВОЗЧИКОВ — проверяет ключи и связь СДЭК/ПЭК/Яндекс
+// ===================================================================
+type DiagRow = { ok: boolean; step: string; message: string; hint?: string };
+type DiagResult = {
+  env: Record<string, boolean>;
+  sender: Record<string, any>;
+  cdek: DiagRow; pek: DiagRow; yandex: DiagRow;
+};
+
+const DeliveryDiagnose = () => {
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<DiagResult | null>(null);
+
+  const run = async () => {
+    setRunning(true);
+    setResult(null);
+    try {
+      const r = await adminCall("delivery.diagnose", {});
+      setResult(r.data);
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+    setRunning(false);
+  };
+
+  const row = (title: string, r: DiagRow | undefined) => {
+    if (!r) return null;
+    return (
+      <div className={`p-4 rounded-lg border ${r.ok ? "border-emerald-800 bg-emerald-950/30" : "border-red-900 bg-red-950/30"}`}>
+        <div className="flex items-center gap-2 mb-1">
+          <span className={`text-lg ${r.ok ? "text-emerald-400" : "text-red-400"}`}>
+            {r.ok ? "✓" : "✕"}
+          </span>
+          <span className="font-medium text-white">{title}</span>
+          <span className="text-[12px] text-[#888]">[{r.step}]</span>
+        </div>
+        <p className="text-[14px] text-[#ddd]">{r.message}</p>
+        {r.hint && <p className="text-[13px] text-[#c9a35b] mt-1">💡 {r.hint}</p>}
+      </div>
+    );
+  };
+
+  return (
+    <div className={ui.card}>
+      <h2 className={`${ui.h2} mb-2`}>Диагностика перевозчиков</h2>
+      <p className="text-[14px] text-[#888] mb-4">
+        Проверяет наличие ключей на сервере, авторизацию у СДЭК/ПЭК/Яндекс и распознавание города отправителя.
+        Не считает реальный тариф.
+      </p>
+      <button
+        onClick={run}
+        disabled={running}
+        className={`${ui.btn} ${ui.btnPrimary} ${running ? "opacity-50" : ""}`}
+      >
+        {running ? "Проверяю…" : "Запустить проверку"}
+      </button>
+
+      {result && (
+        <div className="mt-6 grid gap-3">
+          <div className="p-3 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a]">
+            <p className="text-[13px] text-[#888] mb-2">Ключи на сервере (env):</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-1 text-[13px]">
+              {Object.entries(result.env).map(([k, v]) => (
+                <div key={k} className={v ? "text-emerald-400" : "text-red-400"}>
+                  {v ? "✓" : "✕"} {k}
+                </div>
+              ))}
+            </div>
+          </div>
+          {row("СДЭК", result.cdek)}
+          {row("ПЭК", result.pek)}
+          {row("Яндекс.Доставка", result.yandex)}
+        </div>
+      )}
+    </div>
+  );
+};
+
 
 // ===================================================================
 // CONTENT PANEL — редактирование контента и страниц сайта
