@@ -22,6 +22,16 @@ const PASSWORD = Deno.env.get("TINKOFF_PASSWORD") ?? "";
 const ADMIN_PASSWORD = Deno.env.get("ADMIN_PASSWORD") ?? "";
 const TINKOFF_API = "https://securepay.tinkoff.ru/v2";
 
+// На self-hosted SUPABASE_URL внутри edge-runtime = http://kong:8000 (внутренний).
+// NotificationURL, который улетает в Т-Кассу, ДОЛЖЕН быть публичным — иначе
+// вебхук об оплате никогда не долетит и заказ навсегда останется в NEW.
+const PUBLIC_API_URL = (
+  Deno.env.get("SUPABASE_PUBLIC_URL") ||
+  Deno.env.get("API_EXTERNAL_URL") ||
+  SUPABASE_URL
+).replace(/\/$/, "");
+
+
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
