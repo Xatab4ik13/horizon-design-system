@@ -456,7 +456,6 @@ Deno.serve(async (req) => {
           .filter((f: any) => f && f.id)
           .map((f: any) => {
             const path = prefix ? `${prefix.replace(/\/$/, "")}/${f.name}` : f.name;
-            const { data: pub } = admin.storage.from(bucket).getPublicUrl(path);
             return {
               name: f.name,
               path,
@@ -464,9 +463,10 @@ Deno.serve(async (req) => {
               mimeType: f.metadata?.mimetype ?? null,
               createdAt: f.created_at ?? null,
               updatedAt: f.updated_at ?? null,
-              publicUrl: pub.publicUrl,
+              publicUrl: buildPublicUrl(bucket, path),
             };
           });
+
         return json({ data: files });
       }
 
