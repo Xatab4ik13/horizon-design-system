@@ -479,6 +479,23 @@ Deno.serve(async (req) => {
         return json(j);
       }
 
+      // ===== DELIVERY: diagnose carriers (auth + city lookup) =====
+      case "delivery.diagnose": {
+        const r = await fetch(`${SUPABASE_URL}/functions/v1/delivery-diagnose`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-password": ADMIN_PASSWORD,
+            Authorization: `Bearer ${SERVICE_ROLE}`,
+          },
+          body: "{}",
+        });
+        const j = await r.json();
+        if (!r.ok) return json({ error: j?.error ?? "delivery-diagnose failed" }, r.status);
+        return json(j);
+      }
+
+
       // ===== DASHBOARD STATS =====
       case "stats": {
         const now = new Date();

@@ -3063,9 +3063,14 @@ const SettingsPanel = () => {
     prefetchAdminSettings(["sender", "notifications"]);
     adminCallSWR("settings.get", { key: "sender" })
       .then((r) => {
-        setSender({ ...emptySender, ...(r.data ?? {}) });
+        const loaded = { ...emptySender, ...(r.data ?? {}) } as typeof emptySender;
+        // Санитайз: в числовых полях мог остаться мусор (email и т.п.) — вычищаем всё кроме цифр
+        loaded.pek_city_id = String(loaded.pek_city_id ?? "").replace(/[^\d]/g, "");
+        loaded.cdek_city_code = String(loaded.cdek_city_code ?? "").replace(/[^\d]/g, "");
+        setSender(loaded);
         setLoading(false);
       })
+
       .catch((e) => {
         toast.error(e.message);
         setLoading(false);
@@ -3085,17 +3090,28 @@ const SettingsPanel = () => {
 
   if (loading) return <p className="text-[#888]">Загрузка…</p>;
 
-  const field = (k: keyof typeof sender, label: string, placeholder = "") => (
+  const field = (
+    k: keyof typeof sender,
+    label: string,
+    placeholder = "",
+    opts: { numeric?: boolean } = {},
+  ) => (
     <div>
       <label className={ui.label}>{label}</label>
       <input
         value={sender[k] ?? ""}
-        onChange={(e) => setSender({ ...sender, [k]: e.target.value })}
+        onChange={(e) => {
+          let v = e.target.value;
+          if (opts.numeric) v = v.replace(/[^\d]/g, "");
+          setSender({ ...sender, [k]: v });
+        }}
+        inputMode={opts.numeric ? "numeric" : undefined}
         className={ui.input}
         placeholder={placeholder}
       />
     </div>
   );
+
 
   return (
     <div className="grid gap-6">
@@ -3131,9 +3147,11 @@ const SettingsPanel = () => {
           {field("cdek_address", "Адрес отправителя", "ул. Мастеровая, 12")}
           {field(
             "cdek_city_code",
-            "Код города СДЭК (необяз.)",
+            "Код города СДЭК (необяз., только цифры)",
             "если пусто — по названию (напр. 44)",
+            { numeric: true },
           )}
+
         </div>
       </div>
 
@@ -3147,9 +3165,11 @@ const SettingsPanel = () => {
           {field("pek_address", "Адрес отправителя", "ул. Мастеровая, 12")}
           {field(
             "pek_city_id",
-            "ID города в ПЭК (необяз.)",
+            "ID города в ПЭК (необяз., только цифры)",
             "из ЛК ПЭК (напр. 50001)",
+            { numeric: true },
           )}
+
         </div>
       </div>
 
@@ -3166,6 +3186,7 @@ const SettingsPanel = () => {
 
       <div className={ui.card}>
         <div className="flex gap-3">
+
           <button
             onClick={save}
             disabled={saving}
@@ -3176,12 +3197,93 @@ const SettingsPanel = () => {
         </div>
       </div>
 
+      <DeliveryDiagnose />
 
       <NotificationsEditor />
       <PasswordPanel />
     </div>
   );
 };
+
+// ===================================================================
+// ДИАГНОСТИКА ПЕРЕВОЗЧИКОВ — проверяет ключи и связь СДЭК/ПЭК/Яндекс
+// ===================================================================
+type DiagRow = { ok: boolean; step: string; message: string; hint?: string };
+type DiagResult = {
+  env: Record<string, boolean>;
+  sender: Record<string, any>;
+  cdek: DiagRow; pek: DiagRow; yandex: DiagRow;
+};
+
+const DeliveryDiagnose = () => {
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<DiagResult | null>(null);
+
+  const run = async () => {
+    setRunning(true);
+    setResult(null);
+    try {
+      const r = await adminCall("delivery.diagnose", {});
+      setResult(r.data);
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+    setRunning(false);
+  };
+
+  const row = (title: string, r: DiagRow | undefined) => {
+    if (!r) return null;
+    return (
+      <div className={`p-4 rounded-lg border ${r.ok ? "border-emerald-800 bg-emerald-950/30" : "border-red-900 bg-red-950/30"}`}>
+        <div className="flex items-center gap-2 mb-1">
+          <span className={`text-lg ${r.ok ? "text-emerald-400" : "text-red-400"}`}>
+            {r.ok ? "✓" : "✕"}
+          </span>
+          <span className="font-medium text-white">{title}</span>
+          <span className="text-[12px] text-[#888]">[{r.step}]</span>
+        </div>
+        <p className="text-[14px] text-[#ddd]">{r.message}</p>
+        {r.hint && <p className="text-[13px] text-[#c9a35b] mt-1">💡 {r.hint}</p>}
+      </div>
+    );
+  };
+
+  return (
+    <div className={ui.card}>
+      <h2 className={`${ui.h2} mb-2`}>Диагностика перевозчиков</h2>
+      <p className="text-[14px] text-[#888] mb-4">
+        Проверяет наличие ключей на сервере, авторизацию у СДЭК/ПЭК/Яндекс и распознавание города отправителя.
+        Не считает реальный тариф.
+      </p>
+      <button
+        onClick={run}
+        disabled={running}
+        className={`${ui.btn} ${ui.btnPrimary} ${running ? "opacity-50" : ""}`}
+      >
+        {running ? "Проверяю…" : "Запустить проверку"}
+      </button>
+
+      {result && (
+        <div className="mt-6 grid gap-3">
+          <div className="p-3 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a]">
+            <p className="text-[13px] text-[#888] mb-2">Ключи на сервере (env):</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-1 text-[13px]">
+              {Object.entries(result.env).map(([k, v]) => (
+                <div key={k} className={v ? "text-emerald-400" : "text-red-400"}>
+                  {v ? "✓" : "✕"} {k}
+                </div>
+              ))}
+            </div>
+          </div>
+          {row("СДЭК", result.cdek)}
+          {row("ПЭК", result.pek)}
+          {row("Яндекс.Доставка", result.yandex)}
+        </div>
+      )}
+    </div>
+  );
+};
+
 
 // ===================================================================
 // CONTENT PANEL — редактирование контента и страниц сайта
