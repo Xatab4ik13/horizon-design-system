@@ -10,6 +10,7 @@ import {
   renderOrderConfirmation,
   sendEmail,
 } from "../_shared/email.ts";
+import { loadDeliveryCreds, type DeliveryCreds } from "../_shared/delivery-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,11 +26,6 @@ const json = (d: unknown, s = 200) =>
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const YANDEX_TOKEN = Deno.env.get("YANDEX_DELIVERY_TOKEN") ?? "";
-const PEK_LOGIN = Deno.env.get("PEK_API_LOGIN") ?? "";
-const PEK_KEY = Deno.env.get("PEK_API_KEY") ?? "";
-const CDEK_ACCOUNT = Deno.env.get("CDEK_ACCOUNT") ?? "";
-const CDEK_PASSWORD = Deno.env.get("CDEK_SECURE_PASSWORD") ?? "";
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -45,8 +41,8 @@ async function getSender() {
 }
 
 // ===== Создание заявки в Яндекс.Доставке =====
-async function createYandexClaim(order: any, sender: Record<string, any>) {
-  if (!YANDEX_TOKEN) throw new Error("YANDEX_DELIVERY_TOKEN не настроен");
+async function createYandexClaim(order: any, sender: Record<string, any>, creds: DeliveryCreds["yandex"]) {
+  if (!creds.token) throw new Error("Яндекс токен не настроен в админке");
   const items = (order.items as any[]).map((i, idx) => ({
     pickup_point: 1,
     droppof_point: 2,
@@ -61,19 +57,12 @@ async function createYandexClaim(order: any, sender: Record<string, any>) {
     items,
     route_points: [
       {
-        point_id: 1,
-        visit_order: 1,
-        type: "source",
-        address: { fullname: sender.address ?? "" },
-        contact: {
-          name: sender.contact_name ?? "FAKTURA",
-          phone: sender.contact_phone ?? "+79991234567",
-        },
+        point_id: 1, visit_order: 1, type: "source",
+        address: { fullname: sender.yandex_address || sender.address || sender.city || "" },
+        contact: { name: sender.contact_name ?? "FAKTURA", phone: sender.contact_phone ?? "+79991234567" },
       },
       {
-        point_id: 2,
-        visit_order: 2,
-        type: "destination",
+        point_id: 2, visit_order: 2, type: "destination",
         address: { fullname: order.delivery_address || order.delivery_city || "" },
         contact: { name: order.customer_name, phone: order.customer_phone },
       },
@@ -84,11 +73,11 @@ async function createYandexClaim(order: any, sender: Record<string, any>) {
   };
   const requestId = crypto.randomUUID();
   const r = await fetch(
-    `https://b2b.taxi.yandex.net/api/b2b/cargo/integration/v2/claims/create?request_id=${requestId}`,
+    `${creds.baseUrl}/b2b/cargo/integration/v2/claims/create?request_id=${requestId}`,
     {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${YANDEX_TOKEN}`,
+        Authorization: `Bearer ${creds.token}`,
         "Content-Type": "application/json",
         "Accept-Language": "ru",
       },
@@ -102,9 +91,9 @@ async function createYandexClaim(order: any, sender: Record<string, any>) {
 }
 
 // ===== Создание заявки в ПЭК =====
-async function createPekOrder(order: any, sender: Record<string, any>) {
-  if (!PEK_LOGIN || !PEK_KEY) throw new Error("ПЭК ключи не настроены");
-  const auth = btoa(`${PEK_LOGIN}:${PEK_KEY}`);
+async function createPekOrder(order: any, sender: Record<string, any>, creds: DeliveryCreds["pek"]) {
+  if (!creds.login || !creds.key) throw new Error("ПЭК ключи не настроены в админке");
+  const auth = btoa(`${creds.login}:${creds.key}`);
   const totalWeight = (order.items as any[]).reduce(
     (s: number, i: any) =>
       s + (i.weight ? Number(String(i.weight).replace(/[^0-9.]/g, "")) || 1 : 1) * (i.quantity ?? 1),
@@ -117,7 +106,7 @@ async function createPekOrder(order: any, sender: Record<string, any>) {
     receiverPhone: order.customer_phone,
     cargo: { weight: Math.max(0.5, totalWeight), places: order.items.length },
   };
-  const r = await fetch("https://kabinet.pecom.ru/api/v1/orders/create", {
+  const r = await fetch(`${creds.baseUrl}/orders/create`, {
     method: "POST",
     headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -133,14 +122,14 @@ async function createPekOrder(order: any, sender: Record<string, any>) {
 }
 
 // ===== СДЭК =====
-async function getCdekToken() {
-  const r = await fetch("https://api.cdek.ru/v2/oauth/token?parameters", {
+async function getCdekToken(creds: DeliveryCreds["cdek"]) {
+  const r = await fetch(`${creds.baseUrl}/v2/oauth/token?parameters`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       grant_type: "client_credentials",
-      client_id: CDEK_ACCOUNT,
-      client_secret: CDEK_PASSWORD,
+      client_id: creds.account,
+      client_secret: creds.password,
     }).toString(),
   });
   const text = await r.text();
@@ -150,30 +139,24 @@ async function getCdekToken() {
   return j.access_token as string;
 }
 
-async function createCdekOrder(order: any, sender: Record<string, any>) {
-  if (!CDEK_ACCOUNT || !CDEK_PASSWORD) throw new Error("СДЭК ключи не настроены");
-  const token = await getCdekToken();
+async function createCdekOrder(order: any, sender: Record<string, any>, creds: DeliveryCreds["cdek"]) {
+  if (!creds.account || !creds.password) throw new Error("СДЭК ключи не настроены в админке");
+  const token = await getCdekToken(creds);
   const packages = (order.items as any[]).map((i: any, idx: number) => ({
     number: `${order.id}-${idx + 1}`,
     weight: Math.max(
       100,
-      Math.round(
-        (i.weight ? Number(String(i.weight).replace(/[^0-9.]/g, "")) || 1 : 1) * 1000,
-      ),
+      Math.round((i.weight ? Number(String(i.weight).replace(/[^0-9.]/g, "")) || 1 : 1) * 1000),
     ),
-    length: 30,
-    width: 30,
-    height: 30,
-    items: [
-      {
-        name: i.name ?? `item-${idx + 1}`,
-        ware_key: String(i.productId ?? idx + 1),
-        cost: Number(i.price ?? 0),
-        amount: Number(i.quantity ?? 1),
-        weight: 1000,
-        payment: { value: 0 },
-      },
-    ],
+    length: 30, width: 30, height: 30,
+    items: [{
+      name: i.name ?? `item-${idx + 1}`,
+      ware_key: String(i.productId ?? idx + 1),
+      cost: Number(i.price ?? 0),
+      amount: Number(i.quantity ?? 1),
+      weight: 1000,
+      payment: { value: 0 },
+    }],
   }));
   const body = {
     tariff_code: 137,
@@ -186,11 +169,11 @@ async function createCdekOrder(order: any, sender: Record<string, any>) {
       name: order.customer_name,
       phones: [{ number: order.customer_phone }],
     },
-    from_location: { address: sender.address || sender.city || "Москва" },
+    from_location: { address: sender.cdek_address || sender.address || sender.city || "Москва" },
     to_location: { address: order.delivery_address || order.delivery_city || "" },
     packages,
   };
-  const r = await fetch("https://api.cdek.ru/v2/orders", {
+  const r = await fetch(`${creds.baseUrl}/v2/orders`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -275,13 +258,13 @@ Deno.serve(async (req) => {
     };
     if (delivery_provider === "yandex" || delivery_provider === "pek" || delivery_provider === "cdek") {
       try {
-        const sender = await getSender();
+        const [sender, creds] = await Promise.all([getSender(), loadDeliveryCreds(admin)]);
         const r =
           delivery_provider === "yandex"
-            ? await createYandexClaim(order, sender)
+            ? await createYandexClaim(order, sender, creds.yandex)
             : delivery_provider === "pek"
-            ? await createPekOrder(order, sender)
-            : await createCdekOrder(order, sender);
+            ? await createPekOrder(order, sender, creds.pek)
+            : await createCdekOrder(order, sender, creds.cdek);
 
         await admin
           .from("orders")

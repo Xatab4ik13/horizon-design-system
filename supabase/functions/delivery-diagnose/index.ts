@@ -1,8 +1,9 @@
 // Диагностика перевозчиков: проверяет ключи и связь.
 // Не пытается посчитать реальный тариф — только auth / поиск города.
-// Вызывается из admin-api (action: delivery.diagnose), защищено паролем админа.
+// Читает ключи из БД (app_settings.delivery_credentials), фолбэк — .env.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { loadDeliveryCreds, type DeliveryCreds } from "../_shared/delivery-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,11 +20,6 @@ const json = (d: unknown, s = 200) =>
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ADMIN_PASSWORD = Deno.env.get("ADMIN_PASSWORD") ?? "";
-const YANDEX_TOKEN = Deno.env.get("YANDEX_DELIVERY_TOKEN") ?? "";
-const PEK_LOGIN = Deno.env.get("PEK_API_LOGIN") ?? "";
-const PEK_KEY = Deno.env.get("PEK_API_KEY") ?? "";
-const CDEK_ACCOUNT = Deno.env.get("CDEK_ACCOUNT") ?? "";
-const CDEK_PASSWORD = Deno.env.get("CDEK_SECURE_PASSWORD") ?? "";
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -50,45 +46,41 @@ type Result = {
   details?: any;
 };
 
-async function diagCdek(sender: Record<string, any>): Promise<Result> {
-  if (!CDEK_ACCOUNT || !CDEK_PASSWORD) {
+async function diagCdek(sender: Record<string, any>, creds: DeliveryCreds["cdek"]): Promise<Result> {
+  if (!creds.account || !creds.password) {
     return {
       ok: false, step: "config",
-      message: "Не заданы переменные окружения CDEK_ACCOUNT / CDEK_SECURE_PASSWORD.",
-      hint: "Добавьте их в .env на сервере и перезапустите контейнер functions.",
+      message: "Не заданы Account / Secure password СДЭК.",
+      hint: "В админке → Настройки → «Ключи перевозчиков» вставьте пару из ЛК СДЭК → Настройки → Интеграция.",
     };
   }
-  // 1) Auth
   let token: string;
   try {
-    const r = await fetch("https://api.cdek.ru/v2/oauth/token?parameters", {
+    const r = await fetch(`${creds.baseUrl}/v2/oauth/token?parameters`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         grant_type: "client_credentials",
-        client_id: CDEK_ACCOUNT,
-        client_secret: CDEK_PASSWORD,
+        client_id: creds.account,
+        client_secret: creds.password,
       }).toString(),
     });
     const text = await r.text();
     if (!r.ok) {
       return {
         ok: false, step: "auth",
-        message: `СДЭК auth ${r.status}: ${text.slice(0, 200)}`,
+        message: `СДЭК auth ${r.status} (${creds.environment}): ${text.slice(0, 200)}`,
         hint: r.status === 401
-          ? "Ключи СДЭК невалидны. В личном кабинете СДЭК → Настройки → Интеграция сгенерируйте новую пару Account/Secure password и обновите .env."
+          ? `Ключи не приняты в режиме «${creds.environment}». Если это тестовая пара — переключите среду на «test»; если боевая — перевыпустите в ЛК СДЭК → Настройки → Интеграция.`
           : "Проблема на стороне СДЭК, попробуйте позже.",
       };
     }
     const j = JSON.parse(text);
     token = j.access_token;
-    if (!token) {
-      return { ok: false, step: "auth", message: "СДЭК не вернул access_token", details: j };
-    }
+    if (!token) return { ok: false, step: "auth", message: "СДЭК не вернул access_token", details: j };
   } catch (e: any) {
     return { ok: false, step: "auth", message: `Сеть: ${e?.message ?? e}` };
   }
-  // 2) Поиск города отправителя
   const cityName = sender.cdek_city || sender.city || "";
   if (!cityName && !sender.cdek_city_code) {
     return {
@@ -100,42 +92,38 @@ async function diagCdek(sender: Record<string, any>): Promise<Result> {
   try {
     let code = Number(sender.cdek_city_code) || 0;
     if (!code) {
-      const url = new URL("https://api.cdek.ru/v2/location/cities");
+      const url = new URL(`${creds.baseUrl}/v2/location/cities`);
       url.searchParams.set("city", cityName);
       url.searchParams.set("country_codes", "RU");
       url.searchParams.set("size", "5");
-      const r = await fetch(url.toString(), {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const r = await fetch(url.toString(), { headers: { Authorization: `Bearer ${token}` } });
       const text = await r.text();
-      if (!r.ok) {
-        return { ok: false, step: "sender_city", message: `СДЭК cities ${r.status}: ${text.slice(0, 200)}` };
-      }
+      if (!r.ok) return { ok: false, step: "sender_city", message: `СДЭК cities ${r.status}: ${text.slice(0, 200)}` };
       const j = JSON.parse(text);
       if (!Array.isArray(j) || j.length === 0) {
         return {
           ok: false, step: "sender_city",
           message: `Город «${cityName}» не найден в справочнике СДЭК`,
-          hint: "Уточните название или задайте «Код города СДЭК» вручную (найдите в ЛК СДЭК).",
+          hint: "Уточните название или задайте «Код города СДЭК» вручную.",
         };
       }
       code = Number(j[0].code);
     }
     return {
       ok: true, step: "ok",
-      message: `СДЭК работает. Город отправителя: код ${code}.`,
+      message: `СДЭК работает (${creds.environment}, ключ из ${creds.source}). Город отправителя: код ${code}.`,
     };
   } catch (e: any) {
     return { ok: false, step: "sender_city", message: `Сеть: ${e?.message ?? e}` };
   }
 }
 
-async function diagPek(sender: Record<string, any>): Promise<Result> {
-  if (!PEK_LOGIN || !PEK_KEY) {
+async function diagPek(sender: Record<string, any>, creds: DeliveryCreds["pek"]): Promise<Result> {
+  if (!creds.login || !creds.key) {
     return {
       ok: false, step: "config",
-      message: "Не заданы PEK_API_LOGIN / PEK_API_KEY в .env.",
-      hint: "Добавьте ключи и перезапустите контейнер functions.",
+      message: "Не заданы логин/ключ ПЭК.",
+      hint: "В админке → Настройки → «Ключи перевозчиков» введите значения, полученные у менеджера ПЭК.",
     };
   }
   const cityName = sender.pek_city || sender.city || "";
@@ -144,18 +132,18 @@ async function diagPek(sender: Record<string, any>): Promise<Result> {
     return {
       ok: false, step: "sender_city",
       message: "Не указан город отправителя ПЭК.",
-      hint: "Заполните «Адрес отправки — общий» или блок ПЭК в админке.",
+      hint: "Заполните «Адрес отправки — общий» или блок ПЭК.",
     };
   }
-  const auth = btoa(`${PEK_LOGIN}:${PEK_KEY}`);
+  const auth = btoa(`${creds.login}:${creds.key}`);
   try {
     if (forcedId) {
       return {
         ok: true, step: "ok",
-        message: `ПЭК: используется заданный ID города ${forcedId}. Auth не проверялся.`,
+        message: `ПЭК: используется заданный ID города ${forcedId}. Ключ из ${creds.source}.`,
       };
     }
-    const r = await fetch("https://kabinet.pecom.ru/api/v1/branches/branchesfilter", {
+    const r = await fetch(`${creds.baseUrl}/branches/branchesfilter`, {
       method: "POST",
       headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/json" },
       body: JSON.stringify({ filter: cityName }),
@@ -165,37 +153,48 @@ async function diagPek(sender: Record<string, any>): Promise<Result> {
       return {
         ok: false, step: "auth",
         message: `ПЭК ${r.status}: ключи не приняты. ${text.slice(0, 150)}`,
-        hint: "В ЛК ПЭК → Интеграции проверьте, что API-доступ активирован. Ключи выдаются по заявке, а не автоматически.",
+        hint: "У ПЭК доступ к API выдаётся по заявке. Уточните у менеджера правильные логин/ключ и base URL.",
       };
     }
     if (!r.ok) {
-      return { ok: false, step: "cities", message: `ПЭК ${r.status}: ${text.slice(0, 200)}` };
+      return {
+        ok: false, step: "cities",
+        message: `ПЭК ${r.status}: ${text.slice(0, 200) || "пустой ответ"}`,
+        hint: "Проверьте base URL ПЭК в настройках — у некоторых клиентов свой хост.",
+      };
+    }
+    if (!text.trim()) {
+      return {
+        ok: false, step: "cities",
+        message: "ПЭК вернул пустой ответ.",
+        hint: "Проверьте правильность base URL ПЭК.",
+      };
     }
     const j = JSON.parse(text);
     const branches: any[] = j?.branches ?? j?.items ?? [];
     if (!branches.length) {
       return {
         ok: false, step: "sender_city",
-        message: `ПЭК: город «${cityName}» не найден в справочнике`,
-        hint: "Уточните название (например «Санкт-Петербург» без сокращений) или задайте ID города вручную.",
+        message: `ПЭК: город «${cityName}» не найден`,
+        hint: "Уточните название или задайте ID города вручную.",
       };
     }
     const id = Number(branches[0]?.id ?? branches[0]?.branchId);
     return {
       ok: true, step: "ok",
-      message: `ПЭК работает. Найден город: ${branches[0]?.title ?? branches[0]?.name} (id ${id}).`,
+      message: `ПЭК работает (ключ из ${creds.source}). Город: ${branches[0]?.title ?? branches[0]?.name} (id ${id}).`,
     };
   } catch (e: any) {
     return { ok: false, step: "network", message: `Сеть: ${e?.message ?? e}` };
   }
 }
 
-async function diagYandex(sender: Record<string, any>): Promise<Result> {
-  if (!YANDEX_TOKEN) {
+async function diagYandex(sender: Record<string, any>, creds: DeliveryCreds["yandex"]): Promise<Result> {
+  if (!creds.token) {
     return {
       ok: false, step: "config",
-      message: "Не задан YANDEX_DELIVERY_TOKEN в .env.",
-      hint: "Получите OAuth-токен в ЛК Яндекс.Доставки → Интеграции → Получить токен.",
+      message: "Не задан OAuth-токен Яндекс.Доставки.",
+      hint: "В админке → Настройки → «Ключи перевозчиков» вставьте токен из ЛК Яндекс.Доставки → Интеграции.",
     };
   }
   const fromAddress = sender.yandex_address || sender.address || sender.city || "";
@@ -203,10 +202,9 @@ async function diagYandex(sender: Record<string, any>): Promise<Result> {
     return {
       ok: false, step: "sender_city",
       message: "Не указан адрес отправителя Яндекс.",
-      hint: "Заполните «Адрес отправки — общий» или блок «Яндекс.Доставка» в админке.",
+      hint: "Заполните «Адрес отправки — общий» или блок Яндекс.",
     };
   }
-  // Тестируем маршрут внутри одного города (адрес → адрес)
   const body = {
     items: [{
       quantity: 1,
@@ -220,10 +218,10 @@ async function diagYandex(sender: Record<string, any>): Promise<Result> {
     requirements: { taxi_class: "express" },
   };
   try {
-    const r = await fetch("https://b2b.taxi.yandex.net/b2b/cargo/integration/v2/check-price", {
+    const r = await fetch(`${creds.baseUrl}/b2b/cargo/integration/v2/check-price`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${YANDEX_TOKEN}`,
+        Authorization: `Bearer ${creds.token}`,
         "Content-Type": "application/json",
         "Accept-Language": "ru",
       },
@@ -233,20 +231,21 @@ async function diagYandex(sender: Record<string, any>): Promise<Result> {
     if (r.status === 401 || r.status === 403) {
       return {
         ok: false, step: "auth",
-        message: `Яндекс ${r.status}: токен не принят.`,
-        hint: "Перегенерируйте OAuth-токен в ЛК Яндекс.Доставки.",
+        message: `Яндекс ${r.status}: токен не принят (${creds.environment}).`,
+        hint: "Перегенерируйте OAuth-токен в ЛК Яндекс.Доставки → Интеграции.",
       };
     }
-    if (!r.ok) {
+    // 409 suitable_offer_not_found = токен и адрес ок, просто нет тарифа между двумя одинаковыми точками
+    if (!r.ok && !text.includes("suitable_offer_not_found")) {
       return {
         ok: false, step: "price",
         message: `Яндекс ${r.status}: ${text.slice(0, 200)}`,
-        hint: "Проверьте, что адрес отправителя полный и распознаваем (город + улица + дом).",
+        hint: "Проверьте адрес отправителя (город + улица + дом).",
       };
     }
     return {
       ok: true, step: "ok",
-      message: "Яндекс работает. Токен валиден, адрес распознан.",
+      message: `Яндекс работает (${creds.environment}, ключ из ${creds.source}). Токен валиден, адрес распознан.`,
     };
   } catch (e: any) {
     return { ok: false, step: "network", message: `Сеть: ${e?.message ?? e}` };
@@ -260,18 +259,23 @@ Deno.serve(async (req) => {
     if (!ADMIN_PASSWORD || !safeEqual(password, ADMIN_PASSWORD)) {
       return json({ error: "Unauthorized" }, 401);
     }
-    const sender = await getSender();
+    const [sender, creds] = await Promise.all([getSender(), loadDeliveryCreds(admin)]);
     const [cdek, pek, yandex] = await Promise.all([
-      diagCdek(sender), diagPek(sender), diagYandex(sender),
+      diagCdek(sender, creds.cdek),
+      diagPek(sender, creds.pek),
+      diagYandex(sender, creds.yandex),
     ]);
     return json({
       data: {
         env: {
-          CDEK_ACCOUNT: Boolean(CDEK_ACCOUNT),
-          CDEK_SECURE_PASSWORD: Boolean(CDEK_PASSWORD),
-          PEK_API_LOGIN: Boolean(PEK_LOGIN),
-          PEK_API_KEY: Boolean(PEK_KEY),
-          YANDEX_DELIVERY_TOKEN: Boolean(YANDEX_TOKEN),
+          CDEK: creds.cdek.source,
+          PEK: creds.pek.source,
+          YANDEX: creds.yandex.source,
+        },
+        sources: {
+          cdek: { source: creds.cdek.source, environment: creds.cdek.environment, baseUrl: creds.cdek.baseUrl },
+          pek:  { source: creds.pek.source,  baseUrl: creds.pek.baseUrl },
+          yandex: { source: creds.yandex.source, environment: creds.yandex.environment, baseUrl: creds.yandex.baseUrl },
         },
         sender,
         cdek, pek, yandex,

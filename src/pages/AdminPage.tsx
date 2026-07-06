@@ -3192,10 +3192,12 @@ const SettingsPanel = () => {
             disabled={saving}
             className={`${ui.btn} ${ui.btnPrimary} ${saving ? "opacity-50" : ""}`}
           >
-            <Check size={18} /> {saving ? "Сохранение…" : "Сохранить все настройки"}
+            <Check size={18} /> {saving ? "Сохранение…" : "Сохранить адрес отправителя"}
           </button>
         </div>
       </div>
+
+      <DeliveryCredentialsPanel />
 
       <DeliveryDiagnose />
 
@@ -3206,11 +3208,189 @@ const SettingsPanel = () => {
 };
 
 // ===================================================================
+// КЛЮЧИ ПЕРЕВОЗЧИКОВ — вводятся владельцем сайта в админке
+// ===================================================================
+type CarrierCreds = {
+  cdek: { account: string; password: string; environment: "prod" | "test"; base_url: string };
+  pek:  { login: string; key: string; base_url: string };
+  yandex: { token: string; environment: "prod" | "test"; base_url: string };
+};
+
+const emptyCreds: CarrierCreds = {
+  cdek: { account: "", password: "", environment: "prod", base_url: "" },
+  pek:  { login: "", key: "", base_url: "" },
+  yandex: { token: "", environment: "prod", base_url: "" },
+};
+
+const DeliveryCredentialsPanel = () => {
+  const [creds, setCreds] = useState<CarrierCreds>(emptyCreds);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [showSecret, setShowSecret] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    adminCallSWR("settings.get", { key: "delivery_credentials" })
+      .then((r) => {
+        const v = (r.data ?? {}) as Partial<CarrierCreds>;
+        setCreds({
+          cdek: { ...emptyCreds.cdek, ...(v.cdek ?? {}) },
+          pek:  { ...emptyCreds.pek,  ...(v.pek  ?? {}) },
+          yandex: { ...emptyCreds.yandex, ...(v.yandex ?? {}) },
+        });
+        setLoading(false);
+      })
+      .catch((e) => { toast.error(e.message); setLoading(false); });
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await adminCall("settings.set", { key: "delivery_credentials", value: creds });
+      toast.success("Ключи перевозчиков сохранены");
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+    setSaving(false);
+  };
+
+  if (loading) return <p className="text-[#888]">Загрузка ключей…</p>;
+
+  const text = (
+    carrier: keyof CarrierCreds,
+    field: string,
+    label: string,
+    placeholder = "",
+    isSecret = false,
+  ) => {
+    const key = `${carrier}.${field}`;
+    const value = (creds[carrier] as any)[field] ?? "";
+    const shown = showSecret[key];
+    return (
+      <div>
+        <label className={ui.label}>{label}</label>
+        <div className="relative">
+          <input
+            type={isSecret && !shown ? "password" : "text"}
+            value={value}
+            onChange={(e) =>
+              setCreds({ ...creds, [carrier]: { ...creds[carrier], [field]: e.target.value } })
+            }
+            className={ui.input}
+            placeholder={placeholder}
+            autoComplete="off"
+            spellCheck={false}
+          />
+          {isSecret && value && (
+            <button
+              type="button"
+              onClick={() => setShowSecret({ ...showSecret, [key]: !shown })}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-[#888] hover:text-[#ddd]"
+            >
+              {shown ? "скрыть" : "показать"}
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const envToggle = (carrier: "cdek" | "yandex", labelProd: string, labelTest: string) => {
+    const value = (creds[carrier] as any).environment as "prod" | "test";
+    return (
+      <div>
+        <label className={ui.label}>Среда API</label>
+        <div className="flex gap-2">
+          {(["prod", "test"] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() =>
+                setCreds({ ...creds, [carrier]: { ...creds[carrier], environment: v } })
+              }
+              className={`${ui.btn} ${value === v ? ui.btnPrimary : ui.btnSecondary}`}
+            >
+              {v === "prod" ? labelProd : labelTest}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className={ui.card}>
+      <h2 className={`${ui.h2} mb-2`}>Ключи перевозчиков</h2>
+      <p className="text-[14px] text-[#888] mb-6">
+        Вставьте ключи из личных кабинетов СДЭК, ПЭК и Яндекс.Доставки. Значения
+        сохраняются в базе и используются вместо переменных окружения. Если поле пустое —
+        сервер возьмёт значение из <code>.env</code> (если оно там задано).
+      </p>
+
+      {/* СДЭК */}
+      <div className="border border-[#3a3a3a] rounded-lg p-5 mb-4">
+        <h3 className={`${ui.h3} mb-1`}>СДЭК</h3>
+        <p className="text-[13px] text-[#888] mb-4">
+          ЛК СДЭК → плашка профиля → раздел «Интеграция» → скопируйте пару Account / Secure password.
+          Если раздела нет — попросите менеджера подключить API.
+        </p>
+        <div className="grid md:grid-cols-2 gap-4">
+          {text("cdek", "account", "Account (идентификатор)", "например, IM-MSK226-11124")}
+          {text("cdek", "password", "Secure password", "секретный пароль", true)}
+          {envToggle("cdek", "Боевая (api.cdek.ru)", "Тестовая (api.edu.cdek.ru)")}
+          {text("cdek", "base_url", "Base URL (необяз., переопределяет среду)", "https://api.cdek.ru")}
+        </div>
+      </div>
+
+      {/* ПЭК */}
+      <div className="border border-[#3a3a3a] rounded-lg p-5 mb-4">
+        <h3 className={`${ui.h3} mb-1`}>ПЭК</h3>
+        <p className="text-[13px] text-[#888] mb-4">
+          Доступ к API ПЭК выдаётся по заявке менеджеру. Уточните логин, ключ и адрес API —
+          у некоторых клиентов свой хост (по умолчанию <code>https://kabinet.pecom.ru/api/v1</code>).
+        </p>
+        <div className="grid md:grid-cols-2 gap-4">
+          {text("pek", "login", "Логин API", "например, 79015436876")}
+          {text("pek", "key", "Ключ API", "секретный ключ", true)}
+          {text("pek", "base_url", "Base URL API (необяз.)", "https://kabinet.pecom.ru/api/v1")}
+        </div>
+      </div>
+
+      {/* ЯНДЕКС */}
+      <div className="border border-[#3a3a3a] rounded-lg p-5 mb-4">
+        <h3 className={`${ui.h3} mb-1`}>Яндекс.Доставка</h3>
+        <p className="text-[13px] text-[#888] mb-4">
+          ЛК Яндекс.Доставки → Настройки → Интеграции → «Получить OAuth-токен». Скопируйте токен целиком.
+        </p>
+        <div className="grid md:grid-cols-2 gap-4">
+          {text("yandex", "token", "OAuth-токен", "y0_AgAAA...", true)}
+          {envToggle("yandex", "Боевая (b2b.taxi.yandex.net)", "Тестовая (b2b.taxi.tst.yandex.net)")}
+          {text("yandex", "base_url", "Base URL (необяз., переопределяет среду)", "https://b2b.taxi.yandex.net")}
+        </div>
+      </div>
+
+      <button
+        onClick={save}
+        disabled={saving}
+        className={`${ui.btn} ${ui.btnPrimary} ${saving ? "opacity-50" : ""}`}
+      >
+        <Check size={18} /> {saving ? "Сохранение…" : "Сохранить ключи"}
+      </button>
+    </div>
+  );
+};
+
+// ===================================================================
 // ДИАГНОСТИКА ПЕРЕВОЗЧИКОВ — проверяет ключи и связь СДЭК/ПЭК/Яндекс
 // ===================================================================
 type DiagRow = { ok: boolean; step: string; message: string; hint?: string };
+type CredSource = "db" | "env" | "none";
 type DiagResult = {
-  env: Record<string, boolean>;
+  env: Record<string, CredSource | boolean>;
+  sources?: {
+    cdek?: { source: CredSource; environment?: string; baseUrl?: string };
+    pek?:  { source: CredSource; baseUrl?: string };
+    yandex?: { source: CredSource; environment?: string; baseUrl?: string };
+  };
   sender: Record<string, any>;
   cdek: DiagRow; pek: DiagRow; yandex: DiagRow;
 };
@@ -3266,13 +3446,18 @@ const DeliveryDiagnose = () => {
       {result && (
         <div className="mt-6 grid gap-3">
           <div className="p-3 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a]">
-            <p className="text-[13px] text-[#888] mb-2">Ключи на сервере (env):</p>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-1 text-[13px]">
-              {Object.entries(result.env).map(([k, v]) => (
-                <div key={k} className={v ? "text-emerald-400" : "text-red-400"}>
-                  {v ? "✓" : "✕"} {k}
-                </div>
-              ))}
+            <p className="text-[13px] text-[#888] mb-2">Источник ключей (админка → env → нет):</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-1 text-[13px]">
+              {(["cdek", "pek", "yandex"] as const).map((k) => {
+                const src = result.sources?.[k]?.source ?? (result.env[k.toUpperCase()] as any) ?? "none";
+                const cls = src === "db" ? "text-emerald-400" : src === "env" ? "text-amber-400" : "text-red-400";
+                const label = src === "db" ? "из админки" : src === "env" ? "из .env" : "не задан";
+                return (
+                  <div key={k} className={cls}>
+                    {src === "none" ? "✕" : "✓"} {k.toUpperCase()}: {label}
+                  </div>
+                );
+              })}
             </div>
           </div>
           {row("СДЭК", result.cdek)}
