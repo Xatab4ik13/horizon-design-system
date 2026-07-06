@@ -73,6 +73,7 @@ const categoryImages: Record<string, string> = {
 
 const CatalogPage = () => {
   const header = usePageHeader("catalog", { title: "Категории каталога", subtitle: "" });
+  const dbCategories = useProductCategories();
   const [searchParams, setSearchParams] = useSearchParams();
   const { addItem } = useCart();
   const { products, loading: productsLoading } = useDbProducts();
