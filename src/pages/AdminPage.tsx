@@ -68,6 +68,7 @@ const AdminPage = () => {
   const tabs: { id: Tab; label: string; icon: any }[] = [
     { id: "dashboard", label: "Сводка", icon: Package },
     { id: "products", label: "Товары", icon: Package },
+    { id: "categories", label: "Категории каталога", icon: Layout },
     { id: "orders", label: "Заказы", icon: ShoppingBag },
     { id: "requests", label: "Заявки", icon: MessageSquare },
     { id: "users", label: "Пользователи", icon: Users },
