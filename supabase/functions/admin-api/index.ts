@@ -72,6 +72,11 @@ Deno.serve(async (req) => {
 
     // Логин — отдельная ветка без авторизации внутри
     if (action === "login") {
+      const email = String(body?.email ?? "").trim().toLowerCase();
+      // Если на сервере задан ADMIN_EMAIL — требуем совпадение
+      if (ADMIN_EMAIL && email !== ADMIN_EMAIL) {
+        return json({ ok: false, error: "Неверный email или пароль" }, 401);
+      }
       const ok = await verifyPassword(String(password));
       return json({ ok }, ok ? 200 : 401);
     }
