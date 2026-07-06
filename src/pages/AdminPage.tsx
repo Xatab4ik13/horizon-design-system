@@ -3143,7 +3143,6 @@ const ContentPanel = () => {
       "nav_menu",
       "homepage_blocks",
       "services_docs",
-      "about_page",
       "contacts_page",
       "services_page",
       "delivery_page",
@@ -3167,7 +3166,6 @@ const ContentPanel = () => {
       <ContactsPageEditor />
       <ServicesPageEditor />
       <DeliveryPageEditor />
-      <AboutPageEditor />
       <ServicesDocsEditor />
       <SeoEditor />
     </div>
@@ -3185,7 +3183,6 @@ const SEO_PAGES: { key: SeoPageKey; label: string; path: string }[] = [
   { key: "delivery", label: "Доставка и оплата",    path: "/delivery" },
   { key: "blog",     label: "Блог",                 path: "/blog" },
   { key: "contacts", label: "Контакты",             path: "/contacts" },
-  { key: "about",    label: "О компании",           path: "/about" },
 ];
 
 const SeoEditor = () => {
@@ -3998,7 +3995,6 @@ const AVAILABLE_PAGES: { url: string; label: string }[] = [
   { url: "/blog", label: "Блог" },
   { url: "/delivery", label: "Доставка и оплата" },
   { url: "/contacts", label: "Контакты" },
-  { url: "/about", label: "О нас" },
   { url: "/cart", label: "Корзина" },
   { url: "/account", label: "Личный кабинет" },
 ];
@@ -4333,52 +4329,7 @@ const ServicesDocsEditor = () => {
   );
 };
 
-// ===================================================================
-// ABOUT PAGE EDITOR — текст страницы «О компании»
-// ===================================================================
-const AboutPageEditor = () => {
-  const [text, setText] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    adminCallSWR("settings.get", { key: "about_page" })
-      .then((r) => { setText(r.data?.text ?? ""); setLoading(false); })
-      .catch((e) => { toast.error(e.message); setLoading(false); });
-  }, []);
-
-  const save = async () => {
-    setSaving(true);
-    try {
-      await adminCall("settings.set", { key: "about_page", value: { text } });
-      toast.success("Страница «О компании» сохранена");
-    } catch (e: any) { toast.error(e.message); }
-    setSaving(false);
-  };
-
-  if (loading) return <p className="text-[#888]">Загрузка «О компании»…</p>;
-
-  return (
-    <div className={ui.card}>
-      <h2 className={`${ui.h2} mb-2`}>Страница «О компании»</h2>
-      <p className="text-[14px] text-[#888] mb-4">
-        Текст со страницы /about. Пустые строки — разделители абзацев.
-      </p>
-      <textarea
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        className={ui.textarea}
-        rows={14}
-        placeholder="FAKTURA — мастерская изделий из натурального дерева…"
-      />
-      <div className="flex gap-2 mt-4">
-        <button onClick={save} disabled={saving} className={`${ui.btn} ${ui.btnPrimary} ${saving ? "opacity-50" : ""}`}>
-          <Check size={18} /> {saving ? "Сохранение…" : "Сохранить"}
-        </button>
-      </div>
-    </div>
-  );
-};
 
 // ===================================================================
 // NOTIFICATIONS EDITOR — email для уведомлений о заявках/заказах
@@ -5204,6 +5155,15 @@ const GalleryPanel = () => {
 // ===================================================================
 // DELIVERY PAGE EDITOR — партнёры, самовывоз, упаковка, оплата, FAQ
 // ===================================================================
+// Фиксированный набор транспортных компаний. Админ редактирует только их
+// поля (описание, сроки, логотип, особенности, показ/скрытие), но не может
+// добавить новую или удалить существующую.
+const FIXED_DELIVERY_COMPANIES = [
+  { name: "ПЭК", description: "Перевозка крупногабаритных грузов и мебели по России.", timing: "3–14 дней", features: ["Крупногабарит", "Страхование", "До терминала / до двери"] },
+  { name: "СДЭК", description: "Доставка по всей России и СНГ. Более 3 000 пунктов выдачи.", timing: "2–7 дней", features: ["Пункты выдачи", "Курьерская доставка", "Примерка при получении"] },
+  { name: "Яндекс Доставка", description: "Быстрая курьерская доставка в крупных городах за 1–2 дня.", timing: "1–2 дня", features: ["Экспресс-доставка", "Курьер до двери", "Отслеживание в реальном времени"] },
+];
+
 const emptyDelivery = {
   companies: [] as any[],
   pickup: {
@@ -5240,8 +5200,25 @@ const DeliveryPageEditor = () => {
     adminCallSWR("settings.get", { key: "delivery_page" })
       .then((r) => {
         const v = (r.data ?? {}) as any;
+        // Приводим список компаний к фиксированному набору: 3 слота в фиксированном
+        // порядке. Существующие значения подтягиваем по имени, отсутствующие —
+        // берём из FIXED_DELIVERY_COMPANIES. Лишние (Boxberry, Почта и т.п.) отбрасываем.
+        const stored: any[] = Array.isArray(v.companies) ? v.companies : [];
+        const findStored = (name: string) =>
+          stored.find((s) => String(s?.name ?? "").trim().toLowerCase() === name.toLowerCase());
+        const companies = FIXED_DELIVERY_COMPANIES.map((fx) => {
+          const s = findStored(fx.name);
+          return {
+            name: fx.name,
+            logo: s?.logo ?? "",
+            description: s?.description ?? fx.description,
+            timing: s?.timing ?? fx.timing,
+            features: Array.isArray(s?.features) ? s.features : fx.features,
+            enabled: s?.enabled !== false,
+          };
+        });
         setData({
-          companies: Array.isArray(v.companies) ? v.companies : [],
+          companies,
           pickup: { ...emptyDelivery.pickup, ...(v.pickup ?? {}), features: Array.isArray(v.pickup?.features) ? v.pickup.features : [] },
           packaging: { ...emptyDelivery.packaging, ...(v.packaging ?? {}), items: Array.isArray(v.packaging?.items) ? v.packaging.items : [] },
           paymentMethods: Array.isArray(v.paymentMethods) ? v.paymentMethods : [],
@@ -5288,15 +5265,16 @@ const DeliveryPageEditor = () => {
       {/* Партнёры */}
       <details className="border border-[#3a3a3a] rounded-lg p-4 mb-4" open>
         <summary className={`${ui.h3} cursor-pointer`}>Транспортные компании ({data.companies.length})</summary>
+        <p className="text-[13px] text-[#888] mt-3">
+          Фиксированный список из трёх партнёров. Название менять нельзя, остальные поля — редактируемые.
+        </p>
         <div className="grid gap-4 mt-4">
           {data.companies.map((c, i) => (
             <div key={i} className="border border-[#3a3a3a] rounded-lg p-4 grid md:grid-cols-2 gap-4">
               <div className="grid gap-3">
                 <div>
                   <label className={ui.label}>Название</label>
-                  <input value={c.name ?? ""} onChange={(e) => {
-                    const n = [...data.companies]; n[i] = { ...n[i], name: e.target.value }; setData({ ...data, companies: n });
-                  }} className={ui.input} />
+                  <input value={c.name ?? ""} readOnly className={`${ui.input} opacity-70 cursor-not-allowed`} />
                 </div>
                 <div>
                   <label className={ui.label}>Описание</label>
@@ -5356,21 +5334,9 @@ const DeliveryPageEditor = () => {
                     }} className="w-5 h-5" />
                   <span>Показывать</span>
                 </label>
-                <button
-                  onClick={() => setData({ ...data, companies: data.companies.filter((_, j) => j !== i) })}
-                  className={`${ui.btn} ${ui.btnDanger} justify-self-start`}
-                >
-                  <Trash2 size={14} /> Удалить компанию
-                </button>
               </div>
             </div>
           ))}
-          <button
-            onClick={() => setData({ ...data, companies: [...data.companies, { name: "", logo: "", description: "", timing: "", features: [], enabled: true }] })}
-            className={`${ui.btn} ${ui.btnSecondary} justify-self-start`}
-          >
-            <Plus size={16} /> Добавить компанию
-          </button>
         </div>
       </details>
 

@@ -374,8 +374,7 @@ export type SeoPageKey =
   | "services"
   | "delivery"
   | "blog"
-  | "contacts"
-  | "about";
+  | "contacts";
 
 export type SeoPageValue = {
   title?: string;

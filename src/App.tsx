@@ -26,7 +26,7 @@ const AuthPage = lazy(() => import("./pages/AuthPage"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AdminPage = lazy(() => import("./pages/AdminPage"));
-const AboutPage = lazy(() => import("./pages/AboutPage"));
+
 
 const queryClient = new QueryClient();
 
@@ -63,7 +63,7 @@ const App = () => (
                   <Route path="/auth" element={<AuthPage />} />
                   <Route path="/reset-password" element={<ResetPasswordPage />} />
                   <Route path="/admin" element={<AdminPage />} />
-                  <Route path="/about" element={<AboutPage />} />
+                  
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>

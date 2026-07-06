@@ -17,7 +17,7 @@ const siteMap = [
   {
     title: "Информация",
     links: [
-      { name: "О компании", url: "/about" },
+      
       { name: "Доставка и оплата", url: "/delivery" },
       { name: "Услуги", url: "/services" },
       { name: "Блог", url: "/blog" },
