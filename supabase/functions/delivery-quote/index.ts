@@ -59,6 +59,11 @@ function providerCfg(sender: Record<string, any>, prefix: "cdek" | "pek" | "yand
 async function quoteYandex(sender: Record<string, any>, city: string, address: string, items: Item[]) {
   if (!YANDEX_TOKEN) return { ok: false, error: "Яндекс токен не настроен" };
   try {
+    const cfg = providerCfg(sender, "yandex");
+    const fromAddress = cfg.address || cfg.city;
+    if (!fromAddress) {
+      return { ok: false, error: "Не указан адрес отправителя Яндекс в настройках админки" };
+    }
     const sizeM = (cm?: number) => Math.max(0.1, (cm ?? 30) / 100);
     const body = {
       items: items.map((i, idx) => ({
@@ -70,8 +75,8 @@ async function quoteYandex(sender: Record<string, any>, city: string, address: s
         title: `item-${idx + 1}`,
       })),
       route_points: [
-        { coordinates: undefined, fullname: sender.address ?? "" },
-        { coordinates: undefined, fullname: address || city },
+        { fullname: fromAddress },
+        { fullname: address || city },
       ],
       requirements: { taxi_class: "express" },
     };
@@ -88,11 +93,13 @@ async function quoteYandex(sender: Record<string, any>, city: string, address: s
     if (!r.ok) return { ok: false, error: `Yandex ${r.status}: ${text.slice(0, 200)}` };
     const j = JSON.parse(text);
     const cost = Number(j.price ?? j.price_raw ?? 0);
+    if (!cost) return { ok: false, error: "Яндекс не вернул стоимость (проверь адрес/тариф)" };
     return { ok: true, cost: Math.round(cost), days: "1–2 дня", raw: j };
   } catch (e: any) {
     return { ok: false, error: e?.message ?? String(e) };
   }
 }
+
 
 // ===== ПЭК =====
 // Документация: https://kabinet.pecom.ru/api/v1/
