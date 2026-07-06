@@ -141,7 +141,7 @@ const PopularProducts = () => {
               className="flex flex-col-reverse md:flex-row items-center justify-between gap-6 md:gap-4 w-full pointer-events-none"
             >
               {/* Text */}
-              <div className="w-full md:w-1/2 text-center md:text-left pointer-events-auto md:pr-4">
+              <div className="w-full md:w-1/2 text-center md:text-left pointer-events-auto md:pl-12 lg:pl-20 xl:pl-28 md:pr-4">
                 <motion.span
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
