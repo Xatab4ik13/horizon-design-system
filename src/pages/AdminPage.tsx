@@ -5200,8 +5200,25 @@ const DeliveryPageEditor = () => {
     adminCallSWR("settings.get", { key: "delivery_page" })
       .then((r) => {
         const v = (r.data ?? {}) as any;
+        // Приводим список компаний к фиксированному набору: 3 слота в фиксированном
+        // порядке. Существующие значения подтягиваем по имени, отсутствующие —
+        // берём из FIXED_DELIVERY_COMPANIES. Лишние (Boxberry, Почта и т.п.) отбрасываем.
+        const stored: any[] = Array.isArray(v.companies) ? v.companies : [];
+        const findStored = (name: string) =>
+          stored.find((s) => String(s?.name ?? "").trim().toLowerCase() === name.toLowerCase());
+        const companies = FIXED_DELIVERY_COMPANIES.map((fx) => {
+          const s = findStored(fx.name);
+          return {
+            name: fx.name,
+            logo: s?.logo ?? "",
+            description: s?.description ?? fx.description,
+            timing: s?.timing ?? fx.timing,
+            features: Array.isArray(s?.features) ? s.features : fx.features,
+            enabled: s?.enabled !== false,
+          };
+        });
         setData({
-          companies: Array.isArray(v.companies) ? v.companies : [],
+          companies,
           pickup: { ...emptyDelivery.pickup, ...(v.pickup ?? {}), features: Array.isArray(v.pickup?.features) ? v.pickup.features : [] },
           packaging: { ...emptyDelivery.packaging, ...(v.packaging ?? {}), items: Array.isArray(v.packaging?.items) ? v.packaging.items : [] },
           paymentMethods: Array.isArray(v.paymentMethods) ? v.paymentMethods : [],
