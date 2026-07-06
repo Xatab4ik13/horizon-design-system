@@ -91,6 +91,43 @@ echo "==> Перезапускаю functions runtime"
 docker compose up -d functions
 docker compose restart functions
 
+# === Чиним старые publicUrl'ы, записанные до фикса ===
+# До фикса admin-api storage.signUpload возвращал publicUrl на основе
+# внутреннего SUPABASE_URL (http://kong:8000) — такие ссылки не открываются из
+# браузера и картинки на сайте отображаются чёрными. Одноразово переписываем их
+# на публичный домен, взятый из .env (SUPABASE_PUBLIC_URL / API_EXTERNAL_URL).
+PUBLIC_URL="$(grep -E '^(SUPABASE_PUBLIC_URL|API_EXTERNAL_URL)=' .env 2>/dev/null | head -n1 | cut -d= -f2- | tr -d '"' | sed 's:/*$::')"
+if [[ -n "${PUBLIC_URL:-}" ]]; then
+  echo "==> Переписываю старые http://kong:8000 storage-ссылки на $PUBLIC_URL"
+  psql_exec <<SQL
+UPDATE public.products
+   SET images = ARRAY(
+     SELECT replace(u, 'http://kong:8000', '${PUBLIC_URL}')
+     FROM unnest(images) AS u
+   )
+ WHERE EXISTS (SELECT 1 FROM unnest(images) AS u WHERE u LIKE 'http://kong:8000/%');
+
+UPDATE public.gallery_items
+   SET image_url = replace(image_url, 'http://kong:8000', '${PUBLIC_URL}')
+ WHERE image_url LIKE 'http://kong:8000/%';
+
+UPDATE public.product_categories
+   SET image_url = replace(image_url, 'http://kong:8000', '${PUBLIC_URL}')
+ WHERE image_url LIKE 'http://kong:8000/%';
+
+UPDATE public.blog_posts
+   SET cover_url = replace(cover_url, 'http://kong:8000', '${PUBLIC_URL}')
+ WHERE cover_url LIKE 'http://kong:8000/%';
+
+UPDATE public.app_settings
+   SET value = replace(value::text, 'http://kong:8000', '${PUBLIC_URL}')::jsonb
+ WHERE value::text LIKE '%http://kong:8000/%';
+SQL
+else
+  echo "  -> SUPABASE_PUBLIC_URL/API_EXTERNAL_URL не найден в .env, пропускаю переписывание ссылок"
+fi
+
+
 echo "==> Синхронизирую email-шаблоны GoTrue"
 TEMPLATES_SRC="$SERVER_DIR/gotrue-templates"
 TEMPLATES_DST="$SERVER_DIR/volumes/gotrue-templates"
