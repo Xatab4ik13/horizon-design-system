@@ -52,8 +52,14 @@ function providerCfg(sender: Record<string, any>, prefix: "cdek" | "pek" | "yand
 
 
 // ===== Яндекс Доставка =====
-async function quoteYandex(sender: Record<string, any>, city: string, address: string, items: Item[]) {
-  if (!YANDEX_TOKEN) return { ok: false, error: "Яндекс токен не настроен" };
+async function quoteYandex(
+  sender: Record<string, any>,
+  creds: DeliveryCreds["yandex"],
+  city: string,
+  address: string,
+  items: Item[],
+) {
+  if (!creds.token) return { ok: false, error: "Яндекс токен не настроен в админке" };
   try {
     const cfg = providerCfg(sender, "yandex");
     const fromAddress = cfg.address || cfg.city;
@@ -76,10 +82,10 @@ async function quoteYandex(sender: Record<string, any>, city: string, address: s
       ],
       requirements: { taxi_class: "express" },
     };
-    const r = await fetch("https://b2b.taxi.yandex.net/b2b/cargo/integration/v2/check-price", {
+    const r = await fetch(`${creds.baseUrl}/b2b/cargo/integration/v2/check-price`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${YANDEX_TOKEN}`,
+        Authorization: `Bearer ${creds.token}`,
         "Content-Type": "application/json",
         "Accept-Language": "ru",
       },
@@ -87,7 +93,6 @@ async function quoteYandex(sender: Record<string, any>, city: string, address: s
     });
     const text = await r.text();
     if (!r.ok) {
-      // Яндекс.Экспресс работает только внутри города — межгород возвращает 409
       if (text.includes("suitable_offer_not_found")) {
         return {
           ok: false,
@@ -96,7 +101,6 @@ async function quoteYandex(sender: Record<string, any>, city: string, address: s
       }
       return { ok: false, error: `Yandex ${r.status}: ${text.slice(0, 200)}` };
     }
-
     const j = JSON.parse(text);
     const cost = Number(j.price ?? j.price_raw ?? 0);
     if (!cost) return { ok: false, error: "Яндекс не вернул стоимость (проверь адрес/тариф)" };
@@ -108,13 +112,11 @@ async function quoteYandex(sender: Record<string, any>, city: string, address: s
 
 
 // ===== ПЭК =====
-// Документация: https://kabinet.pecom.ru/api/v1/
-// Сначала ищем receiverCityId по названию города, затем считаем стоимость.
 type PekLookup = { id: number | null; authError?: string; notFound?: boolean; error?: string };
-async function getPekCityId(cityName: string): Promise<PekLookup> {
+async function getPekCityId(creds: DeliveryCreds["pek"], cityName: string): Promise<PekLookup> {
   try {
-    const auth = btoa(`${PEK_LOGIN}:${PEK_KEY}`);
-    const r = await fetch("https://kabinet.pecom.ru/api/v1/branches/branchesfilter", {
+    const auth = btoa(`${creds.login}:${creds.key}`);
+    const r = await fetch(`${creds.baseUrl}/branches/branchesfilter`, {
       method: "POST",
       headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/json" },
       body: JSON.stringify({ filter: cityName }),
@@ -127,7 +129,9 @@ async function getPekCityId(cityName: string): Promise<PekLookup> {
       const text = await r.text();
       return { id: null, error: `ПЭК ${r.status}: ${text.slice(0, 150)}` };
     }
-    const j = await r.json();
+    const raw = await r.text();
+    if (!raw.trim()) return { id: null, error: "ПЭК вернул пустой ответ (проверьте base URL)" };
+    const j = JSON.parse(raw);
     const branches: any[] = j?.branches ?? j?.items ?? [];
     if (!branches.length) return { id: null, notFound: true };
     const exact = branches.find(
@@ -141,18 +145,15 @@ async function getPekCityId(cityName: string): Promise<PekLookup> {
   }
 }
 
-async function quotePek(sender: Record<string, any>, city: string, items: Item[]) {
-  if (!PEK_LOGIN || !PEK_KEY) return { ok: false, error: "ПЭК ключи не настроены на сервере" };
+async function quotePek(sender: Record<string, any>, creds: DeliveryCreds["pek"], city: string, items: Item[]) {
+  if (!creds.login || !creds.key) return { ok: false, error: "ПЭК ключи не настроены в админке" };
   try {
     const pekCfg = providerCfg(sender, "pek");
-    // pek_city_id должен быть числом; если там мусор (email и т.п.) — игнорируем
     let senderCityId = Number(sender.pek_city_id);
     if (!Number.isFinite(senderCityId) || senderCityId <= 0) senderCityId = 0;
     if (!senderCityId) {
-      if (!pekCfg.city) {
-        return { ok: false, error: "ПЭК: не указан город отправителя в админке" };
-      }
-      const found = await getPekCityId(String(pekCfg.city));
+      if (!pekCfg.city) return { ok: false, error: "ПЭК: не указан город отправителя в админке" };
+      const found = await getPekCityId(creds, String(pekCfg.city));
       if (found.authError) return { ok: false, error: found.authError };
       if (found.error) return { ok: false, error: found.error };
       if (found.notFound || !found.id) {
@@ -163,7 +164,7 @@ async function quotePek(sender: Record<string, any>, city: string, items: Item[]
       }
       senderCityId = found.id;
     }
-    const found = await getPekCityId(city);
+    const found = await getPekCityId(creds, city);
     if (found.authError) return { ok: false, error: found.authError };
     if (found.error) return { ok: false, error: found.error };
     if (found.notFound || !found.id) return { ok: false, error: `ПЭК: город получателя «${city}» не найден` };
@@ -191,20 +192,18 @@ async function quotePek(sender: Record<string, any>, city: string, items: Item[]
       isHigherThirdFloor: false,
       Cargos: cargos,
     };
-    const auth = btoa(`${PEK_LOGIN}:${PEK_KEY}`);
-    const r = await fetch("https://kabinet.pecom.ru/api/v1/calculator/calculateprice", {
+    const auth = btoa(`${creds.login}:${creds.key}`);
+    const r = await fetch(`${creds.baseUrl}/calculator/calculateprice`, {
       method: "POST",
       headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
     const text = await r.text();
     if (r.status === 401 || r.status === 403) {
-      return { ok: false, error: `ПЭК ${r.status}: ключи не приняты. Проверьте PEK_API_LOGIN/PEK_API_KEY.` };
+      return { ok: false, error: `ПЭК ${r.status}: ключи не приняты. Проверьте логин/ключ в админке.` };
     }
     if (!r.ok) return { ok: false, error: `ПЭК ${r.status}: ${text.slice(0, 200)}` };
-
     const j = JSON.parse(text);
-    // Ответ обычно: { transfers: { auto: { ndsCost, costWithNds, periodMin, periodMax } } }
     const auto = j?.transfers?.auto ?? j?.auto ?? {};
     const cost =
       Number(auto.costWithNds ?? auto.cost ?? j?.total ?? j?.totalSum ?? j?.price ?? 0) || 0;
@@ -224,48 +223,39 @@ async function quotePek(sender: Record<string, any>, city: string, items: Item[]
 }
 
 // ===== СДЭК =====
-// Документация: https://api-docs.cdek.ru/63345430.html
-// 1) OAuth2 client_credentials → токен
-// 2) /location/cities → получить code города (адрес для тарифа недостаточно надёжен)
-// 3) /calculator/tariff (тариф 137 — «склад–дверь», самый частый для ИМ)
-async function getCdekToken() {
-  const r = await fetch("https://api.cdek.ru/v2/oauth/token?parameters", {
+async function getCdekToken(creds: DeliveryCreds["cdek"]) {
+  const r = await fetch(`${creds.baseUrl}/v2/oauth/token?parameters`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       grant_type: "client_credentials",
-      client_id: CDEK_ACCOUNT,
-      client_secret: CDEK_PASSWORD,
+      client_id: creds.account,
+      client_secret: creds.password,
     }).toString(),
   });
   const text = await r.text();
   if (!r.ok) {
     const hint = r.status === 401
-      ? " — ключи невалидны, перевыпустите пару Account/Secure password в ЛК СДЭК → Настройки → Интеграция"
+      ? ` — ключи невалидны (режим «${creds.environment}»). Проверьте пару Account/Secure password в админке.`
       : "";
     throw new Error(`СДЭК auth ${r.status}: ${text.slice(0, 150)}${hint}`);
   }
-
   const j = JSON.parse(text);
   if (!j.access_token) throw new Error("CDEK auth: нет access_token");
   return j.access_token as string;
 }
 
-async function getCdekCityCode(token: string, cityName: string): Promise<number | null> {
+async function getCdekCityCode(creds: DeliveryCreds["cdek"], token: string, cityName: string): Promise<number | null> {
   try {
-    const url = new URL("https://api.cdek.ru/v2/location/cities");
+    const url = new URL(`${creds.baseUrl}/v2/location/cities`);
     url.searchParams.set("city", cityName);
     url.searchParams.set("country_codes", "RU");
     url.searchParams.set("size", "10");
-    const r = await fetch(url.toString(), {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const r = await fetch(url.toString(), { headers: { Authorization: `Bearer ${token}` } });
     if (!r.ok) return null;
     const j = await r.json();
     if (!Array.isArray(j) || j.length === 0) return null;
-    const exact = j.find(
-      (c: any) => String(c.city ?? "").toLowerCase() === cityName.toLowerCase(),
-    );
+    const exact = j.find((c: any) => String(c.city ?? "").toLowerCase() === cityName.toLowerCase());
     const pick = exact ?? j[0];
     const code = Number(pick?.code);
     return Number.isFinite(code) && code > 0 ? code : null;
@@ -274,17 +264,15 @@ async function getCdekCityCode(token: string, cityName: string): Promise<number 
   }
 }
 
-async function quoteCdek(sender: Record<string, any>, city: string, items: Item[]) {
-  if (!CDEK_ACCOUNT || !CDEK_PASSWORD) {
-    return { ok: false, error: "СДЭК ключи не настроены" };
-  }
+async function quoteCdek(sender: Record<string, any>, creds: DeliveryCreds["cdek"], city: string, items: Item[]) {
+  if (!creds.account || !creds.password) return { ok: false, error: "СДЭК ключи не настроены в админке" };
   try {
-    const token = await getCdekToken();
+    const token = await getCdekToken(creds);
     const cdekCfg = providerCfg(sender, "cdek");
     const fromCode =
       Number(sender.cdek_city_code) ||
-      (await getCdekCityCode(token, String(cdekCfg.city || "Москва")));
-    const toCode = await getCdekCityCode(token, city);
+      (await getCdekCityCode(creds, token, String(cdekCfg.city || "Москва")));
+    const toCode = await getCdekCityCode(creds, token, city);
     if (!fromCode) return { ok: false, error: "Не определён город отправителя СДЭК" };
     if (!toCode) return { ok: false, error: `СДЭК: город «${city}» не найден` };
 
@@ -296,14 +284,11 @@ async function quoteCdek(sender: Record<string, any>, city: string, items: Item[
         height: Math.max(1, Math.round(i.height_cm ?? 30)),
       })),
     );
-    // Перебираем популярные тарифы для ИМ, выбираем самый дешёвый успешный
-    // 136 — Посылка склад-склад, 137 — Посылка склад-дверь,
-    // 233 — Экономичная посылка склад-склад, 234 — Экономичная посылка склад-дверь
     const tariffs = [137, 234, 136, 233];
     let best: { cost: number; days: string; raw: any; tariff: number } | null = null;
     let lastError = "";
     for (const tariff_code of tariffs) {
-      const r = await fetch("https://api.cdek.ru/v2/calculator/tariff", {
+      const r = await fetch(`${creds.baseUrl}/v2/calculator/tariff`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -314,10 +299,7 @@ async function quoteCdek(sender: Record<string, any>, city: string, items: Item[
         }),
       });
       const text = await r.text();
-      if (!r.ok) {
-        lastError = `СДЭК ${r.status}: ${text.slice(0, 200)}`;
-        continue;
-      }
+      if (!r.ok) { lastError = `СДЭК ${r.status}: ${text.slice(0, 200)}`; continue; }
       const j = JSON.parse(text);
       const cost = Number(j?.total_sum ?? j?.delivery_sum ?? 0) || 0;
       if (cost > 0) {
@@ -327,9 +309,7 @@ async function quoteCdek(sender: Record<string, any>, city: string, items: Item[
         if (!best || cost < best.cost) best = { cost, days, raw: j, tariff: tariff_code };
       }
     }
-    if (!best) {
-      return { ok: false, error: lastError || "СДЭК не вернул стоимость ни по одному тарифу" };
-    }
+    if (!best) return { ok: false, error: lastError || "СДЭК не вернул стоимость ни по одному тарифу" };
     return {
       ok: true,
       cost: Math.round(best.cost),
@@ -349,11 +329,11 @@ Deno.serve(async (req) => {
     if (!city || !Array.isArray(items) || items.length === 0) {
       return json({ error: "city и items обязательны" }, 400);
     }
-    const sender = await getSender();
+    const [sender, creds] = await Promise.all([getSender(), loadDeliveryCreds(admin)]);
     const [yandex, pek, cdek] = await Promise.all([
-      quoteYandex(sender, String(city), String(address ?? ""), items as Item[]),
-      quotePek(sender, String(city), items as Item[]),
-      quoteCdek(sender, String(city), items as Item[]),
+      quoteYandex(sender, creds.yandex, String(city), String(address ?? ""), items as Item[]),
+      quotePek(sender, creds.pek, String(city), items as Item[]),
+      quoteCdek(sender, creds.cdek, String(city), items as Item[]),
     ]);
     return json({ yandex, pek, cdek });
   } catch (e: any) {
@@ -361,3 +341,4 @@ Deno.serve(async (req) => {
     return json({ error: e?.message ?? "Internal error" }, 500);
   }
 });
+
