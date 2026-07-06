@@ -185,7 +185,7 @@ const PopularProducts = () => {
               </div>
 
               {/* Image */}
-              <div className="w-full md:w-1/2 flex justify-center md:justify-end">
+              <div className="w-full md:w-1/2 flex justify-center md:justify-start md:pr-12 lg:pr-20 xl:pr-28">
                 <AutoTilt3D>
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -197,8 +197,9 @@ const PopularProducts = () => {
                       alt={item.title}
                       loading="lazy"
                       decoding="async"
-                      className="w-[280px] h-[280px] md:w-[400px] md:h-[400px] lg:w-[480px] lg:h-[480px] object-contain drop-shadow-2xl pointer-events-none ml-auto"
+                      className="w-[280px] h-[280px] md:w-[400px] md:h-[400px] lg:w-[480px] lg:h-[480px] object-contain drop-shadow-2xl pointer-events-none"
                     />
+
                   </motion.div>
                 </AutoTilt3D>
               </div>
