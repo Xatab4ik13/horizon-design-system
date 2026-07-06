@@ -3,6 +3,7 @@
 // Ответ: { yandex: {...}, pek: {...}, cdek: {...} }
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { loadDeliveryCreds, type DeliveryCreds } from "../_shared/delivery-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,11 +28,6 @@ interface Item {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const YANDEX_TOKEN = Deno.env.get("YANDEX_DELIVERY_TOKEN") ?? "";
-const PEK_LOGIN = Deno.env.get("PEK_API_LOGIN") ?? "";
-const PEK_KEY = Deno.env.get("PEK_API_KEY") ?? "";
-const CDEK_ACCOUNT = Deno.env.get("CDEK_ACCOUNT") ?? "";
-const CDEK_PASSWORD = Deno.env.get("CDEK_SECURE_PASSWORD") ?? "";
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, {
   auth: { persistSession: false, autoRefreshToken: false },
