@@ -5334,21 +5334,9 @@ const DeliveryPageEditor = () => {
                     }} className="w-5 h-5" />
                   <span>Показывать</span>
                 </label>
-                <button
-                  onClick={() => setData({ ...data, companies: data.companies.filter((_, j) => j !== i) })}
-                  className={`${ui.btn} ${ui.btnDanger} justify-self-start`}
-                >
-                  <Trash2 size={14} /> Удалить компанию
-                </button>
               </div>
             </div>
           ))}
-          <button
-            onClick={() => setData({ ...data, companies: [...data.companies, { name: "", logo: "", description: "", timing: "", features: [], enabled: true }] })}
-            className={`${ui.btn} ${ui.btnSecondary} justify-self-start`}
-          >
-            <Plus size={16} /> Добавить компанию
-          </button>
         </div>
       </details>
 
