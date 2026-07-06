@@ -96,8 +96,23 @@ bash scripts/apply-migrations.sh
 cd /opt/faktura/server && bash scripts/deploy-backend.sh
 ```
 
-Скрипт обновит код из GitHub, применит новые миграции и перезапустит edge-функции:
-`admin-api`, `delivery-quote`, `delivery-create`, `order-place`, `tinkoff-payment`.
+Скрипт обновит код из GitHub, применит новые миграции, перезапустит edge-функции
+(`admin-api`, `delivery-quote`, `delivery-create`, `order-place`, `tinkoff-payment`),
+синхронизирует HTML-шаблоны писем GoTrue и поднимет вспомогательный контейнер
+`email-templates`, который раздаёт эти шаблоны по HTTP внутри docker-сети.
+
+**Все правки бэкенда (миграции, edge-функции, шаблоны писем, docker override) —
+через коммит в репозиторий + один запуск этого скрипта на сервере. Больше
+руками ничего править не нужно.**
+
+Кастомизации compose (контейнер `email-templates`, env `GOTRUE_MAILER_TEMPLATES_*`)
+лежат в `server/docker-compose.override.yml` — Docker Compose подхватывает его
+автоматически рядом с основным `docker-compose.yml` из upstream-стека Supabase.
+
+HTML-шаблоны писем лежат в `server/gotrue-templates/*.html`. Правь их коммитом,
+скрипт `deploy-backend.sh` сам разложит их в `server/volumes/gotrue-templates/`
+и перезапустит `auth` + `email-templates`.
+
 
 Ручной вариант через CLI, если нужен отдельно:
 
