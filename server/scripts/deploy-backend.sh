@@ -116,8 +116,9 @@ UPDATE public.product_categories
  WHERE image_url LIKE 'http://kong:8000/%';
 
 UPDATE public.blog_posts
-   SET cover_url = replace(cover_url, 'http://kong:8000', '${PUBLIC_URL}')
- WHERE cover_url LIKE 'http://kong:8000/%';
+   SET cover_image = replace(cover_image, 'http://kong:8000', '${PUBLIC_URL}')
+ WHERE cover_image LIKE 'http://kong:8000/%';
+
 
 UPDATE public.app_settings
    SET value = replace(value::text, 'http://kong:8000', '${PUBLIC_URL}')::jsonb
