@@ -207,8 +207,9 @@ async function createCdekOrder(order: any, sender: Record<string, any>) {
       name: order.customer_name,
       phones: [{ number: order.customer_phone }],
     },
-    from_location: { address: sender.address || sender.city || "Москва" },
+    from_location: { address: providerCfg(sender, "cdek").address || providerCfg(sender, "cdek").city || "Москва" },
     to_location: { address: order.delivery_address || order.delivery_city || "" },
+
     packages,
   };
   const r = await fetch("https://api.cdek.ru/v2/orders", {
