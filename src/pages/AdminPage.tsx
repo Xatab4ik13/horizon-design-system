@@ -120,6 +120,7 @@ const AdminPage = () => {
 
         {tab === "dashboard" && <Dashboard onNavigate={setTab} />}
         {tab === "products" && <ProductsPanel />}
+        {tab === "categories" && <CategoriesPanel />}
         {tab === "orders" && <OrdersPanel />}
         {tab === "requests" && <RequestsPanel />}
         {tab === "users" && <UsersPanel />}
