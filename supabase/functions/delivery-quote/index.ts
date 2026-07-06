@@ -114,7 +114,8 @@ async function quoteYandex(sender: Record<string, any>, city: string, address: s
 // ===== ПЭК =====
 // Документация: https://kabinet.pecom.ru/api/v1/
 // Сначала ищем receiverCityId по названию города, затем считаем стоимость.
-async function getPekCityId(cityName: string): Promise<number | null> {
+type PekLookup = { id: number | null; authError?: string; notFound?: boolean; error?: string };
+async function getPekCityId(cityName: string): Promise<PekLookup> {
   try {
     const auth = btoa(`${PEK_LOGIN}:${PEK_KEY}`);
     const r = await fetch("https://kabinet.pecom.ru/api/v1/branches/branchesfilter", {
@@ -122,38 +123,56 @@ async function getPekCityId(cityName: string): Promise<number | null> {
       headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/json" },
       body: JSON.stringify({ filter: cityName }),
     });
-    if (!r.ok) return null;
+    if (r.status === 401 || r.status === 403) {
+      const text = await r.text();
+      return { id: null, authError: `ПЭК ${r.status}: ключи не приняты. ${text.slice(0, 120)}` };
+    }
+    if (!r.ok) {
+      const text = await r.text();
+      return { id: null, error: `ПЭК ${r.status}: ${text.slice(0, 150)}` };
+    }
     const j = await r.json();
-    // Ответ: { branches: [{ id, title, ... }] }
     const branches: any[] = j?.branches ?? j?.items ?? [];
-    if (!branches.length) return null;
+    if (!branches.length) return { id: null, notFound: true };
     const exact = branches.find(
       (b) => String(b.title ?? b.name ?? "").toLowerCase() === cityName.toLowerCase(),
     );
     const pick = exact ?? branches[0];
     const id = Number(pick?.id ?? pick?.branchId);
-    return Number.isFinite(id) && id > 0 ? id : null;
-  } catch {
-    return null;
+    return { id: Number.isFinite(id) && id > 0 ? id : null };
+  } catch (e: any) {
+    return { id: null, error: `Сеть: ${e?.message ?? e}` };
   }
 }
 
 async function quotePek(sender: Record<string, any>, city: string, items: Item[]) {
-  if (!PEK_LOGIN || !PEK_KEY) return { ok: false, error: "ПЭК ключи не настроены" };
+  if (!PEK_LOGIN || !PEK_KEY) return { ok: false, error: "ПЭК ключи не настроены на сервере" };
   try {
     const pekCfg = providerCfg(sender, "pek");
-    let senderCityId = Number(sender.pek_city_id) || null;
-    if (!senderCityId && pekCfg.city) {
-      senderCityId = await getPekCityId(String(pekCfg.city));
-    }
+    // pek_city_id должен быть числом; если там мусор (email и т.п.) — игнорируем
+    let senderCityId = Number(sender.pek_city_id);
+    if (!Number.isFinite(senderCityId) || senderCityId <= 0) senderCityId = 0;
     if (!senderCityId) {
-      return { ok: false, error: "ПЭК: не определён город отправителя (укажите его в настройках)" };
+      if (!pekCfg.city) {
+        return { ok: false, error: "ПЭК: не указан город отправителя в админке" };
+      }
+      const found = await getPekCityId(String(pekCfg.city));
+      if (found.authError) return { ok: false, error: found.authError };
+      if (found.error) return { ok: false, error: found.error };
+      if (found.notFound || !found.id) {
+        return {
+          ok: false,
+          error: `ПЭК: город отправителя «${pekCfg.city}» не найден. Задайте ID города вручную в настройках.`,
+        };
+      }
+      senderCityId = found.id;
     }
+    const found = await getPekCityId(city);
+    if (found.authError) return { ok: false, error: found.authError };
+    if (found.error) return { ok: false, error: found.error };
+    if (found.notFound || !found.id) return { ok: false, error: `ПЭК: город получателя «${city}» не найден` };
+    const receiverCityId = found.id;
 
-    const receiverCityId = await getPekCityId(city);
-    if (!receiverCityId) {
-      return { ok: false, error: `ПЭК: город «${city}» не найден` };
-    }
     const cargos = items.flatMap((i) =>
       Array.from({ length: i.quantity }, () => ({
         length: Math.max(0.01, (i.depth_cm ?? 30) / 100),
