@@ -1,36 +1,13 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import categoryTable from "@/assets/category-table.png";
-import categoryChairs from "@/assets/category-chairs.png";
-import categoryDecor from "@/assets/category-decor.png";
-import categoryShelves from "@/assets/category-shelves.png";
-import categoryCrafts from "@/assets/category-crafts.png";
-import categoryDoors from "@/assets/category-doors.png";
 import { useHomepageContent } from "@/hooks/useSiteContent";
-
-const defaultCategories = [
-  { name: "Мебель", slug: "furniture", image: categoryTable },
-  { name: "Кухонные принадлежности", slug: "kitchen", image: categoryChairs },
-  { name: "Системы хранения", slug: "storage", image: categoryDecor },
-  { name: "Предметы интерьера", slug: "interior", image: categoryShelves },
-  { name: "Заготовки для творчества", slug: "crafts", image: categoryCrafts },
-  { name: "Двери", slug: "doors", image: categoryDoors },
-];
+import { useProductCategories, resolveCategoryImage } from "@/hooks/useProductCategories";
 
 const CategoriesSection = () => {
   const content = useHomepageContent();
-  const overrides = content.categories?.items ?? [];
-  const total = Math.max(defaultCategories.length, overrides.length);
-  const categories = Array.from({ length: total }, (_, i) => {
-    const def = defaultCategories[i];
-    const ov = overrides[i];
-    return {
-      name: ov?.name?.trim() || def?.name || "",
-      slug: def?.slug || `extra-${i}`,
-      image: ov?.image?.trim() || def?.image || "",
-      enabled: ov?.enabled !== false,
-    };
-  }).filter((c) => c.enabled && c.name);
+  const allCategories = useProductCategories();
+  const categories = allCategories.filter((c) => c.show_on_home);
+
   const title = content.categories?.title?.trim() || "Категории каталога";
   const bgImage = content.categories?.bgImage?.trim();
   const sectionStyle = bgImage
@@ -42,9 +19,7 @@ const CategoriesSection = () => {
       className="py-16 relative"
       style={sectionStyle}
     >
-      {/* Top fade */}
       <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-t from-transparent to-[hsl(0_0%_2%)] pointer-events-none" />
-      {/* Bottom fade */}
       <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-b from-transparent to-[hsl(0_0%_2%)] pointer-events-none" />
 
       <div className="container mx-auto px-4 relative z-10">
@@ -52,38 +27,41 @@ const CategoriesSection = () => {
           {title}
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-6">
-          {categories.map((cat, i) => (
-            <Link
-              key={cat.slug}
-              to={`/catalog?category=${cat.slug}`}
-              className="group relative h-44 md:h-80 lg:h-96 overflow-visible"
-            >
-              {cat.image ? (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: i * 0.1 }}
-                  className="absolute inset-0 flex items-center justify-center"
-                >
-                  <img
-                    src={cat.image}
-                    alt={cat.name}
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
-                  />
-                </motion.div>
-              ) : (
-                <div className="absolute inset-0 bg-muted/30" />
-              )}
-              <div className="absolute inset-x-0 bottom-0 z-10 flex justify-center pb-2">
-                <h3 className="text-base md:text-xl text-foreground group-hover:text-primary transition-colors">
-                  {cat.name}
-                </h3>
-              </div>
-            </Link>
-          ))}
+          {categories.map((cat, i) => {
+            const image = resolveCategoryImage(cat);
+            return (
+              <Link
+                key={cat.id}
+                to={`/catalog?category=${cat.slug}`}
+                className="group relative h-44 md:h-80 lg:h-96 overflow-visible"
+              >
+                {image ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: i * 0.1 }}
+                    className="absolute inset-0 flex items-center justify-center"
+                  >
+                    <img
+                      src={image}
+                      alt={cat.name}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
+                    />
+                  </motion.div>
+                ) : (
+                  <div className="absolute inset-0 bg-muted/30" />
+                )}
+                <div className="absolute inset-x-0 bottom-0 z-10 flex justify-center pb-2">
+                  <h3 className="text-base md:text-xl text-foreground group-hover:text-primary transition-colors">
+                    {cat.name}
+                  </h3>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </section>

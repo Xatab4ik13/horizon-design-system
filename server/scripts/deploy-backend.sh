@@ -45,6 +45,7 @@ echo "==> Накатываю новые миграции админки/гале
 apply_if_table_missing "gallery_items" "20260703121524_4a279bd2-6bfc-404e-be96-e788e743de9d.sql"
 apply_if_table_missing "email_log" "20260703123557_79cdea4b-50c0-4cb7-8946-2682bbe8b2f7.sql"
 apply_if_table_missing "payment_log" "20260703124312_a5ae3479-60b9-4721-943e-f26335b88762.sql"
+apply_if_table_missing "product_categories" "20260706193058_7a7f6c99-5267-4f85-b6e4-e1102408b75c.sql"
 
 echo "==> Дожимаю grants/колонки на случай частичного прогона"
 psql_exec <<'SQL'

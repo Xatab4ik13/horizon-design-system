@@ -7,22 +7,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import LiveSearch from "@/components/LiveSearch";
 import Logo from "@/components/Logo";
-import categoryTable from "@/assets/category-table.png";
-import categoryChairs from "@/assets/category-chairs.png";
-import categoryDecor from "@/assets/category-decor.png";
-import categoryShelves from "@/assets/category-shelves.png";
-import categoryCrafts from "@/assets/category-crafts.png";
-import categoryDoors from "@/assets/category-doors.png";
 import { useNavMenu } from "@/hooks/useSiteContent";
-
-const categories = [
-  { name: "Мебель", slug: "furniture", image: categoryTable },
-  { name: "Кухонные принадлежности", slug: "kitchen", image: categoryChairs },
-  { name: "Системы хранения", slug: "storage", image: categoryDecor },
-  { name: "Предметы интерьера", slug: "interior", image: categoryShelves },
-  { name: "Заготовки для творчества", slug: "crafts", image: categoryCrafts },
-  { name: "Двери", slug: "doors", image: categoryDoors },
-];
+import { useProductCategories, resolveCategoryImage } from "@/hooks/useProductCategories";
 
 const defaultNavItems = [
   { name: "Главная", url: "/" },
@@ -39,6 +25,12 @@ const Header = () => {
   const isMobile = useIsMobile();
   const { totalItems } = useCart();
   const navItems = useNavMenu(defaultNavItems);
+  const allCategories = useProductCategories();
+  const categories = allCategories.filter((c) => c.show_in_menu).map((c) => ({
+    slug: c.slug,
+    name: c.name,
+    image: resolveCategoryImage(c),
+  }));
   const [activeTab, setActiveTab] = useState(
     navItems.find((item) => item.url === location.pathname)?.name || navItems[0].name
   );

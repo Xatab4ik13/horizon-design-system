@@ -355,6 +355,49 @@ Deno.serve(async (req) => {
         return json({ ok: true, count: items.length });
       }
 
+      // ===== CATEGORIES (product_categories) =====
+      case "categories.list": {
+        const { data, error } = await admin
+          .from("product_categories")
+          .select("*")
+          .order("sort_order", { ascending: true })
+          .order("name", { ascending: true });
+        if (error) throw error;
+        return json({ data });
+      }
+      case "categories.create": {
+        const { data, error } = await admin.from("product_categories").insert(payload).select().single();
+        if (error) throw error;
+        return json({ data });
+      }
+      case "categories.update": {
+        const { id, ...patch } = payload;
+        const { data, error } = await admin
+          .from("product_categories")
+          .update(patch)
+          .eq("id", id)
+          .select()
+          .single();
+        if (error) throw error;
+        return json({ data });
+      }
+      case "categories.delete": {
+        const { error } = await admin.from("product_categories").delete().eq("id", payload.id);
+        if (error) throw error;
+        return json({ ok: true });
+      }
+      case "categories.reorder": {
+        const items: { id: string; sort_order: number }[] = Array.isArray(payload?.items) ? payload.items : [];
+        for (const it of items) {
+          const { error } = await admin
+            .from("product_categories")
+            .update({ sort_order: it.sort_order })
+            .eq("id", it.id);
+          if (error) throw error;
+        }
+        return json({ ok: true, count: items.length });
+      }
+
 
 
       // ===== STORAGE: signed upload URL (для больших файлов, минуя 6МБ-лимит invoke) =====
