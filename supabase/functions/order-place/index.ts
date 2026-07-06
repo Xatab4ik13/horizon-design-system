@@ -258,13 +258,13 @@ Deno.serve(async (req) => {
     };
     if (delivery_provider === "yandex" || delivery_provider === "pek" || delivery_provider === "cdek") {
       try {
-        const sender = await getSender();
+        const [sender, creds] = await Promise.all([getSender(), loadDeliveryCreds(admin)]);
         const r =
           delivery_provider === "yandex"
-            ? await createYandexClaim(order, sender)
+            ? await createYandexClaim(order, sender, creds.yandex)
             : delivery_provider === "pek"
-            ? await createPekOrder(order, sender)
-            : await createCdekOrder(order, sender);
+            ? await createPekOrder(order, sender, creds.pek)
+            : await createCdekOrder(order, sender, creds.cdek);
 
         await admin
           .from("orders")
