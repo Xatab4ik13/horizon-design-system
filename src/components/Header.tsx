@@ -7,22 +7,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import LiveSearch from "@/components/LiveSearch";
 import Logo from "@/components/Logo";
-import categoryTable from "@/assets/category-table.png";
-import categoryChairs from "@/assets/category-chairs.png";
-import categoryDecor from "@/assets/category-decor.png";
-import categoryShelves from "@/assets/category-shelves.png";
-import categoryCrafts from "@/assets/category-crafts.png";
-import categoryDoors from "@/assets/category-doors.png";
 import { useNavMenu } from "@/hooks/useSiteContent";
-
-const categories = [
-  { name: "Мебель", slug: "furniture", image: categoryTable },
-  { name: "Кухонные принадлежности", slug: "kitchen", image: categoryChairs },
-  { name: "Системы хранения", slug: "storage", image: categoryDecor },
-  { name: "Предметы интерьера", slug: "interior", image: categoryShelves },
-  { name: "Заготовки для творчества", slug: "crafts", image: categoryCrafts },
-  { name: "Двери", slug: "doors", image: categoryDoors },
-];
+import { useProductCategories, resolveCategoryImage } from "@/hooks/useProductCategories";
 
 const defaultNavItems = [
   { name: "Главная", url: "/" },
