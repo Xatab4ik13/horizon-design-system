@@ -5282,6 +5282,330 @@ const MediaPanel = () => {
 // ===================================================================
 // GALLERY — управление карточками страницы /gallery
 // ===================================================================
+// ===================================================================
+// КАТЕГОРИИ КАТАЛОГА (product_categories) — единый источник для главной, каталога и меню
+// ===================================================================
+type CategoryRow = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+  sort_order: number;
+  show_on_home: boolean;
+  show_in_menu: boolean;
+  is_active: boolean;
+  created_at?: string;
+};
+
+const emptyCategory: Partial<CategoryRow> = {
+  slug: "",
+  name: "",
+  description: "",
+  image_url: "",
+  sort_order: 0,
+  show_on_home: true,
+  show_in_menu: true,
+  is_active: true,
+};
+
+const CategoriesPanel = () => {
+  const cached = getCachedAdminCall<{ data: CategoryRow[] }>("categories.list");
+  const [items, setItems] = useState<CategoryRow[]>(cached?.data ?? []);
+  const [loading, setLoading] = useState(!cached);
+  const [editing, setEditing] = useState<Partial<CategoryRow> | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const load = async () => {
+    if (!getCachedAdminCall("categories.list")) setLoading(true);
+    try {
+      const r = await adminCallSWR<{ data: CategoryRow[] }>("categories.list", undefined, (fresh) => {
+        setItems(fresh.data ?? []);
+      });
+      setItems(r.data ?? []);
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+    setLoading(false);
+  };
+  useEffect(() => { load(); }, []);
+
+  const save = async () => {
+    if (!editing) return;
+    const slug = (editing.slug ?? "").trim().toLowerCase();
+    const name = (editing.name ?? "").trim();
+    if (!slug || !/^[a-z0-9-]+$/.test(slug)) {
+      toast.error("Slug должен быть латиницей, цифрами и дефисом");
+      return;
+    }
+    if (!name) {
+      toast.error("Введите название");
+      return;
+    }
+    const patch: Partial<CategoryRow> = {
+      ...editing,
+      slug,
+      name,
+      description: (editing.description ?? "") || null,
+      image_url: (editing.image_url ?? "") || null,
+      sort_order: Number(editing.sort_order ?? 0) || 0,
+    };
+    try {
+      if (editing.id) {
+        await adminCall("categories.update", patch);
+      } else {
+        await adminCall("categories.create", { ...emptyCategory, ...patch, sort_order: patch.sort_order ?? items.length * 10 });
+      }
+      invalidateAdminCache("categories.");
+      toast.success("Сохранено");
+      setEditing(null);
+      load();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  const remove = async (row: CategoryRow) => {
+    if (!confirm(`Удалить категорию «${row.name}»?\n\nТовары с этим slug останутся, но перестанут отображаться в каталоге, пока категория не будет создана заново.`)) return;
+    try {
+      await adminCall("categories.delete", { id: row.id });
+      invalidateAdminCache("categories.");
+      load();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  const move = async (idx: number, dir: -1 | 1) => {
+    const j = idx + dir;
+    if (j < 0 || j >= items.length) return;
+    const next = [...items];
+    [next[idx], next[j]] = [next[j], next[idx]];
+    setItems(next);
+    try {
+      await adminCall("categories.reorder", {
+        items: next.map((it, i) => ({ id: it.id, sort_order: (i + 1) * 10 })),
+      });
+      invalidateAdminCache("categories.");
+    } catch (e: any) {
+      toast.error(e.message);
+      load();
+    }
+  };
+
+  const toggle = async (row: CategoryRow, field: "is_active" | "show_on_home" | "show_in_menu") => {
+    try {
+      await adminCall("categories.update", { id: row.id, [field]: !row[field] });
+      invalidateAdminCache("categories.");
+      load();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setUploading(true);
+    try {
+      const url = await adminUploadFile("site-images", f, { prefix: "categories/" });
+      setEditing((prev) => ({ ...(prev ?? emptyCategory), image_url: url }));
+    } catch (err: any) {
+      toast.error(err?.message ?? "Ошибка загрузки");
+    }
+    setUploading(false);
+    e.target.value = "";
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
+        <div>
+          <h2 className={ui.h2}>Категории каталога ({items.length})</h2>
+          <p className="text-[14px] text-[#999] mt-1">
+            Единый источник для главной страницы, каталога и меню в шапке. Slug должен совпадать с полем «Категория» у товаров.
+          </p>
+        </div>
+        <button
+          onClick={() => setEditing({ ...emptyCategory, sort_order: (items.length + 1) * 10 })}
+          className={`${ui.btn} ${ui.btnPrimary}`}
+        >
+          <Plus size={18} /> Новая категория
+        </button>
+      </div>
+
+      {editing && (
+        <div className={`${ui.card} mb-6`}>
+          <h3 className={`${ui.h3} mb-4`}>{editing.id ? "Редактирование" : "Новая категория"}</h3>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className={ui.label}>Изображение</label>
+              {editing.image_url ? (
+                <div className="mb-3 rounded-lg overflow-hidden bg-[#1a1a1a] aspect-[4/3] flex items-center justify-center">
+                  <img src={editing.image_url} alt="" className="max-w-full max-h-full object-contain" />
+                </div>
+              ) : (
+                <div className="mb-3 rounded-lg bg-[#1a1a1a] aspect-[4/3] flex items-center justify-center text-[#666] text-sm text-center px-4">
+                  Если не задано — используется встроенная картинка по slug<br />(furniture / kitchen / storage / interior / crafts / doors)
+                </div>
+              )}
+              <label className={`${ui.btn} ${ui.btnSecondary} cursor-pointer ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+                <Upload size={16} /> {uploading ? "Загрузка…" : "Загрузить"}
+                <input type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+              </label>
+              <input
+                type="text"
+                value={editing.image_url ?? ""}
+                onChange={(e) => setEditing({ ...editing, image_url: e.target.value })}
+                placeholder="или URL напрямую"
+                className={`${ui.input} mt-3`}
+              />
+            </div>
+
+            <div className="grid gap-4">
+              <div>
+                <label className={ui.label}>Slug (латиница)</label>
+                <input
+                  type="text"
+                  value={editing.slug ?? ""}
+                  onChange={(e) => setEditing({ ...editing, slug: e.target.value })}
+                  placeholder="furniture"
+                  className={ui.input}
+                  disabled={!!editing.id}
+                />
+                <p className="text-[13px] text-[#888] mt-1">
+                  Идентификатор в URL: <code>/catalog?category=slug</code>. У товаров поле «Категория» должно быть таким же.
+                </p>
+              </div>
+              <div>
+                <label className={ui.label}>Название</label>
+                <input
+                  type="text"
+                  value={editing.name ?? ""}
+                  onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+                  placeholder="Мебель"
+                  className={ui.input}
+                />
+              </div>
+              <div>
+                <label className={ui.label}>Описание (необязательно)</label>
+                <textarea
+                  value={editing.description ?? ""}
+                  onChange={(e) => setEditing({ ...editing, description: e.target.value })}
+                  rows={3}
+                  className={ui.textarea}
+                />
+              </div>
+              <div>
+                <label className={ui.label}>Порядок сортировки</label>
+                <input
+                  type="number"
+                  value={editing.sort_order ?? 0}
+                  onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) })}
+                  className={ui.input}
+                />
+              </div>
+              <div className="flex flex-wrap gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editing.is_active ?? true}
+                    onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })}
+                  />
+                  <span>Активна</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editing.show_on_home ?? true}
+                    onChange={(e) => setEditing({ ...editing, show_on_home: e.target.checked })}
+                  />
+                  <span>Показывать на главной</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editing.show_in_menu ?? true}
+                    onChange={(e) => setEditing({ ...editing, show_in_menu: e.target.checked })}
+                  />
+                  <span>Показывать в меню</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-3 mt-6">
+            <button onClick={save} className={`${ui.btn} ${ui.btnPrimary}`}><Check size={18} /> Сохранить</button>
+            <button onClick={() => setEditing(null)} className={`${ui.btn} ${ui.btnSecondary}`}><X size={18} /> Отмена</button>
+          </div>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="text-[#999]">Загрузка…</div>
+      ) : items.length === 0 ? (
+        <div className={`${ui.card} text-center text-[#999]`}>Пока нет ни одной категории.</div>
+      ) : (
+        <div className={`${ui.card} p-0 overflow-hidden`}>
+          <table className="w-full text-[15px]">
+            <thead className="bg-[#1a1a1a] text-[#bbb] text-[13px] uppercase tracking-wide">
+              <tr>
+                <th className="px-4 py-3 text-left w-16"></th>
+                <th className="px-4 py-3 text-left w-20">Порядок</th>
+                <th className="px-4 py-3 text-left">Название</th>
+                <th className="px-4 py-3 text-left">Slug</th>
+                <th className="px-4 py-3 text-center">Активна</th>
+                <th className="px-4 py-3 text-center">Главная</th>
+                <th className="px-4 py-3 text-center">Меню</th>
+                <th className="px-4 py-3 text-right w-32">Действия</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((it, i) => (
+                <tr key={it.id} className="border-t border-[#3a3a3a]">
+                  <td className="px-4 py-3">
+                    {it.image_url ? (
+                      <img src={it.image_url} alt="" className="w-12 h-12 object-contain" />
+                    ) : (
+                      <div className="w-12 h-12 rounded bg-[#1a1a1a] flex items-center justify-center text-[#666] text-xs">—</div>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-col gap-0.5">
+                      <button onClick={() => move(i, -1)} disabled={i === 0} className="text-[#999] hover:text-white disabled:opacity-30 text-xs">▲</button>
+                      <span className="text-[#666] text-xs text-center">{it.sort_order}</span>
+                      <button onClick={() => move(i, 1)} disabled={i === items.length - 1} className="text-[#999] hover:text-white disabled:opacity-30 text-xs">▼</button>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 font-semibold">{it.name}</td>
+                  <td className="px-4 py-3 text-[#999] font-mono text-[13px]">{it.slug}</td>
+                  <td className="px-4 py-3 text-center">
+                    <button onClick={() => toggle(it, "is_active")} className={it.is_active ? "text-green-400" : "text-[#666]"}>{it.is_active ? "✓" : "—"}</button>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <button onClick={() => toggle(it, "show_on_home")} className={it.show_on_home ? "text-green-400" : "text-[#666]"}>{it.show_on_home ? "✓" : "—"}</button>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <button onClick={() => toggle(it, "show_in_menu")} className={it.show_in_menu ? "text-green-400" : "text-[#666]"}>{it.show_in_menu ? "✓" : "—"}</button>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="inline-flex gap-2">
+                      <button onClick={() => setEditing(it)} className={`${ui.btn} ${ui.btnSecondary} !px-3 !py-2`}><Pencil size={14} /></button>
+                      <button onClick={() => remove(it)} className={`${ui.btn} ${ui.btnDanger} !px-3 !py-2`}><Trash2 size={14} /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ===================================================================
+// ГАЛЕРЕЯ
+// ===================================================================
 type GalleryRow = {
   id: string;
   image_url: string;
