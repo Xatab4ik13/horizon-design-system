@@ -244,6 +244,16 @@ const ProductPage = () => {
     });
   }, [product?.id]);
 
+  // Автоматический запуск AR при переходе с QR-кода (?ar=1)
+  useEffect(() => {
+    if (!product?.arModel) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("ar") === "1") {
+      setArAutoLaunch(true);
+      setShowAR(true);
+    }
+  }, [product?.arModel]);
+
   const handleVariationChange = useCallback(
     (type: string, value: string) => {
       const next = { ...selectedVariations, [type]: value };
