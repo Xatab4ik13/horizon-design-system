@@ -46,18 +46,20 @@ const ContactForm = () => {
 
   const onSubmit = async (data: FormData) => {
     setSubmitting(true);
-    const contact = data.email ? `${data.phone} / ${data.email}` : data.phone;
-    const { error } = await supabase.from("contact_requests").insert({
-      name: data.name,
-      contact,
-      subject: data.subject,
-      message: data.message,
+    const { data: res, error } = await supabase.functions.invoke("contact-submit", {
+      body: {
+        name: data.name,
+        phone: data.phone,
+        email: data.email || undefined,
+        subject: data.subject,
+        message: data.message,
+      },
     });
     setSubmitting(false);
-    if (error) {
+    if (error || (res && (res as any).error)) {
       toast({
         title: "Не удалось отправить",
-        description: error.message,
+        description: (error?.message ?? (res as any)?.error) || "Попробуйте ещё раз",
         variant: "destructive",
       });
       return;
