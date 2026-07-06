@@ -732,6 +732,19 @@ const ProductPage = () => {
           </Button>
         </div>
       </main>
+      {product.arModel && (
+        <ARModal
+          open={showAR}
+          onClose={() => {
+            setShowAR(false);
+            setArAutoLaunch(false);
+          }}
+          glb={product.arModel.glb}
+          usdz={product.arModel.usdz}
+          productName={product.name}
+          autoLaunch={arAutoLaunch}
+        />
+      )}
       <Footer />
     </div>
   );
