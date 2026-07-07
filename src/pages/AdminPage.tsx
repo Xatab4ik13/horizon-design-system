@@ -935,10 +935,10 @@ const ProductEditor = ({
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <NumField k="width_cm" label="Ширина, см" />
-          <NumField k="height_cm" label="Высота (длина), см" />
-          <NumField k="depth_cm" label="Толщина, см" />
-          <NumField k="weight_kg" label="Вес нетто, кг" />
+          {renderNumField("width_cm", "Ширина, см")}
+          {renderNumField("height_cm", "Высота (длина), см")}
+          {renderNumField("depth_cm", "Толщина, см")}
+          {renderNumField("weight_kg", "Вес нетто, кг")}
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -971,8 +971,8 @@ const ProductEditor = ({
               <option value="Нет в наличии">Нет в наличии</option>
             </select>
           </div>
-          <NumField k="weight_gross_kg" label="Вес брутто, кг" />
-          <NumField k="area_m2" label="Площадь, м²" />
+          {renderNumField("weight_gross_kg", "Вес брутто, кг")}
+          {renderNumField("area_m2", "Площадь, м²")}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1006,7 +1006,7 @@ const ProductEditor = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <NumField k="volume_m3" label="Объём, м³" />
+          {renderNumField("volume_m3", "Объём, м³")}
           <div>
             <label className={ui.label}>Упаковка</label>
             <input
