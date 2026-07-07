@@ -68,20 +68,31 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Письмо админу — не блокирует ответ клиенту, но ошибку логируем.
+  // Письмо админу — отправляем в фоне с таймаутом, чтобы SMTP-задержки/зависания
+  // не блокировали ответ клиенту и не занимали воркер edge-функций.
   if (ADMIN_EMAIL) {
-    try {
-      const t = renderContactRequest({ name, phone, email, subject, message });
-      await sendEmail({
-        to: ADMIN_EMAIL,
-        subject: t.subject,
-        html: t.html,
-        template: "contact-request-admin",
-        related_request_id: inserted?.id ?? null,
-        metadata: { source: "contact-form" },
-      });
-    } catch (e) {
-      console.error("admin email send failed", e);
+    const t = renderContactRequest({ name, phone, email, subject, message });
+    const emailTask = (async () => {
+      try {
+        await Promise.race([
+          sendEmail({
+            to: ADMIN_EMAIL,
+            subject: t.subject,
+            html: t.html,
+            template: "contact-request-admin",
+            related_request_id: inserted?.id ?? null,
+            metadata: { source: "contact-form" },
+          }),
+          new Promise((_, rej) => setTimeout(() => rej(new Error("smtp timeout 10s")), 10_000)),
+        ]);
+      } catch (e) {
+        console.error("admin email send failed", e);
+      }
+    })();
+    // @ts-ignore — EdgeRuntime доступен в supabase/edge-runtime
+    if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) {
+      // @ts-ignore
+      EdgeRuntime.waitUntil(emailTask);
     }
   } else {
     console.warn("ADMIN_NOTIFY_EMAIL is not set — admin email skipped");
