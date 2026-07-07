@@ -12,6 +12,7 @@ import { useCart } from "@/contexts/CartContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import DadataAddressInput from "@/components/DadataAddressInput";
 
 import logoYandex from "@/assets/logo-yandex-delivery.png";
 
@@ -368,20 +369,21 @@ const CheckoutPage = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="sm:col-span-1">
                           <label className="text-sm text-muted-foreground mb-1.5 block">Город *</label>
-                          <input
+                          <DadataAddressInput
+                            mode="city"
                             value={city}
-                            onChange={(e) => { setCity(e.target.value); setQuotes(null); }}
-                            className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors"
+                            onChange={(v) => { setCity(v); setQuotes(null); }}
                             placeholder="Москва"
                             disabled={isPickup}
                           />
                         </div>
                         <div className="sm:col-span-2">
                           <label className="text-sm text-muted-foreground mb-1.5 block">Адрес *</label>
-                          <input
+                          <DadataAddressInput
+                            mode="address"
+                            cityFilter={city}
                             value={address}
-                            onChange={(e) => { setAddress(e.target.value); setQuotes(null); }}
-                            className="w-full px-4 py-3 rounded-xl bg-background/60 border border-border text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none transition-colors"
+                            onChange={(v) => { setAddress(v); setQuotes(null); }}
                             placeholder="ул. Примерная, 1, кв. 2"
                             disabled={isPickup}
                           />
