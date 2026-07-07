@@ -860,7 +860,7 @@ const ProductEditor = ({
     setArUploading(null);
   };
 
-  const NumField = ({ k, label }: { k: string; label: string }) => (
+  const renderNumField = (k: string, label: string) => (
     <div>
       <label className={ui.label}>{label}</label>
       <input
@@ -872,6 +872,7 @@ const ProductEditor = ({
       />
     </div>
   );
+
 
   return (
     <div className={`${ui.card} max-w-4xl mx-auto`}>
