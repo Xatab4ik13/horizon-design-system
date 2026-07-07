@@ -70,9 +70,10 @@ const ProductGallery = ({
             alt={name}
             loading="eager"
             decoding="async"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
             onError={(e) => { const img = e.currentTarget as HTMLImageElement; if (!img.src.endsWith("/placeholder.svg")) img.src = "/placeholder.svg"; }}
           />
+
           {isNew && (
             <span className="absolute top-4 left-4 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-full z-10">
               Новинка
