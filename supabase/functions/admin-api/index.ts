@@ -851,7 +851,7 @@ Deno.serve(async (req) => {
         // Подтягиваем номера заказов
         const orderIds = Array.from(new Set((data ?? []).map((r: any) => r.order_id).filter(Boolean)));
         const { data: orders } = orderIds.length
-          ? await admin.from("orders").select("id, order_number, customer_name, total_amount, payment_status, refunded_amount").in("id", orderIds)
+          ? await admin.from("orders").select("id, customer_name, total_amount, payment_status, refunded_amount").in("id", orderIds)
           : { data: [] as any[] };
         const orderMap = new Map((orders ?? []).map((o: any) => [o.id, o]));
 

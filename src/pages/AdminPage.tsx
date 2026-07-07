@@ -1276,6 +1276,8 @@ const deliveryMethodLabel = (v: string) => {
 
 const paymentMethodLabel = (v: string) => {
   const m: Record<string, string> = {
+    online: "Онлайн-оплата (Т-Касса)",
+    cod: "При получении",
     card: "Картой онлайн",
     tinkoff: "Тинькофф",
     cash: "Наличные при получении",
@@ -1284,6 +1286,9 @@ const paymentMethodLabel = (v: string) => {
   };
   return m[v] ?? v;
 };
+
+const orderDisplayNumber = (order: { id?: string; order_number?: string | null } | null | undefined) =>
+  order?.order_number ?? (order?.id ? `DW-${order.id.slice(0, 6).toUpperCase()}` : "—");
 
 const csvEscape = (v: unknown) => {
   const s = v == null ? "" : String(v);
@@ -2121,7 +2126,7 @@ type PaymentRow = {
   error: string | null;
   created_at: string;
   order?: {
-    id: string; order_number: string; customer_name: string;
+    id: string; order_number?: string | null; customer_name: string;
     total_amount: number; payment_status: string | null; refunded_amount: number | null;
   } | null;
 };
@@ -2188,7 +2193,7 @@ const PaymentsPanel = () => {
       new Date(r.created_at).toLocaleString("ru-RU"),
       paymentEventLabel[r.event] ?? r.event,
       r.status ?? "",
-      r.order?.order_number ?? r.order_key ?? "",
+      r.order ? orderDisplayNumber(r.order) : (r.order_key ?? ""),
       r.payment_id ?? "",
       r.amount != null ? String(r.amount) : "",
       r.error ?? "",
@@ -2336,7 +2341,7 @@ const PaymentsPanel = () => {
                       <td className="px-4 py-3">
                         {r.order ? (
                           <div>
-                            <div className="font-semibold">№ {r.order.order_number}</div>
+                            <div className="font-semibold">№ {orderDisplayNumber(r.order)}</div>
                             <div className="text-[12px] text-[#888]">{r.order.customer_name}</div>
                           </div>
                         ) : r.order_key ? <span className="text-[#888]">{r.order_key}</span> : "—"}
@@ -2396,7 +2401,7 @@ const PaymentsPanel = () => {
               {selected.order && (
                 <>
                   <dt className="text-[#888]">Заказ</dt>
-                  <dd>№ {selected.order.order_number} · {selected.order.customer_name} · {formatRub(Number(selected.order.total_amount))}
+                  <dd>№ {orderDisplayNumber(selected.order)} · {selected.order.customer_name} · {formatRub(Number(selected.order.total_amount))}
                     {Number(selected.order.refunded_amount ?? 0) > 0 && (
                       <span className="ml-2 text-[#f5c58a]">возвращено: {formatRub(Number(selected.order.refunded_amount))}</span>
                     )}

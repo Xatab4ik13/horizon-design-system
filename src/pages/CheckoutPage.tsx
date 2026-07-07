@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useCart } from "@/contexts/CartContext";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -41,6 +42,20 @@ const paymentOptions = [
 
 const steps = ["Контактные данные", "Доставка", "Оплата", "Готово"];
 
+const getFunctionErrorMessage = async (error: unknown) => {
+  if (!error) return null;
+  if (error instanceof FunctionsHttpError) {
+    const text = await error.context.text().catch(() => "");
+    try {
+      const parsed = JSON.parse(text);
+      return parsed?.error || parsed?.message || text || error.message;
+    } catch {
+      return text || error.message;
+    }
+  }
+  return error instanceof Error ? error.message : String(error);
+};
+
 const CheckoutPage = () => {
   const { items, totalPrice, clearCart } = useCart();
   const { toast } = useToast();
@@ -56,6 +71,7 @@ const CheckoutPage = () => {
   const [payment, setPayment] = useState("online");
   const [submitting, setSubmitting] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string>("");
+  const [pendingOnlineOrderId, setPendingOnlineOrderId] = useState<string | null>(null);
   const [contact, setContact] = useState({
     firstName: "",
     lastName: "",
@@ -146,8 +162,43 @@ const CheckoutPage = () => {
   const deliveryShipping = isPickup ? 0 : (selectedQuote?.cost ?? 0);
   const grandTotal = totalPrice + deliveryShipping;
 
+  const openOnlinePayment = async (orderId: string) => {
+    try {
+      setSubmitting(true);
+      const { data: pay, error: payErr } = await supabase.functions.invoke("tinkoff-payment", {
+        body: { action: "init", orderId },
+      });
+      const payUrl = (pay as any)?.paymentUrl;
+      const errMsg = (await getFunctionErrorMessage(payErr)) ?? (pay as any)?.error;
+      if (payUrl) {
+        clearCart();
+        window.location.href = payUrl;
+        return true;
+      }
+      toast({
+        title: "Не удалось открыть оплату",
+        description: errMsg ?? "Заказ создан, но ссылка на оплату не получена. Корзина сохранена — попробуйте ещё раз или выберите оплату при получении.",
+        variant: "destructive",
+      });
+      return false;
+    } catch (e: any) {
+      toast({
+        title: "Не удалось открыть оплату",
+        description: e?.message ?? String(e),
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleComplete = async () => {
     if (submitting) return;
+    if (payment === "online" && pendingOnlineOrderId) {
+      await openOnlinePayment(pendingOnlineOrderId);
+      return;
+    }
     setSubmitting(true);
     const customerName = `${contact.firstName.trim()} ${contact.lastName.trim()}`.trim();
     const providerName =
@@ -171,7 +222,7 @@ const CheckoutPage = () => {
         delivery_city: isPickup ? null : city.trim(),
         delivery_cost: deliveryShipping || null,
         delivery_days: selectedQuote?.days ?? null,
-        payment_method: paymentOptions.find((p) => p.id === payment)?.label ?? payment,
+        payment_method: payment,
         items: items.map((i) => ({
           productId: i.productId,
           name: i.name,
@@ -188,7 +239,7 @@ const CheckoutPage = () => {
 
     setSubmitting(false);
 
-    const errMsg = error?.message ?? (data as any)?.error;
+    const errMsg = (await getFunctionErrorMessage(error)) ?? (data as any)?.error;
     if (errMsg) {
       toast({
         title: "Не удалось оформить заказ",
@@ -221,32 +272,9 @@ const CheckoutPage = () => {
 
     // Онлайн-оплата: получаем PaymentURL у Т-Кассы и уводим клиента туда
     if (payment === "online" && orderId) {
-      try {
-        setSubmitting(true);
-        const { data: pay, error: payErr } = await supabase.functions.invoke("tinkoff-payment", {
-          body: { action: "init", orderId },
-        });
-        const payUrl = (pay as any)?.paymentUrl;
-        const errMsg2 = payErr?.message ?? (pay as any)?.error;
-        if (payUrl) {
-          clearCart();
-          window.location.href = payUrl;
-          return;
-        }
-        toast({
-          title: "Не удалось открыть оплату",
-          description: errMsg2 ?? "Попробуйте оплатить из личного кабинета.",
-          variant: "destructive",
-        });
-      } catch (e: any) {
-        toast({
-          title: "Не удалось открыть оплату",
-          description: e?.message ?? String(e),
-          variant: "destructive",
-        });
-      } finally {
-        setSubmitting(false);
-      }
+      setPendingOnlineOrderId(orderId);
+      await openOnlinePayment(orderId);
+      return;
     }
 
     setStep(3);
