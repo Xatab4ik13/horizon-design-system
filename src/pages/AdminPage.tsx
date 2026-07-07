@@ -3152,6 +3152,26 @@ const SettingsPanel = () => {
     </div>
   );
 
+  const addrField = (
+    k: keyof typeof sender,
+    label: string,
+    placeholder = "",
+    mode: "city" | "address" = "address",
+    cityKey?: keyof typeof sender,
+  ) => (
+    <div>
+      <label className={ui.label}>{label}</label>
+      <DadataAddressInput
+        mode={mode}
+        cityFilter={cityKey ? (sender[cityKey] || sender.city || "") : undefined}
+        value={sender[k] ?? ""}
+        onChange={(v) => setSender({ ...sender, [k]: v })}
+        placeholder={placeholder}
+        inputClassName={ui.input}
+      />
+    </div>
+  );
+
 
   return (
     <div className="grid gap-6">
