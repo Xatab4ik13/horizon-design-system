@@ -243,9 +243,9 @@ const Dashboard = ({ onNavigate }: { onNavigate: (t: Tab) => void }) => {
     </button>
   );
 
-  const statusOrder = ["new", "in_progress", "shipped", "completed", "cancelled"];
+  const statusOrder = ["pending_payment", "new", "in_progress", "shipped", "completed", "cancelled"];
   const statusLabels: Record<string, string> = {
-    new: "Новые", in_progress: "В работе", shipped: "Отправлены", completed: "Выполнены", cancelled: "Отменены",
+    pending_payment: "Ждут оплаты", new: "Новые", in_progress: "В работе", shipped: "Отправлены", completed: "Выполнены", cancelled: "Отменены",
   };
   const deliveryLabels: Record<string, string> = {
     pickup: "Самовывоз", cdek: "СДЭК", yandex: "Яндекс.Доставка", pek: "ПЭК", russianpost: "Почта России",
