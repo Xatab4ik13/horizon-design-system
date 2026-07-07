@@ -185,7 +185,7 @@ const PopularProducts = () => {
               </div>
 
               {/* Image */}
-              <div className="w-full md:w-1/2 flex justify-center md:justify-end md:pr-0 lg:pr-0 xl:pr-0">
+              <div className="w-full md:w-auto flex justify-center md:justify-end md:absolute md:right-0 md:top-1/2 md:-translate-y-1/2 md:z-0 md:pr-0 lg:pr-0 xl:pr-0">
                 <AutoTilt3D>
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
