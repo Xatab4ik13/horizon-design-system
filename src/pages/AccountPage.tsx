@@ -251,10 +251,13 @@ const AccountPage = () => {
                       {orders.map((order) => {
                         const items = Array.isArray(order.items) ? (order.items as Array<{ name: string; quantity: number; price: number; image?: string }>) : [];
                         const status = statusLabel[order.status] ?? { label: order.status, color: "text-muted-foreground bg-muted/20" };
+                        const isPending = order.status === "pending_payment";
+                        const deadline = new Date(order.created_at).getTime() + PAY_WINDOW_HOURS * 3_600_000;
+                        const msLeft = deadline - now;
                         return (
                           <div
                             key={order.id}
-                            className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-5"
+                            className={`bg-card/60 backdrop-blur-sm border rounded-2xl p-5 ${isPending ? "border-orange-500/40" : "border-border"}`}
                           >
                             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                               <div>
@@ -267,6 +270,25 @@ const AccountPage = () => {
                                 {status.label}
                               </span>
                             </div>
+
+                            {isPending && (
+                              <div className="mb-4 p-3 rounded-xl bg-orange-500/10 border border-orange-500/30 flex flex-wrap items-center justify-between gap-3">
+                                <div className="text-sm">
+                                  <div className="text-orange-300 font-semibold">Ожидает оплаты</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    Осталось {formatCountdown(msLeft)}. После истечения заказ будет отменён автоматически.
+                                  </div>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handlePayNow(order)}
+                                  disabled={payingId === order.id || msLeft <= 0}
+                                  className="rounded-full"
+                                >
+                                  {payingId === order.id ? "Открываем..." : "Оплатить"}
+                                </Button>
+                              </div>
+                            )}
 
                             <div className="space-y-2 mb-4">
                               {items.map((it, i) => (
