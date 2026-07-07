@@ -18,6 +18,7 @@ interface OrderRow {
   delivery_method: string;
   payment_method: string;
   delivery_address: string | null;
+  payment_url: string | null;
   items: unknown;
 }
 
@@ -32,11 +33,22 @@ const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
 
 const statusLabel: Record<string, { label: string; color: string }> = {
-  new: { label: "Новый", color: "text-primary bg-primary/10" },
+  pending_payment: { label: "Ждёт оплаты", color: "text-orange-400 bg-orange-500/10" },
+  new: { label: "Оплачен · принят", color: "text-primary bg-primary/10" },
   in_progress: { label: "В производстве", color: "text-yellow-500 bg-yellow-500/10" },
-  shipped: { label: "В пути", color: "text-blue-500 bg-blue-500/10" },
+  shipped: { label: "В пути", color: "text-blue-400 bg-blue-500/10" },
+  completed: { label: "Выполнен", color: "text-green-500 bg-green-500/10" },
   delivered: { label: "Доставлен", color: "text-green-500 bg-green-500/10" },
   cancelled: { label: "Отменён", color: "text-red-500 bg-red-500/10" },
+};
+
+const PAY_WINDOW_HOURS = 24;
+
+const formatCountdown = (msLeft: number) => {
+  if (msLeft <= 0) return "истекло";
+  const h = Math.floor(msLeft / 3_600_000);
+  const m = Math.floor((msLeft % 3_600_000) / 60_000);
+  return `${h}ч ${m}м`;
 };
 
 const tabs = [
