@@ -73,24 +73,34 @@ const AccountPage = () => {
     if (!authLoading && !user) navigate("/auth", { replace: true });
   }, [authLoading, user, navigate]);
 
+  const [payingId, setPayingId] = useState<string | null>(null);
+  const [now, setNow] = useState(Date.now());
+
+  const loadOrders = () => {
+    if (!user) return Promise.resolve();
+    return supabase
+      .from("orders")
+      .select("id, created_at, status, total_amount, delivery_method, payment_method, delivery_address, payment_url, items")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setOrders((data as OrderRow[]) ?? []));
+  };
+
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
     setOrdersLoading(true);
+    // Тихо чистим неоплаченные заказы старше 24ч
+    supabase.functions.invoke("tinkoff-payment", { body: { action: "expire" } }).catch(() => {});
     Promise.all([
-      supabase
-        .from("orders")
-        .select("id, created_at, status, total_amount, delivery_method, payment_method, delivery_address, items")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false }),
+      loadOrders(),
       supabase
         .from("profiles")
         .select("first_name, last_name, phone")
         .eq("user_id", user.id)
         .maybeSingle(),
-    ]).then(([ord, prof]) => {
+    ]).then(([_, prof]) => {
       if (cancelled) return;
-      setOrders((ord.data as OrderRow[]) ?? []);
       if (prof.data) {
         setProfile({
           first_name: prof.data.first_name ?? "",
@@ -100,10 +110,35 @@ const AccountPage = () => {
       }
       setOrdersLoading(false);
     });
+    const tick = setInterval(() => setNow(Date.now()), 60_000);
     return () => {
       cancelled = true;
+      clearInterval(tick);
     };
   }, [user]);
+
+  const handlePayNow = async (order: OrderRow) => {
+    setPayingId(order.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("tinkoff-payment", {
+        body: { action: "init", orderId: order.id },
+      });
+      const url = (data as any)?.paymentUrl;
+      if (url) {
+        window.location.href = url;
+        return;
+      }
+      toast({
+        title: "Не удалось открыть оплату",
+        description: (data as any)?.error ?? error?.message ?? "Попробуйте ещё раз позже.",
+        variant: "destructive",
+      });
+    } catch (e: any) {
+      toast({ title: "Не удалось открыть оплату", description: e?.message ?? String(e), variant: "destructive" });
+    } finally {
+      setPayingId(null);
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut();
