@@ -199,7 +199,7 @@ function summary(order: any) {
 }
 
 export function renderOrderConfirmation(order: any) {
-  const num = order.order_number ?? order.id?.slice?.(0, 8) ?? "";
+  const num = order.order_number ?? (order.id ? `DW-${String(order.id).slice(0, 6).toUpperCase()}` : "");
   const isOnlinePayment = String(order.payment_method ?? "").toLowerCase() === "online";
   const body = `
     <h1 style="margin:0 0 8px 0;font-family:'Franklin Gothic Medium',Arial,sans-serif;font-size:26px;color:#c9a96a;font-weight:600;letter-spacing:1px;">Заказ №${escapeHtml(num)} создан</h1>
@@ -227,7 +227,7 @@ export function renderOrderConfirmation(order: any) {
 }
 
 export function renderPaymentConfirmed(order: any) {
-  const num = order.order_number ?? order.id?.slice?.(0, 8) ?? "";
+  const num = order.order_number ?? (order.id ? `DW-${String(order.id).slice(0, 6).toUpperCase()}` : "");
   const body = `
     <h1 style="margin:0 0 8px 0;font-family:'Franklin Gothic Medium',Arial,sans-serif;font-size:26px;color:#c9a96a;font-weight:600;letter-spacing:1px;">Оплата получена</h1>
     <p style="margin:0 0 20px 0;color:#8a7a5c;">По заказу №${escapeHtml(num)} прошла оплата на сумму ${escapeHtml(money(order.total_amount))}. Мы приступаем к сборке и отправке.</p>
@@ -249,7 +249,7 @@ export function renderPaymentConfirmed(order: any) {
 }
 
 export function renderAdminNewOrder(order: any) {
-  const num = order.order_number ?? order.id?.slice?.(0, 8) ?? "";
+  const num = order.order_number ?? (order.id ? `DW-${String(order.id).slice(0, 6).toUpperCase()}` : "");
   const body = `
     <h1 style="margin:0 0 8px 0;font-family:'Franklin Gothic Medium',Arial,sans-serif;font-size:24px;color:#c9a96a;font-weight:600;">Новый заказ №${escapeHtml(num)}</h1>
     <p style="margin:0 0 20px 0;color:#8a7a5c;">${escapeHtml(order.customer_name)} · ${escapeHtml(order.customer_phone)}${order.customer_email ? " · " + escapeHtml(order.customer_email) : ""}</p>
