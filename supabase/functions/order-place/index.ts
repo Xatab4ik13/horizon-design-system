@@ -243,7 +243,7 @@ Deno.serve(async (req) => {
         items,
         comment,
         total_amount,
-        status: "new",
+        status: payment_method === "online" ? "pending_payment" : "new",
       })
       .select("*")
       .single();
