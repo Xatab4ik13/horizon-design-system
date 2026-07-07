@@ -174,7 +174,7 @@ function itemsTable(items: any[]) {
 
 function summary(order: any) {
   const deliveryLabel =
-    order.delivery_method === "pickup"
+    order.delivery_provider === "pickup" || order.delivery_method === "pickup" || order.delivery_method === "Самовывоз"
       ? "Самовывоз"
       : order.delivery_provider === "yandex"
         ? "Яндекс.Доставка"
@@ -183,7 +183,11 @@ function summary(order: any) {
           : order.delivery_provider === "cdek"
             ? "СДЭК"
             : "Доставка";
-  const paymentLabel = order.payment_method === "online" ? "Онлайн-оплата (Т-Касса)" : "При получении";
+  const paymentRaw = String(order.payment_method ?? "").toLowerCase();
+  const paymentLabel =
+    paymentRaw === "online" || paymentRaw.includes("банк") || paymentRaw.includes("сбп") || paymentRaw.includes("тинькофф") || paymentRaw.includes("т-касс")
+      ? "Онлайн-оплата (Т-Касса)"
+      : "При получении";
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:8px;font-size:14px;">
       <tr><td style="padding:6px 0;color:#8a7a5c;">Способ доставки</td><td style="padding:6px 0;text-align:right;color:#e8e4dc;">${escapeHtml(deliveryLabel)}</td></tr>
@@ -196,9 +200,14 @@ function summary(order: any) {
 
 export function renderOrderConfirmation(order: any) {
   const num = order.order_number ?? order.id?.slice?.(0, 8) ?? "";
+  const isOnlinePayment = String(order.payment_method ?? "").toLowerCase() === "online";
   const body = `
-    <h1 style="margin:0 0 8px 0;font-family:'Franklin Gothic Medium',Arial,sans-serif;font-size:26px;color:#c9a96a;font-weight:600;letter-spacing:1px;">Спасибо за заказ!</h1>
-    <p style="margin:0 0 20px 0;color:#8a7a5c;">Заказ №${escapeHtml(num)} принят. Мы уже начали его собирать и свяжемся с вами для подтверждения деталей.</p>
+    <h1 style="margin:0 0 8px 0;font-family:'Franklin Gothic Medium',Arial,sans-serif;font-size:26px;color:#c9a96a;font-weight:600;letter-spacing:1px;">Заказ №${escapeHtml(num)} создан</h1>
+    <p style="margin:0 0 20px 0;color:#8a7a5c;">${
+      isOnlinePayment
+        ? "Чтобы передать заказ в работу, завершите оплату на странице Т-Кассы. Если оплата не открылась, напишите нам — пришлём ссылку повторно."
+        : "Мы получили заказ и свяжемся с вами для подтверждения деталей."
+    }</p>
     ${itemsTable(order.items ?? [])}
     ${summary(order)}
     ${order.comment ? `<div style="margin-top:20px;padding:14px 16px;background:#0a0908;border:1px solid #2a221a;border-radius:10px;font-size:13px;color:#8a7a5c;"><strong style="color:#c9a96a;">Комментарий:</strong> ${escapeHtml(order.comment)}</div>` : ""}`;

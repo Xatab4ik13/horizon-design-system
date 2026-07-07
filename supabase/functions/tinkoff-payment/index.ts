@@ -42,6 +42,9 @@ const json = (data: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+const orderDisplayNumber = (order: any) =>
+  order?.order_number || (order?.id ? `DW-${String(order.id).slice(0, 6).toUpperCase()}` : "FAKTURA");
+
 // Токен Тинькофф = SHA256(конкатенация значений всех корневых полей + Password, отсортированных по ключу).
 // Массивы и объекты в подсчёте не участвуют.
 async function makeToken(params: Record<string, any>): Promise<string> {
@@ -105,7 +108,7 @@ Deno.serve(async (req) => {
 
       const { data: order, error: oErr } = await admin
         .from("orders")
-        .select("id, order_number, total_amount, customer_email, customer_phone, items")
+        .select("id, total_amount, customer_email, customer_phone, items")
         .eq("id", orderId)
         .maybeSingle();
       if (oErr || !order) return json({ error: "order not found" }, 404);
@@ -115,8 +118,8 @@ Deno.serve(async (req) => {
 
       const initParams: Record<string, any> = {
         Amount: amountKopecks,
-        OrderId: order.order_number || order.id,
-        Description: `Заказ №${order.order_number ?? order.id.slice(0, 8)}`,
+        OrderId: order.id,
+        Description: `Заказ №${orderDisplayNumber(order)}`,
         SuccessURL: `${origin}/account?payment=success&order=${order.id}`,
         FailURL: `${origin}/account?payment=fail&order=${order.id}`,
         NotificationURL: `${PUBLIC_API_URL}/functions/v1/tinkoff-payment`,
@@ -218,12 +221,8 @@ Deno.serve(async (req) => {
       let orderRow: { id: string } | null = null;
 
       if (orderKey) {
-        const { data } = await admin.from("orders").select("id").eq("order_number", orderKey).maybeSingle();
-        if (data) orderRow = data;
-        if (!orderRow) {
-          const { data: byId } = await admin.from("orders").select("id").eq("id", orderKey).maybeSingle();
-          if (byId) orderRow = byId;
-        }
+        const { data: byId } = await admin.from("orders").select("id").eq("id", orderKey).maybeSingle();
+        if (byId) orderRow = byId;
       }
       if (!orderRow && paymentId) {
         const { data } = await admin.from("orders").select("id").eq("payment_id", paymentId).maybeSingle();

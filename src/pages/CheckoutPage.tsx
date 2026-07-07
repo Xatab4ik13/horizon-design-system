@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useCart } from "@/contexts/CartContext";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,6 +41,20 @@ const paymentOptions = [
 ];
 
 const steps = ["Контактные данные", "Доставка", "Оплата", "Готово"];
+
+const getFunctionErrorMessage = async (error: unknown) => {
+  if (!error) return null;
+  if (error instanceof FunctionsHttpError) {
+    const text = await error.context.text().catch(() => "");
+    try {
+      const parsed = JSON.parse(text);
+      return parsed?.error || parsed?.message || text || error.message;
+    } catch {
+      return text || error.message;
+    }
+  }
+  return error instanceof Error ? error.message : String(error);
+};
 
 const CheckoutPage = () => {
   const { items, totalPrice, clearCart } = useCart();
@@ -171,7 +186,7 @@ const CheckoutPage = () => {
         delivery_city: isPickup ? null : city.trim(),
         delivery_cost: deliveryShipping || null,
         delivery_days: selectedQuote?.days ?? null,
-        payment_method: paymentOptions.find((p) => p.id === payment)?.label ?? payment,
+        payment_method: payment,
         items: items.map((i) => ({
           productId: i.productId,
           name: i.name,
@@ -188,7 +203,7 @@ const CheckoutPage = () => {
 
     setSubmitting(false);
 
-    const errMsg = error?.message ?? (data as any)?.error;
+    const errMsg = (await getFunctionErrorMessage(error)) ?? (data as any)?.error;
     if (errMsg) {
       toast({
         title: "Не удалось оформить заказ",
@@ -227,7 +242,7 @@ const CheckoutPage = () => {
           body: { action: "init", orderId },
         });
         const payUrl = (pay as any)?.paymentUrl;
-        const errMsg2 = payErr?.message ?? (pay as any)?.error;
+        const errMsg2 = (await getFunctionErrorMessage(payErr)) ?? (pay as any)?.error;
         if (payUrl) {
           clearCart();
           window.location.href = payUrl;
@@ -235,7 +250,7 @@ const CheckoutPage = () => {
         }
         toast({
           title: "Не удалось открыть оплату",
-          description: errMsg2 ?? "Попробуйте оплатить из личного кабинета.",
+          description: errMsg2 ?? "Заказ создан, но ссылка на оплату не получена. Корзина сохранена — попробуйте ещё раз или выберите оплату при получении.",
           variant: "destructive",
         });
       } catch (e: any) {
@@ -248,6 +263,8 @@ const CheckoutPage = () => {
         setSubmitting(false);
       }
     }
+
+    if (payment === "online") return;
 
     setStep(3);
     clearCart();
