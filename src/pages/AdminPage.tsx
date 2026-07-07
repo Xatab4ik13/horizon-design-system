@@ -284,7 +284,7 @@ const Dashboard = ({ onNavigate }: { onNavigate: (t: Tab) => void }) => {
       {stats.ordersTotal > 0 && (
         <div className={ui.card}>
           <div className="text-[13px] uppercase tracking-wider text-[#888] mb-3">Заказы по статусам</div>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             {statusOrder.map((s) => (
               <div key={s} className="bg-[#1a1a1a] rounded-lg p-4">
                 <div className="text-[12px] text-[#888] uppercase">{statusLabels[s]}</div>
