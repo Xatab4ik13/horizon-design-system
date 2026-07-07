@@ -101,6 +101,13 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const action = String(body?.action ?? url.searchParams.get("action") ?? "").trim();
 
+    // ==================== EXPIRE (housekeeping) ====================
+    if (action === "expire") {
+      const { data, error } = await admin.rpc("expire_unpaid_orders");
+      if (error) return json({ error: error.message }, 500);
+      return json({ ok: true, deleted: data ?? 0 });
+    }
+
     // ==================== INIT ====================
     if (action === "init") {
       const orderId = String(body?.orderId ?? "").trim();
