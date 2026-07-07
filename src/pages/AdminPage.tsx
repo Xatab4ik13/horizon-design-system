@@ -3192,8 +3192,8 @@ const SettingsPanel = () => {
           Используется, если для конкретного перевозчика ниже не указан свой адрес.
         </p>
         <div className="grid md:grid-cols-2 gap-4">
-          {field("city", "Город", "Москва")}
-          {field("address", "Адрес склада / пункта отправки", "ул. Мастеровая, 12")}
+          {addrField("city", "Город", "Москва", "city")}
+          {addrField("address", "Адрес склада / пункта отправки", "ул. Мастеровая, 12", "address", "city")}
         </div>
       </div>
 
@@ -3203,8 +3203,8 @@ const SettingsPanel = () => {
           Откуда СДЭК забирает груз. Если поля пустые — берётся общий адрес выше.
         </p>
         <div className="grid md:grid-cols-2 gap-4">
-          {field("cdek_city", "Город отправителя", "Москва")}
-          {field("cdek_address", "Адрес отправителя", "ул. Мастеровая, 12")}
+          {addrField("cdek_city", "Город отправителя", "Москва", "city")}
+          {addrField("cdek_address", "Адрес отправителя", "ул. Мастеровая, 12", "address", "cdek_city")}
           {field(
             "cdek_city_code",
             "Код города СДЭК (необяз., только цифры)",
@@ -3221,8 +3221,8 @@ const SettingsPanel = () => {
           Откуда ПЭК забирает груз. Если поля пустые — берётся общий адрес.
         </p>
         <div className="grid md:grid-cols-2 gap-4">
-          {field("pek_city", "Город отправителя", "Москва")}
-          {field("pek_address", "Адрес отправителя", "ул. Мастеровая, 12")}
+          {addrField("pek_city", "Город отправителя", "Москва", "city")}
+          {addrField("pek_address", "Адрес отправителя", "ул. Мастеровая, 12", "address", "pek_city")}
           {field(
             "pek_city_id",
             "ID города в ПЭК (необяз., только цифры)",
@@ -3239,8 +3239,8 @@ const SettingsPanel = () => {
           Откуда Яндекс забирает груз. Если поля пустые — берётся общий адрес.
         </p>
         <div className="grid md:grid-cols-2 gap-4">
-          {field("yandex_city", "Город отправителя", "Москва")}
-          {field("yandex_address", "Адрес отправителя (полный)", "Москва, ул. Мастеровая, 12")}
+          {addrField("yandex_city", "Город отправителя", "Москва", "city")}
+          {addrField("yandex_address", "Адрес отправителя (полный)", "Москва, ул. Мастеровая, 12", "address", "yandex_city")}
         </div>
       </div>
 
