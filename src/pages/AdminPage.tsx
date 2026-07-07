@@ -1253,6 +1253,7 @@ const ProductEditor = ({
 // ЗАКАЗЫ
 // ===================================================================
 const orderStatuses = [
+  { value: "pending_payment", label: "Ждёт оплаты" },
   { value: "new", label: "Новый" },
   { value: "in_progress", label: "В работе" },
   { value: "shipped", label: "Отправлен" },
