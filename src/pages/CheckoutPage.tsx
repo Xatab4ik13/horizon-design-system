@@ -71,6 +71,7 @@ const CheckoutPage = () => {
   const [payment, setPayment] = useState("online");
   const [submitting, setSubmitting] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string>("");
+  const [pendingOnlineOrderId, setPendingOnlineOrderId] = useState<string | null>(null);
   const [contact, setContact] = useState({
     firstName: "",
     lastName: "",
@@ -161,8 +162,43 @@ const CheckoutPage = () => {
   const deliveryShipping = isPickup ? 0 : (selectedQuote?.cost ?? 0);
   const grandTotal = totalPrice + deliveryShipping;
 
+  const openOnlinePayment = async (orderId: string) => {
+    try {
+      setSubmitting(true);
+      const { data: pay, error: payErr } = await supabase.functions.invoke("tinkoff-payment", {
+        body: { action: "init", orderId },
+      });
+      const payUrl = (pay as any)?.paymentUrl;
+      const errMsg = (await getFunctionErrorMessage(payErr)) ?? (pay as any)?.error;
+      if (payUrl) {
+        clearCart();
+        window.location.href = payUrl;
+        return true;
+      }
+      toast({
+        title: "Не удалось открыть оплату",
+        description: errMsg ?? "Заказ создан, но ссылка на оплату не получена. Корзина сохранена — попробуйте ещё раз или выберите оплату при получении.",
+        variant: "destructive",
+      });
+      return false;
+    } catch (e: any) {
+      toast({
+        title: "Не удалось открыть оплату",
+        description: e?.message ?? String(e),
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleComplete = async () => {
     if (submitting) return;
+    if (payment === "online" && pendingOnlineOrderId) {
+      await openOnlinePayment(pendingOnlineOrderId);
+      return;
+    }
     setSubmitting(true);
     const customerName = `${contact.firstName.trim()} ${contact.lastName.trim()}`.trim();
     const providerName =
@@ -236,35 +272,10 @@ const CheckoutPage = () => {
 
     // Онлайн-оплата: получаем PaymentURL у Т-Кассы и уводим клиента туда
     if (payment === "online" && orderId) {
-      try {
-        setSubmitting(true);
-        const { data: pay, error: payErr } = await supabase.functions.invoke("tinkoff-payment", {
-          body: { action: "init", orderId },
-        });
-        const payUrl = (pay as any)?.paymentUrl;
-        const errMsg2 = (await getFunctionErrorMessage(payErr)) ?? (pay as any)?.error;
-        if (payUrl) {
-          clearCart();
-          window.location.href = payUrl;
-          return;
-        }
-        toast({
-          title: "Не удалось открыть оплату",
-          description: errMsg2 ?? "Заказ создан, но ссылка на оплату не получена. Корзина сохранена — попробуйте ещё раз или выберите оплату при получении.",
-          variant: "destructive",
-        });
-      } catch (e: any) {
-        toast({
-          title: "Не удалось открыть оплату",
-          description: e?.message ?? String(e),
-          variant: "destructive",
-        });
-      } finally {
-        setSubmitting(false);
-      }
+      setPendingOnlineOrderId(orderId);
+      await openOnlinePayment(orderId);
+      return;
     }
-
-    if (payment === "online") return;
 
     setStep(3);
     clearCart();
