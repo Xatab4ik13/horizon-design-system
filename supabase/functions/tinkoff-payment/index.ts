@@ -101,6 +101,13 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const action = String(body?.action ?? url.searchParams.get("action") ?? "").trim();
 
+    // ==================== EXPIRE (housekeeping) ====================
+    if (action === "expire") {
+      const { data, error } = await admin.rpc("expire_unpaid_orders");
+      if (error) return json({ error: error.message }, 500);
+      return json({ ok: true, deleted: data ?? 0 });
+    }
+
     // ==================== INIT ====================
     if (action === "init") {
       const orderId = String(body?.orderId ?? "").trim();
@@ -247,7 +254,7 @@ Deno.serve(async (req) => {
         const patch: Record<string, any> = { payment_status: body.Status };
         // Синхронизируем статус заказа
         if (body.Status === "CONFIRMED" || body.Status === "AUTHORIZED") {
-          patch.status = "in_progress";
+          patch.status = "new"; // оплачен, принят к работе
         } else if (body.Status === "REFUNDED" || body.Status === "REVERSED" || body.Status === "CANCELED") {
           patch.status = "cancelled";
         }

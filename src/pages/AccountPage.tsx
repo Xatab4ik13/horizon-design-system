@@ -18,6 +18,7 @@ interface OrderRow {
   delivery_method: string;
   payment_method: string;
   delivery_address: string | null;
+  payment_url: string | null;
   items: unknown;
 }
 
@@ -32,11 +33,22 @@ const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
 
 const statusLabel: Record<string, { label: string; color: string }> = {
-  new: { label: "Новый", color: "text-primary bg-primary/10" },
+  pending_payment: { label: "Ждёт оплаты", color: "text-orange-400 bg-orange-500/10" },
+  new: { label: "Оплачен · принят", color: "text-primary bg-primary/10" },
   in_progress: { label: "В производстве", color: "text-yellow-500 bg-yellow-500/10" },
-  shipped: { label: "В пути", color: "text-blue-500 bg-blue-500/10" },
+  shipped: { label: "В пути", color: "text-blue-400 bg-blue-500/10" },
+  completed: { label: "Выполнен", color: "text-green-500 bg-green-500/10" },
   delivered: { label: "Доставлен", color: "text-green-500 bg-green-500/10" },
   cancelled: { label: "Отменён", color: "text-red-500 bg-red-500/10" },
+};
+
+const PAY_WINDOW_HOURS = 24;
+
+const formatCountdown = (msLeft: number) => {
+  if (msLeft <= 0) return "истекло";
+  const h = Math.floor(msLeft / 3_600_000);
+  const m = Math.floor((msLeft % 3_600_000) / 60_000);
+  return `${h}ч ${m}м`;
 };
 
 const tabs = [
@@ -61,24 +73,34 @@ const AccountPage = () => {
     if (!authLoading && !user) navigate("/auth", { replace: true });
   }, [authLoading, user, navigate]);
 
+  const [payingId, setPayingId] = useState<string | null>(null);
+  const [now, setNow] = useState(Date.now());
+
+  const loadOrders = () => {
+    if (!user) return Promise.resolve();
+    return supabase
+      .from("orders")
+      .select("id, created_at, status, total_amount, delivery_method, payment_method, delivery_address, payment_url, items")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setOrders((data as OrderRow[]) ?? []));
+  };
+
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
     setOrdersLoading(true);
+    // Тихо чистим неоплаченные заказы старше 24ч
+    supabase.functions.invoke("tinkoff-payment", { body: { action: "expire" } }).catch(() => {});
     Promise.all([
-      supabase
-        .from("orders")
-        .select("id, created_at, status, total_amount, delivery_method, payment_method, delivery_address, items")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false }),
+      loadOrders(),
       supabase
         .from("profiles")
         .select("first_name, last_name, phone")
         .eq("user_id", user.id)
         .maybeSingle(),
-    ]).then(([ord, prof]) => {
+    ]).then(([_, prof]) => {
       if (cancelled) return;
-      setOrders((ord.data as OrderRow[]) ?? []);
       if (prof.data) {
         setProfile({
           first_name: prof.data.first_name ?? "",
@@ -88,10 +110,35 @@ const AccountPage = () => {
       }
       setOrdersLoading(false);
     });
+    const tick = setInterval(() => setNow(Date.now()), 60_000);
     return () => {
       cancelled = true;
+      clearInterval(tick);
     };
   }, [user]);
+
+  const handlePayNow = async (order: OrderRow) => {
+    setPayingId(order.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("tinkoff-payment", {
+        body: { action: "init", orderId: order.id },
+      });
+      const url = (data as any)?.paymentUrl;
+      if (url) {
+        window.location.href = url;
+        return;
+      }
+      toast({
+        title: "Не удалось открыть оплату",
+        description: (data as any)?.error ?? error?.message ?? "Попробуйте ещё раз позже.",
+        variant: "destructive",
+      });
+    } catch (e: any) {
+      toast({ title: "Не удалось открыть оплату", description: e?.message ?? String(e), variant: "destructive" });
+    } finally {
+      setPayingId(null);
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -204,10 +251,13 @@ const AccountPage = () => {
                       {orders.map((order) => {
                         const items = Array.isArray(order.items) ? (order.items as Array<{ name: string; quantity: number; price: number; image?: string }>) : [];
                         const status = statusLabel[order.status] ?? { label: order.status, color: "text-muted-foreground bg-muted/20" };
+                        const isPending = order.status === "pending_payment";
+                        const deadline = new Date(order.created_at).getTime() + PAY_WINDOW_HOURS * 3_600_000;
+                        const msLeft = deadline - now;
                         return (
                           <div
                             key={order.id}
-                            className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-5"
+                            className={`bg-card/60 backdrop-blur-sm border rounded-2xl p-5 ${isPending ? "border-orange-500/40" : "border-border"}`}
                           >
                             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                               <div>
@@ -220,6 +270,25 @@ const AccountPage = () => {
                                 {status.label}
                               </span>
                             </div>
+
+                            {isPending && (
+                              <div className="mb-4 p-3 rounded-xl bg-orange-500/10 border border-orange-500/30 flex flex-wrap items-center justify-between gap-3">
+                                <div className="text-sm">
+                                  <div className="text-orange-300 font-semibold">Ожидает оплаты</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    Осталось {formatCountdown(msLeft)}. После истечения заказ будет отменён автоматически.
+                                  </div>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handlePayNow(order)}
+                                  disabled={payingId === order.id || msLeft <= 0}
+                                  className="rounded-full"
+                                >
+                                  {payingId === order.id ? "Открываем..." : "Оплатить"}
+                                </Button>
+                              </div>
+                            )}
 
                             <div className="space-y-2 mb-4">
                               {items.map((it, i) => (
