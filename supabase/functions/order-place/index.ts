@@ -188,6 +188,8 @@ async function createCdekOrder(order: any, sender: Record<string, any>, creds: D
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
+    // Тихая очистка неоплаченных заказов старше 24ч (best-effort)
+    admin.rpc("expire_unpaid_orders").then(() => {}).catch(() => {});
     const body = await req.json();
     const {
       user_id = null,
