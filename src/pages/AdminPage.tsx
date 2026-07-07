@@ -1,6 +1,7 @@
 import { useEffect, useState, FormEvent } from "react";
 import { adminAuth, adminCall, adminCallSWR, getCachedAdminCall, invalidateAdminCache, adminLogin, adminUploadFile, prefetchAdminSettings } from "@/lib/adminApi";
 import { supabase } from "@/integrations/supabase/client";
+import DadataAddressInput from "@/components/DadataAddressInput";
 import { parse1CFile } from "@/lib/import1c";
 import { exportProductsTo1CXlsx, downloadBlob } from "@/lib/export1c";
 import { toast } from "sonner";
