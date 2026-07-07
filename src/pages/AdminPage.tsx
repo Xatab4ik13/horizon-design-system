@@ -1,6 +1,7 @@
 import { useEffect, useState, FormEvent } from "react";
 import { adminAuth, adminCall, adminCallSWR, getCachedAdminCall, invalidateAdminCache, adminLogin, adminUploadFile, prefetchAdminSettings } from "@/lib/adminApi";
 import { supabase } from "@/integrations/supabase/client";
+import DadataAddressInput from "@/components/DadataAddressInput";
 import { parse1CFile } from "@/lib/import1c";
 import { exportProductsTo1CXlsx, downloadBlob } from "@/lib/export1c";
 import { toast } from "sonner";
@@ -3151,6 +3152,26 @@ const SettingsPanel = () => {
     </div>
   );
 
+  const addrField = (
+    k: keyof typeof sender,
+    label: string,
+    placeholder = "",
+    mode: "city" | "address" = "address",
+    cityKey?: keyof typeof sender,
+  ) => (
+    <div>
+      <label className={ui.label}>{label}</label>
+      <DadataAddressInput
+        mode={mode}
+        cityFilter={cityKey ? (sender[cityKey] || sender.city || "") : undefined}
+        value={sender[k] ?? ""}
+        onChange={(v) => setSender({ ...sender, [k]: v })}
+        placeholder={placeholder}
+        inputClassName={ui.input}
+      />
+    </div>
+  );
+
 
   return (
     <div className="grid gap-6">
@@ -3171,8 +3192,8 @@ const SettingsPanel = () => {
           Используется, если для конкретного перевозчика ниже не указан свой адрес.
         </p>
         <div className="grid md:grid-cols-2 gap-4">
-          {field("city", "Город", "Москва")}
-          {field("address", "Адрес склада / пункта отправки", "ул. Мастеровая, 12")}
+          {addrField("city", "Город", "Москва", "city")}
+          {addrField("address", "Адрес склада / пункта отправки", "ул. Мастеровая, 12", "address", "city")}
         </div>
       </div>
 
@@ -3182,8 +3203,8 @@ const SettingsPanel = () => {
           Откуда СДЭК забирает груз. Если поля пустые — берётся общий адрес выше.
         </p>
         <div className="grid md:grid-cols-2 gap-4">
-          {field("cdek_city", "Город отправителя", "Москва")}
-          {field("cdek_address", "Адрес отправителя", "ул. Мастеровая, 12")}
+          {addrField("cdek_city", "Город отправителя", "Москва", "city")}
+          {addrField("cdek_address", "Адрес отправителя", "ул. Мастеровая, 12", "address", "cdek_city")}
           {field(
             "cdek_city_code",
             "Код города СДЭК (необяз., только цифры)",
@@ -3200,8 +3221,8 @@ const SettingsPanel = () => {
           Откуда ПЭК забирает груз. Если поля пустые — берётся общий адрес.
         </p>
         <div className="grid md:grid-cols-2 gap-4">
-          {field("pek_city", "Город отправителя", "Москва")}
-          {field("pek_address", "Адрес отправителя", "ул. Мастеровая, 12")}
+          {addrField("pek_city", "Город отправителя", "Москва", "city")}
+          {addrField("pek_address", "Адрес отправителя", "ул. Мастеровая, 12", "address", "pek_city")}
           {field(
             "pek_city_id",
             "ID города в ПЭК (необяз., только цифры)",
@@ -3218,8 +3239,8 @@ const SettingsPanel = () => {
           Откуда Яндекс забирает груз. Если поля пустые — берётся общий адрес.
         </p>
         <div className="grid md:grid-cols-2 gap-4">
-          {field("yandex_city", "Город отправителя", "Москва")}
-          {field("yandex_address", "Адрес отправителя (полный)", "Москва, ул. Мастеровая, 12")}
+          {addrField("yandex_city", "Город отправителя", "Москва", "city")}
+          {addrField("yandex_address", "Адрес отправителя (полный)", "Москва, ул. Мастеровая, 12", "address", "yandex_city")}
         </div>
       </div>
 
