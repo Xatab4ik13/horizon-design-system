@@ -247,7 +247,7 @@ Deno.serve(async (req) => {
         const patch: Record<string, any> = { payment_status: body.Status };
         // Синхронизируем статус заказа
         if (body.Status === "CONFIRMED" || body.Status === "AUTHORIZED") {
-          patch.status = "in_progress";
+          patch.status = "new"; // оплачен, принят к работе
         } else if (body.Status === "REFUNDED" || body.Status === "REVERSED" || body.Status === "CANCELED") {
           patch.status = "cancelled";
         }
