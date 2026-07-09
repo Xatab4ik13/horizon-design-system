@@ -254,64 +254,66 @@ Deno.serve(async (req) => {
       return json({ error: insErr?.message ?? "Не удалось создать заказ" }, 500);
     }
 
-    // 2) Если доставка через перевозчика — пытаемся создать заявку
-    let deliveryResult: { ok: boolean; external_id?: string; tracking?: string; error?: string } = {
-      ok: false,
-    };
-    if (delivery_provider === "yandex" || delivery_provider === "pek" || delivery_provider === "cdek") {
+    // 2) Фоновая работа: заявка перевозчику + письма.
+    // Клиенту сразу отдаём order_id, чтобы фронт мог быстро открыть оплату Т-Кассы.
+    const backgroundWork = (async () => {
+      // 2a) Заявка перевозчику
+      if (delivery_provider === "yandex" || delivery_provider === "pek" || delivery_provider === "cdek") {
+        try {
+          const [sender, creds] = await Promise.all([getSender(), loadDeliveryCreds(admin)]);
+          const r =
+            delivery_provider === "yandex"
+              ? await createYandexClaim(order, sender, creds.yandex)
+              : delivery_provider === "pek"
+              ? await createPekOrder(order, sender, creds.pek)
+              : await createCdekOrder(order, sender, creds.cdek);
+
+          await admin
+            .from("orders")
+            .update({
+              delivery_external_id: r.external_id,
+              delivery_tracking: r.tracking,
+              delivery_payload: r.raw,
+            })
+            .eq("id", order.id);
+        } catch (e: any) {
+          console.error("Auto delivery claim failed:", e?.message ?? e);
+        }
+      }
+
+      // 2b) Письма
       try {
-        const [sender, creds] = await Promise.all([getSender(), loadDeliveryCreds(admin)]);
-        const r =
-          delivery_provider === "yandex"
-            ? await createYandexClaim(order, sender, creds.yandex)
-            : delivery_provider === "pek"
-            ? await createPekOrder(order, sender, creds.pek)
-            : await createCdekOrder(order, sender, creds.cdek);
-
-        await admin
-          .from("orders")
-          .update({
-            delivery_external_id: r.external_id,
-            delivery_tracking: r.tracking,
-            delivery_payload: r.raw,
-          })
-          .eq("id", order.id);
-
-        deliveryResult = { ok: true, external_id: r.external_id, tracking: r.tracking };
-      } catch (e: any) {
-        // Заказ всё равно создан — заявку перевозчика админ может создать вручную из админки
-        console.error("Auto delivery claim failed:", e?.message ?? e);
-        deliveryResult = { ok: false, error: e?.message ?? String(e) };
+        if (order.customer_email) {
+          const t = renderOrderConfirmation(order);
+          await sendEmail({
+            to: order.customer_email,
+            subject: t.subject,
+            html: t.html,
+            template: "order-confirmation",
+            related_order_id: order.id,
+          });
+        }
+        if (ADMIN_EMAIL) {
+          const t = renderAdminNewOrder(order);
+          await sendEmail({
+            to: ADMIN_EMAIL,
+            subject: t.subject,
+            html: t.html,
+            template: "admin-new-order",
+            related_order_id: order.id,
+          });
+        }
+      } catch (e) {
+        console.error("order emails failed", e);
       }
-    }
+    })();
 
-    // 3) Отправляем письма (клиенту "спасибо за заказ", админу — уведомление)
-    try {
-      if (order.customer_email) {
-        const t = renderOrderConfirmation(order);
-        await sendEmail({
-          to: order.customer_email,
-          subject: t.subject,
-          html: t.html,
-          template: "order-confirmation",
-          related_order_id: order.id,
-        });
-      }
-      if (ADMIN_EMAIL) {
-        const t = renderAdminNewOrder(order);
-        await sendEmail({
-          to: ADMIN_EMAIL,
-          subject: t.subject,
-          html: t.html,
-          template: "admin-new-order",
-          related_order_id: order.id,
-        });
-      }
-    } catch (e) {
-      console.error("order emails failed", e);
-    }
+    // EdgeRuntime.waitUntil продолжит работу после return
+    // @ts-ignore — глобал доступен в Supabase Edge Runtime
+    if (typeof EdgeRuntime !== "undefined") EdgeRuntime.waitUntil(backgroundWork);
 
-    return json({ data: { order_id: order.id, delivery: deliveryResult } });
+    return json({ data: { order_id: order.id, delivery: { ok: true, deferred: true } } });
+
   } catch (e: any) {
     console.error("order-place error", e);
     return json({ error: e?.message ?? "Internal error" }, 500);
