@@ -376,9 +376,11 @@ const CheckoutPage = () => {
                         </div>
                       ))}
                     </div>
-                    <p className="text-xs text-muted-foreground mb-4">
-                      Уже есть аккаунт? <Link to="/account" className="text-primary hover:underline">Войти</Link>
-                    </p>
+                    {!user && (
+                      <p className="text-xs text-muted-foreground mb-4">
+                        Уже есть аккаунт? <Link to="/account" className="text-primary hover:underline">Войти</Link>
+                      </p>
+                    )}
                     <Button onClick={() => setStep(1)} size="lg" disabled={!canProceedFromContact} className="rounded-xl w-full sm:w-auto">
                       Далее: Доставка
                     </Button>
