@@ -115,10 +115,18 @@ Deno.serve(async (req) => {
 
       const { data: order, error: oErr } = await admin
         .from("orders")
-        .select("id, total_amount, customer_email, customer_phone, items")
+        .select("id, total_amount, customer_email, customer_phone, items, payment_url, payment_id, payment_status")
         .eq("id", orderId)
         .maybeSingle();
       if (oErr || !order) return json({ error: "order not found" }, 404);
+
+      // Если уже есть валидная ссылка и платёж ещё не отменён/подтверждён — возвращаем её мгновенно.
+      const reusableStatuses = ["NEW", "FORM_SHOWED", "AUTHORIZING", "3DS_CHECKING", "3DS_CHECKED", "AUTHORIZED"];
+      if (order.payment_url && reusableStatuses.includes(String(order.payment_status ?? "NEW"))) {
+        return json({ paymentUrl: order.payment_url, paymentId: order.payment_id ? String(order.payment_id) : null, reused: true });
+      }
+
+
 
       const amountKopecks = Math.round(Number(order.total_amount) * 100);
       const origin = req.headers.get("origin") ?? "";

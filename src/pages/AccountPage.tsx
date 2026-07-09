@@ -118,6 +118,11 @@ const AccountPage = () => {
   }, [user]);
 
   const handlePayNow = async (order: OrderRow) => {
+    // Если у заказа уже есть готовая ссылка на оплату — открываем сразу, без повторного Init.
+    if (order.payment_url) {
+      window.location.href = order.payment_url;
+      return;
+    }
     setPayingId(order.id);
     try {
       const { data, error } = await supabase.functions.invoke("tinkoff-payment", {
@@ -139,6 +144,7 @@ const AccountPage = () => {
       setPayingId(null);
     }
   };
+
 
   const handleSignOut = async () => {
     await signOut();
