@@ -93,7 +93,7 @@ const ContactsPage = () => {
     >
       <SEO pageKey="contacts"
         title="Контакты"
-        description="Свяжитесь с мастерской FAKTURA: телефон, email, адрес в Москве. Оставьте заявку на изготовление изделия из дерева."
+        description="Контакты мастерской FAKTURA: телефон, email, адрес. Оставьте заявку на изготовление мебели и изделий из массива дерева на заказ."
       />
       <Header />
       <main className="pt-32 pb-20">
