@@ -4,6 +4,7 @@
 // функция использует SERVICE_ROLE и обходит RLS.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { sendEmail, renderAdminPasswordReset, ADMIN_EMAIL as NOTIFY_EMAIL } from "../_shared/email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -99,6 +100,58 @@ Deno.serve(async (req) => {
       const envOk = typeof password === "string" && safeEqual(password, ADMIN_PASSWORD);
       if (!envOk) return json({ error: "Неверный мастер-пароль (из настроек сервера)" }, 401);
       await admin.from("app_settings").delete().eq("key", "admin_password_hash");
+      return json({ ok: true });
+    }
+
+    // Восстановление пароля по email, шаг 1: генерируем одноразовый токен (1 час),
+    // храним только его хэш и шлём ссылку на почту админа. Ответ всегда ok —
+    // не раскрываем, настроена ли почта.
+    if (action === "auth.requestPasswordReset") {
+      try {
+        const tokenBytes = new Uint8Array(24);
+        crypto.getRandomValues(tokenBytes);
+        const token = Array.from(tokenBytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+        await admin.from("app_settings").upsert(
+          {
+            key: "admin_password_reset",
+            value: { hash: await sha256Hex(token), expires_at: new Date(Date.now() + 3600_000).toISOString() },
+          },
+          { onConflict: "key" },
+        );
+        const to = NOTIFY_EMAIL || ADMIN_EMAIL;
+        if (!to) {
+          console.error("[admin-api] password reset: admin email is not configured");
+        } else {
+          const tpl = renderAdminPasswordReset(token);
+          const p = sendEmail({ to, subject: tpl.subject, html: tpl.html, template: "admin_password_reset" });
+          const er = (globalThis as any).EdgeRuntime;
+          if (er?.waitUntil) er.waitUntil(p.catch((e: unknown) => console.error("[admin-api] reset email failed", e)));
+          else p.catch((e: unknown) => console.error("[admin-api] reset email failed", e));
+        }
+      } catch (e) {
+        console.error("[admin-api] auth.requestPasswordReset failed", e);
+      }
+      return json({ ok: true });
+    }
+
+    // Шаг 2: по токену из письма устанавливаем новый пароль.
+    if (action === "auth.resetPassword") {
+      const token = String(body?.payload?.token ?? "");
+      const newPassword = String(body?.payload?.newPassword ?? "");
+      if (newPassword.length < 6) return json({ error: "Новый пароль — минимум 6 символов" }, 400);
+      const { data } = await admin
+        .from("app_settings").select("value").eq("key", "admin_password_reset").maybeSingle();
+      const v = (data?.value as { hash?: string; expires_at?: string } | null) ?? null;
+      const tokenHash = token ? await sha256Hex(token) : "";
+      const valid =
+        !!v?.hash && tokenHash.length === v.hash.length && safeEqual(tokenHash, v.hash) &&
+        !!v.expires_at && new Date(v.expires_at).getTime() > Date.now();
+      if (!valid) return json({ error: "Ссылка недействительна или устарела — запросите новую" }, 400);
+      await admin.from("app_settings").upsert(
+        { key: "admin_password_hash", value: { hash: await sha256Hex(newPassword) } },
+        { onConflict: "key" },
+      );
+      await admin.from("app_settings").delete().eq("key", "admin_password_reset");
       return json({ ok: true });
     }
 
