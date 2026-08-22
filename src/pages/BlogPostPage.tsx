@@ -1,10 +1,32 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ChevronRight, Calendar, ArrowLeft } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEO, { buildArticleJsonLd, buildBreadcrumbJsonLd } from "@/components/SEO";
 import { fetchBlogPost, getCachedBlogPost, type BlogPostFullRow as BlogPostRow } from "@/lib/blogCache";
+
+// Внутренние ссылки (/catalog, /product/...) рендерим через Link — без перезагрузки страницы.
+const markdownComponents = {
+  a: ({ href, children, ...props }: React.ComponentPropsWithoutRef<"a">) => {
+    if (href && href.startsWith("/")) {
+      return (
+        <Link to={href} className="text-primary hover:underline">
+          {children}
+        </Link>
+      );
+    }
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" {...props}>
+        {children}
+      </a>
+    );
+  },
+  img: ({ src, alt, ...props }: React.ComponentPropsWithoutRef<"img">) => (
+    <img src={src} alt={alt ?? ""} loading="lazy" decoding="async" className="w-full rounded-2xl my-6" {...props} />
+  ),
+};
 
 const formatDate = (iso: string | null) => {
   if (!iso) return "";
@@ -67,8 +89,8 @@ const BlogPostPage = () => {
     >
       {post && (
         <SEO
-          title={post.title}
-          description={post.excerpt ?? post.title}
+          title={(post.seo_title ?? "").trim() || post.title}
+          description={(post.seo_description ?? "").trim() || post.excerpt || post.title}
           type="article"
           jsonLd={[
             buildArticleJsonLd({
@@ -135,8 +157,8 @@ const BlogPostPage = () => {
                 </p>
               )}
 
-              <div className="prose prose-invert max-w-none text-foreground/85 leading-relaxed whitespace-pre-wrap">
-                {post.content}
+              <div className="prose prose-invert max-w-none text-foreground/85 leading-relaxed prose-headings:text-foreground prose-strong:text-foreground prose-li:marker:text-primary">
+                <ReactMarkdown components={markdownComponents}>{post.content}</ReactMarkdown>
               </div>
 
               <div className="mt-12 pt-8 border-t border-border/50">

@@ -109,25 +109,14 @@ const SEO = ({
 
     const schemas = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
 
+    // Только проверяемые данные: телефон/адрес не указываем, пока они не заданы в админке.
     const orgSchema = {
       "@context": "https://schema.org",
       "@type": "Organization",
       name: SITE_NAME,
       url: SITE_URL,
-      logo: `${SITE_URL}/favicon.ico`,
-      contactPoint: {
-        "@type": "ContactPoint",
-        telephone: "+7-999-123-45-67",
-        contactType: "customer service",
-        areaServed: "RU",
-        availableLanguage: "Russian",
-      },
-      address: {
-        "@type": "PostalAddress",
-        streetAddress: "ул. Мастеровая, 12",
-        addressLocality: "Москва",
-        addressCountry: "RU",
-      },
+      logo: `${SITE_URL}/favicon.png`,
+      areaServed: ["Москва", "Московская область", "Санкт-Петербург", "Россия"],
     };
 
     const webSiteSchema = {

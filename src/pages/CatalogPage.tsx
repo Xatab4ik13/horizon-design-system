@@ -190,8 +190,8 @@ const CatalogPage = () => {
     return (
       <div className="min-h-screen bg-background">
         <SEO pageKey="catalog"
-          title="Каталог изделий из дерева"
-          description="Каталог изделий из натурального дерева: мебель, панно, зеркала, кухонные принадлежности, двери. Ручная работа, доставка по России."
+          title="Каталог изделий из натурального дерева"
+          description="Каталог FAKTURA: мебель из массива, деревянные панно, зеркала в деревянной раме, кухонная утварь, двери из массива. Купить готовое или заказать по своим размерам."
           jsonLd={[buildBreadcrumbJsonLd([{ name: "Главная", url: "/" }, { name: "Каталог", url: "/catalog" }])]}
         />
         <Header />
@@ -264,8 +264,8 @@ const CatalogPage = () => {
   return (
     <div className="min-h-screen" style={{ background: "linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(25 15% 8%) 40%, hsl(30 12% 6%) 70%, hsl(0 0% 0%) 100%)" }}>
       <SEO pageKey="catalog"
-        title={`${activeCategoryData?.name || "Каталог"} — изделия из дерева`}
-        description={`${activeCategoryData?.name || "Каталог"} из натурального дерева ручной работы. Выбирайте породу, покрытие и размер.`}
+        title={`${activeCategoryData?.name || "Каталог"} из массива дерева — купить или заказать`}
+        description={`${activeCategoryData?.name || "Изделия"} из натурального дерева ручной работы от мастерской FAKTURA. Выбор породы, покрытия и размера. Доставка по Москве, Санкт-Петербургу и всей России.`}
         jsonLd={[buildBreadcrumbJsonLd([
           { name: "Главная", url: "/" },
           { name: "Каталог", url: "/catalog" },

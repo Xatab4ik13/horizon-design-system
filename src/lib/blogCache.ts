@@ -8,6 +8,8 @@ export interface BlogPostListRow {
   cover_image: string | null;
   published_at: string | null;
   created_at: string;
+  seo_title: string | null;
+  seo_description: string | null;
 }
 
 export interface BlogPostFullRow extends BlogPostListRow {
@@ -29,7 +31,7 @@ export function fetchBlogList(): Promise<BlogPostListRow[]> {
   listInflight = (async () => {
     const { data } = await supabase
       .from("blog_posts")
-      .select("id, slug, title, excerpt, cover_image, published_at, created_at")
+      .select("id, slug, title, excerpt, cover_image, published_at, created_at, seo_title, seo_description")
       .eq("is_published", true)
       .order("published_at", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false });
