@@ -2998,6 +2998,8 @@ const emptyPost = {
   excerpt: "",
   content: "",
   cover_image: "",
+  seo_title: "",
+  seo_description: "",
   is_published: false,
 };
 
@@ -3124,6 +3126,31 @@ const BlogPanel = () => {
               onChange={(e) => setEditing({ ...editing, content: e.target.value })}
               className={`${ui.textarea} min-h-[300px]`}
             />
+            <p className="text-[13px] text-[#777] mt-1.5">
+              Поддерживается Markdown: <code>## Подзаголовок</code>, <code>**жирный**</code>,{" "}
+              <code>- список</code>, ссылка <code>[текст](/catalog)</code>. Внутренние ссылки на каталог и услуги помогают SEO.
+            </p>
+          </div>
+          <div className="grid gap-4 p-4 rounded-xl border border-[#3a3a3a] bg-[#1a1a1a]">
+            <div className="text-[15px] font-semibold text-[#ccc]">SEO (необязательно)</div>
+            <div>
+              <label className={ui.label}>SEO-заголовок (до ~60 символов)</label>
+              <input
+                value={editing.seo_title ?? ""}
+                onChange={(e) => setEditing({ ...editing, seo_title: e.target.value })}
+                className={ui.input}
+                placeholder="если пусто — используется обычный заголовок"
+              />
+            </div>
+            <div>
+              <label className={ui.label}>SEO-описание (до ~160 символов)</label>
+              <textarea
+                value={editing.seo_description ?? ""}
+                onChange={(e) => setEditing({ ...editing, seo_description: e.target.value })}
+                className={ui.textarea}
+                placeholder="если пусто — используется краткое описание"
+              />
+            </div>
           </div>
           <label className="flex items-center gap-3">
             <input
