@@ -17,6 +17,8 @@ const HeroSection = () => {
 
   return (
     <section className="relative h-screen w-full overflow-hidden">
+      {/* H1 для поисковых систем: на экране заголовок — анимированный логотип */}
+      <h1 className="sr-only">Мебель и предметы интерьера из массива дерева на заказ — мастерская FAKTURA</h1>
       {hasVideo ? (
         <video
           ref={videoRef}
