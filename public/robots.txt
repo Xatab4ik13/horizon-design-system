@@ -9,7 +9,6 @@ Crawl-delay: 2
 User-agent: Yandex
 Allow: /
 Crawl-delay: 2
-Host: https://faktura-wood.com
 
 User-agent: Twitterbot
 Allow: /
