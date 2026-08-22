@@ -270,6 +270,26 @@ export function renderAdminNewOrder(order: any) {
   };
 }
 
+export function renderAdminPasswordReset(token: string) {
+  const url = `${SITE_URL}/admin?reset=${encodeURIComponent(token)}`;
+  const body = `
+    <h1 style="margin:0 0 8px 0;font-family:'Franklin Gothic Medium',Arial,sans-serif;font-size:24px;color:#c9a96a;font-weight:600;">Сброс пароля админ-панели</h1>
+    <p style="margin:0 0 20px 0;color:#8a7a5c;">Запрошено восстановление пароля администратора FAKTURA. Нажмите кнопку ниже и задайте новый пароль. Ссылка действует 1 час.</p>
+    <div style="text-align:center;margin:28px 0;">
+      <a href="${url}" style="display:inline-block;padding:14px 32px;background:linear-gradient(180deg,#c9a96a 0%,#a3854a 100%);color:#0b0b0b;text-decoration:none;border-radius:10px;font-weight:600;letter-spacing:1px;font-size:14px;text-transform:uppercase;">Задать новый пароль</a>
+    </div>
+    <p style="margin:16px 0 0 0;color:#8a7a5c;font-size:13px;">Если это были не вы — просто проигнорируйте письмо, пароль останется прежним.</p>
+    <p style="margin:16px 0 0 0;color:#6b5f4a;font-size:12px;word-break:break-all;">Если кнопка не работает, откройте ссылку в браузере:<br><a href="${url}" style="color:#c9a96a;">${url}</a></p>`;
+  return {
+    subject: "FAKTURA · Сброс пароля админ-панели",
+    html: layout({
+      title: "Сброс пароля админ-панели",
+      preheader: "Ссылка для установки нового пароля (действует 1 час)",
+      bodyHtml: body,
+    }),
+  };
+}
+
 export function renderContactRequest(req: {
   name: string;
   phone?: string;
