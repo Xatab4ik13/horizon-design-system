@@ -147,6 +147,12 @@ const LoginScreen = ({ onSuccess }: { onSuccess: () => void }) => {
   const [email, setEmail] = useState("");
   const [pwd, setPwd] = useState("");
   const [loading, setLoading] = useState(false);
+  // Восстановление пароля: ссылка из письма ведёт на /admin?reset=TOKEN
+  const [resetToken] = useState(() => new URLSearchParams(window.location.search).get("reset") ?? "");
+  const [resetMode, setResetMode] = useState(() => !!new URLSearchParams(window.location.search).get("reset"));
+  const [resetSent, setResetSent] = useState(false);
+  const [newPwd, setNewPwd] = useState("");
+  const [newPwd2, setNewPwd2] = useState("");
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -161,6 +167,109 @@ const LoginScreen = ({ onSuccess }: { onSuccess: () => void }) => {
       setLoading(false);
     }
   };
+
+  const sendReset = async () => {
+    setLoading(true);
+    try {
+      await adminCall("auth.requestPasswordReset");
+      setResetSent(true);
+      toast.success("Письмо со ссылкой отправлено на почту администратора");
+    } catch {
+      toast.error("Сеть недоступна, попробуйте ещё раз");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const applyReset = async (e: FormEvent) => {
+    e.preventDefault();
+    if (newPwd.length < 6) { toast.error("Пароль — минимум 6 символов"); return; }
+    if (newPwd !== newPwd2) { toast.error("Пароли не совпадают"); return; }
+    setLoading(true);
+    try {
+      await adminCall("auth.resetPassword", { token: resetToken, newPassword: newPwd });
+      adminAuth.set(newPwd);
+      window.history.replaceState({}, "", "/admin");
+      toast.success("Пароль установлен");
+      onSuccess();
+    } catch (err: any) {
+      toast.error(err.message ?? "Не удалось установить пароль");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (resetMode) {
+    return (
+      <div className={`${ui.page} flex items-center justify-center px-4`}>
+        {resetToken ? (
+          <form onSubmit={applyReset} className={`${ui.card} w-full max-w-md`}>
+            <h1 className={`${ui.h1} mb-2 text-center`}>FAKTURA</h1>
+            <p className="text-center text-[#888] mb-8 text-[15px] uppercase tracking-widest">
+              Новый пароль администратора
+            </p>
+            <label className={ui.label}>Новый пароль</label>
+            <input
+              type="password"
+              autoFocus
+              autoComplete="new-password"
+              value={newPwd}
+              onChange={(e) => setNewPwd(e.target.value)}
+              className={ui.input}
+              placeholder="Не менее 6 символов"
+            />
+            <label className={`${ui.label} mt-4`}>Повторите пароль</label>
+            <input
+              type="password"
+              autoComplete="new-password"
+              value={newPwd2}
+              onChange={(e) => setNewPwd2(e.target.value)}
+              className={ui.input}
+            />
+            <button
+              type="submit"
+              disabled={loading || !newPwd}
+              className={`${ui.btn} ${ui.btnPrimary} w-full mt-6 disabled:opacity-50`}
+            >
+              {loading ? "Сохранение…" : "Установить пароль"}
+            </button>
+          </form>
+        ) : (
+          <div className={`${ui.card} w-full max-w-md`}>
+            <h1 className={`${ui.h1} mb-2 text-center`}>FAKTURA</h1>
+            <p className="text-center text-[#888] mb-6 text-[15px] uppercase tracking-widest">
+              Восстановление пароля
+            </p>
+            {resetSent ? (
+              <p className="text-[14px] text-[#aaa] text-center leading-relaxed">
+                Письмо со ссылкой для сброса отправлено на почту администратора.
+                Перейдите по ссылке из письма — она действует 1 час.
+              </p>
+            ) : (
+              <>
+                <p className="text-[14px] text-[#888] mb-6 text-center leading-relaxed">
+                  На почту администратора придёт письмо со ссылкой для установки нового пароля.
+                </p>
+                <button
+                  onClick={sendReset}
+                  disabled={loading}
+                  className={`${ui.btn} ${ui.btnPrimary} w-full disabled:opacity-50`}
+                >
+                  {loading ? "Отправка…" : "Отправить письмо"}
+                </button>
+              </>
+            )}
+            <button
+              onClick={() => setResetMode(false)}
+              className="w-full mt-4 text-center text-[13px] text-[#888] hover:text-[#c9a96a] transition-colors"
+            >
+              ← Вернуться ко входу
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={`${ui.page} flex items-center justify-center px-4`}>
@@ -188,10 +297,19 @@ const LoginScreen = ({ onSuccess }: { onSuccess: () => void }) => {
           className={ui.input}
           placeholder="Введите пароль"
         />
+        <div className="text-right mt-2">
+          <button
+            type="button"
+            onClick={() => setResetMode(true)}
+            className="text-[13px] text-[#888] hover:text-[#c9a96a] transition-colors"
+          >
+            Забыли пароль?
+          </button>
+        </div>
         <button
           type="submit"
           disabled={loading || !pwd || !email}
-          className={`${ui.btn} ${ui.btnPrimary} w-full mt-6 disabled:opacity-50`}
+          className={`${ui.btn} ${ui.btnPrimary} w-full mt-4 disabled:opacity-50`}
         >
           {loading ? "Проверка…" : "Войти"}
         </button>
