@@ -11,6 +11,31 @@
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://faktura-wood.com/gallery</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/blog</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/services</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/delivery</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/contacts</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://faktura-wood.com/catalog?category=furniture</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -41,57 +66,52 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://faktura-wood.com/product/pano-wave</loc>
+    <loc>https://faktura-wood.com/product/579767e1-d918-49ae-b79a-0aa3e8246ad3</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://faktura-wood.com/product/pano-zebra</loc>
+    <loc>https://faktura-wood.com/product/715a94ed-9331-4085-b524-13a786e86574</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://faktura-wood.com/product/pano-radiance</loc>
+    <loc>https://faktura-wood.com/product/268d8a3d-6767-4180-af55-733a3a125944</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://faktura-wood.com/product/mirror-wave</loc>
+    <loc>https://faktura-wood.com/product/407742f4-0731-4c17-8ede-4a69a2590e99</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://faktura-wood.com/product/shelf-console</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://faktura-wood.com/product/shelf-wave</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://faktura-wood.com/gallery</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://faktura-wood.com/blog</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://faktura-wood.com/services</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://faktura-wood.com/delivery</loc>
+    <loc>https://faktura-wood.com/blog/kak-zakazat-mebel-na-zakaz</loc>
+    <lastmod>2026-04-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://faktura-wood.com/contacts</loc>
+    <loc>https://faktura-wood.com/blog/trendy-interiera-2026-naturalnye-materialy</loc>
+    <lastmod>2026-04-17</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/blog/massiv-vs-shpon-vs-mdf</loc>
+    <lastmod>2026-04-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/blog/uhod-za-derevyannoy-mebelyu</loc>
+    <lastmod>2026-04-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/blog/kak-vybrat-derevyannoe-panno-dlya-interera</loc>
+    <lastmod>2026-04-09</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
