@@ -1,3 +1,7 @@
+-- Импорт статей блога (из облачной базы в self-hosted)
+-- Идемпотентно: повторный запуск безопасен (ON CONFLICT по slug)
+ALTER TABLE public.blog_posts ADD COLUMN IF NOT EXISTS seo_title text;
+ALTER TABLE public.blog_posts ADD COLUMN IF NOT EXISTS seo_description text;
 INSERT INTO public.blog_posts (id,title,slug,excerpt,content,cover_image,is_published,published_at,created_at,updated_at,seo_title,seo_description) VALUES ('ba6a5eb2-c167-4c77-874d-8ba52f924e34'::uuid,'Как выбрать деревянное панно для интерьера: гид от мастерской FAKTURA','kak-vybrat-derevyannoe-panno-dlya-interera','Разбираемся, какое панно из дерева подойдёт именно вашей комнате: порода, размер, фактура, освещение и сочетание со стилем интерьера.','Деревянное панно — это, пожалуй, самый честный способ добавить в интерьер тепла. Не картина, не постер, не очередной декор «для галочки», а живая поверхность, на которой видно каждое годовое кольцо. За годы работы мы в FAKTURA собрали десятки вопросов, которые клиенты задают перед покупкой. Решили ответить на них в одном тексте.
 
 ЗАЧЕМ ВООБЩЕ ПАННО ИЗ ДЕРЕВА
