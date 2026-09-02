@@ -235,15 +235,32 @@ const ProductPage = () => {
     return vars;
   }, [siblings, product]);
 
+  // Варианты, заданные в админке, имеют приоритет над «синтетическими»
+  const ownVariations = useMemo(
+    () => (product?.variations ?? []).filter((v) => v?.options?.length),
+    [product]
+  );
+  const displayVariations = useMemo(
+    () => (ownVariations.length ? ownVariations : syntheticVariations),
+    [ownVariations, syntheticVariations]
+  );
+
   // Preselect current product attributes
   useEffect(() => {
     if (!product) return;
+    if (ownVariations.length) {
+      const init: Record<string, string> = {};
+      ownVariations.forEach((v) => { init[v.type] = v.options[0].value; });
+      setSelectedVariations(init);
+      return;
+    }
     setSelectedVariations({
       wood: product.material || "",
       coating: product.coating || "",
       size: product.dimensions || "",
     });
-  }, [product?.id]);
+  }, [product?.id, ownVariations]);
+
 
   // Автоматический запуск AR при переходе с QR-кода (?ar=1)
   useEffect(() => {
