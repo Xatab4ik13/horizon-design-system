@@ -503,7 +503,7 @@ const ProductPage = () => {
                   { icon: TreePine, label: "Порода", value: currentMaterial },
                   { icon: Ruler, label: "Размеры", value: currentDimensions },
                   { icon: Droplets, label: "Покрытие", value: currentCoating },
-                  { icon: Weight, label: "Вес", value: product.weight },
+                  { icon: Weight, label: "Вес", value: currentWeight },
                   { icon: Check, label: "Наличие", value: product.inStock ? "В наличии" : "Под заказ (2–3 нед.)" },
                 ].map((spec) => {
                   const isWood = spec.label === "Порода";
@@ -579,7 +579,7 @@ const ProductPage = () => {
                     variations: Object.keys(selectedVariations).length > 0 ? selectedVariations : undefined,
                     variationLabels: Object.keys(labels).length > 0 ? labels : undefined,
                     dimensions: currentDimensions,
-                    weight: product.weight,
+                    weight: currentWeight,
                   });
                   toast.success("Товар добавлен в корзину");
                 }}>
