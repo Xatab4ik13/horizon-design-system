@@ -5,7 +5,7 @@ import DadataAddressInput from "@/components/DadataAddressInput";
 import { parse1CFile } from "@/lib/import1c";
 import { exportProductsTo1CXlsx, downloadBlob } from "@/lib/export1c";
 import { toast } from "sonner";
-import { invalidateHomepageContent, invalidateNavMenu, invalidateHomepageBlocks, invalidatePagesContent, invalidateContactsContent, invalidateServicesContent, invalidateDeliveryContent, invalidateSeoContent, type PageKey, type SeoPageKey, type SeoContent } from "@/hooks/useSiteContent";
+import { invalidateHomepageContent, invalidateNavMenu, invalidateHomepageBlocks, invalidatePagesContent, invalidateContactsContent, invalidateServicesContent, invalidateDeliveryContent, invalidateSeoContent, invalidateAboutContent, type PageKey, type SeoPageKey, type SeoContent, type AboutContent } from "@/hooks/useSiteContent";
 import {
   Package,
   ShoppingBag,
