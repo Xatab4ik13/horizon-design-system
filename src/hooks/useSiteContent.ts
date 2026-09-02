@@ -301,7 +301,53 @@ export function useServicesContent(): ServicesContent {
 }
 
 
+// ─── About page («О нас») ───
+export type AboutContent = {
+  title?: string;
+  subtitle?: string;
+  /** Основной текст. Абзацы разделяются пустой строкой. */
+  intro?: string;
+  image?: string;
+  stats?: { value?: string; label?: string }[];
+  values?: { title?: string; desc?: string }[];
+  cta?: { title?: string; text?: string; primary?: string; phone?: string };
+};
+
+let aboutCache: AboutContent | null = null;
+let aboutInflight: Promise<AboutContent> | null = null;
+
+export async function fetchAboutContent(): Promise<AboutContent> {
+  if (aboutCache) return aboutCache;
+  if (aboutInflight) return aboutInflight;
+  aboutInflight = (async () => {
+    const { data } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "about_page")
+      .maybeSingle();
+    aboutCache = ((data?.value as AboutContent) ?? {}) as AboutContent;
+    return aboutCache;
+  })();
+  return aboutInflight;
+}
+
+export function invalidateAboutContent() {
+  aboutCache = null;
+  aboutInflight = null;
+}
+
+export function useAboutContent(): AboutContent {
+  const [c, setC] = useState<AboutContent>(aboutCache ?? {});
+  useEffect(() => {
+    let alive = true;
+    fetchAboutContent().then((v) => { if (alive) setC(v); });
+    return () => { alive = false; };
+  }, []);
+  return c;
+}
+
 // ─── Delivery & Payment page ───
+
 export type DeliveryContent = {
   companies?: {
     name?: string;
