@@ -312,6 +312,22 @@ const ProductPage = () => {
     () => selectedVariations["size"] || product?.dimensions || "",
     [selectedVariations, product]
   );
+  // Вес: базовый вес товара + надбавки выбранных вариантов (например, размера)
+  const currentWeight = useMemo(() => {
+    if (!product) return "";
+    const base = parseFloat(String(product.weight).replace(",", ".").replace(/[^\d.]/g, ""));
+    if (!isFinite(base)) return product.weight;
+    let w = base;
+    (product.variations || []).forEach((v) => {
+      const sel = selectedVariations[v.type];
+      if (!sel) return;
+      const opt = v.options.find((o) => o.value === sel);
+      if (opt?.weightModifier) w += opt.weightModifier;
+    });
+    if (w <= 0) return product.weight;
+    return `${Math.round(w * 100) / 100} кг`;
+  }, [product, selectedVariations]);
+
 
 
   // Подмена основного фото при выборе варианта (например, по породе)
