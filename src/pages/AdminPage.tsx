@@ -1387,6 +1387,116 @@ const ProductEditor = ({
           </div>
         </div>
 
+        {/* ── Варианты товара ── */}
+        <div className="pt-4 border-t border-[#3a3a3a]">
+          <div className="flex items-center justify-between mb-2 gap-3 flex-wrap">
+            <label className={ui.label}>Варианты товара (порода, покрытие, размеры)</label>
+            <div className="flex gap-2 flex-wrap">
+              {[
+                { type: "wood", label: "Порода" },
+                { type: "coating", label: "Покрытие" },
+                { type: "size", label: "Размеры" },
+              ].map((g) => (
+                <button
+                  key={g.type}
+                  onClick={() => addVariationGroup(g.type, g.label)}
+                  className={`${ui.btn} ${ui.btnSecondary}`}
+                >
+                  <Plus size={16} /> {g.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <p className="text-[13px] text-[#888] mb-4">
+            Покупатель выбирает вариант в карточке товара из выпадающего списка.
+            «± цена» и «± вес» — это надбавки к базовой цене и базовому весу выше
+            (можно ставить минус). Пусто = без изменений.
+          </p>
+
+          {variations.length === 0 ? (
+            <p className="text-[14px] text-[#888]">
+              Вариантов нет — в карточке будет показан только базовый товар.
+            </p>
+          ) : (
+            <div className="grid gap-4">
+              {variations.map((v: any, vi: number) => (
+                <div key={vi} className="border border-[#3a3a3a] rounded-lg p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <input
+                      value={v.label ?? ""}
+                      onChange={(e) => updateVariation(vi, { label: e.target.value })}
+                      className={ui.input}
+                      placeholder="Название списка (например «Порода»)"
+                    />
+                    <button onClick={() => removeVariation(vi)} className={`${ui.btn} ${ui.btnDanger}`}>
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                  <div className="grid gap-2">
+                    {(v.options ?? []).map((o: any, oi: number) => (
+                      <div key={oi} className="grid grid-cols-[1fr_130px_130px_auto] gap-2 items-center">
+                        <input
+                          value={o.label ?? ""}
+                          onChange={(e) => updateOption(vi, oi, { label: e.target.value, value: e.target.value })}
+                          className={ui.input}
+                          placeholder="Например «Дуб» или «1200 × 600 см»"
+                        />
+                        <input
+                          type="number"
+                          value={o.priceModifier ?? ""}
+                          onChange={(e) =>
+                            updateOption(vi, oi, {
+                              priceModifier: e.target.value === "" ? undefined : Number(e.target.value),
+                            })
+                          }
+                          className={ui.input}
+                          placeholder="± цена, ₽"
+                        />
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={o.weightModifier ?? ""}
+                          onChange={(e) =>
+                            updateOption(vi, oi, {
+                              weightModifier: e.target.value === "" ? undefined : Number(e.target.value),
+                            })
+                          }
+                          className={ui.input}
+                          placeholder="± вес, кг"
+                        />
+                        <button onClick={() => removeOption(vi, oi)} className={`${ui.btn} ${ui.btnDanger}`}>
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => addOption(vi)}
+                    className={`${ui.btn} ${ui.btnSecondary} mt-3`}
+                  >
+                    <Plus size={16} /> Добавить вариант
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div>
+          <label className={ui.label}>Порядок в каталоге</label>
+          <input
+            type="number"
+            value={form.sort_order ?? 0}
+            onChange={(e) => setForm((f: any) => ({ ...f, sort_order: Number(e.target.value) || 0 }))}
+            className={`${ui.input} max-w-[200px]`}
+          />
+          <p className="text-[13px] text-[#888] mt-1">
+            Чем меньше число — тем выше товар в списке. Порядок также можно менять стрелками в списке товаров.
+          </p>
+        </div>
+
+
+
         <div className="flex items-center gap-3">
           <input
             type="checkbox"
