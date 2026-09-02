@@ -4624,6 +4624,7 @@ const defaultNav = [
   { name: "Галерея", url: "/gallery" },
   { name: "Блог", url: "/blog" },
   { name: "Доставка и оплата", url: "/delivery" },
+  { name: "О нас", url: "/about" },
   { name: "Контакты", url: "/contacts" },
 ];
 
@@ -4636,6 +4637,7 @@ const AVAILABLE_PAGES: { url: string; label: string }[] = [
   { url: "/gallery", label: "Галерея" },
   { url: "/blog", label: "Блог" },
   { url: "/delivery", label: "Доставка и оплата" },
+  { url: "/about", label: "О нас" },
   { url: "/contacts", label: "Контакты" },
   { url: "/cart", label: "Корзина" },
   { url: "/account", label: "Личный кабинет" },
