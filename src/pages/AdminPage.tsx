@@ -3683,6 +3683,247 @@ const DeliveryDiagnose = () => {
 
 
 // ===================================================================
+// ABOUT PAGE EDITOR — страница «О нас» (/about)
+// ===================================================================
+const AboutPageEditor = () => {
+  const [val, setVal] = useState<AboutContent>({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    adminCallSWR("settings.get", { key: "about_page" })
+      .then((r) => { setVal((r.data ?? {}) as AboutContent); setLoading(false); })
+      .catch((e: any) => { toast.error(e.message); setLoading(false); });
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await adminCall("settings.set", { key: "about_page", value: val });
+      invalidateAboutContent();
+      invalidateAdminCache("settings.");
+      toast.success("Страница «О нас» сохранена");
+    } catch (e: any) { toast.error(e.message); }
+    setSaving(false);
+  };
+
+  const upd = (patch: Partial<AboutContent>) => setVal((v) => ({ ...v, ...patch }));
+
+  const updStat = (i: number, patch: Partial<{ value: string; label: string }>) =>
+    setVal((v) => {
+      const list = [...(v.stats ?? [])];
+      list[i] = { ...list[i], ...patch };
+      return { ...v, stats: list };
+    });
+
+  const updValue = (i: number, patch: Partial<{ title: string; desc: string }>) =>
+    setVal((v) => {
+      const list = [...(v.values ?? [])];
+      list[i] = { ...list[i], ...patch };
+      return { ...v, values: list };
+    });
+
+  if (loading) return <p className="text-[#888]">Загрузка…</p>;
+
+  return (
+    <div className={ui.card}>
+      <h2 className={`${ui.h2} mb-2`}>Страница «О нас»</h2>
+      <p className="text-[14px] text-[#888] mb-6">
+        Публичный адрес: <b>/about</b>. Любое пустое поле — на сайте показывается текст по умолчанию.
+      </p>
+
+      <div className="grid gap-5">
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <label className={ui.label}>Заголовок страницы</label>
+            <input
+              value={val.title ?? ""}
+              onChange={(e) => upd({ title: e.target.value })}
+              className={ui.input}
+              placeholder="О нас"
+            />
+          </div>
+          <div>
+            <label className={ui.label}>Подзаголовок (одна строка под заголовком)</label>
+            <input
+              value={val.subtitle ?? ""}
+              onChange={(e) => upd({ subtitle: e.target.value })}
+              className={ui.input}
+              placeholder="Мастерская FAKTURA — изделия из массива дерева с 2015 года"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className={ui.label}>Основной текст</label>
+          <textarea
+            value={val.intro ?? ""}
+            onChange={(e) => upd({ intro: e.target.value })}
+            className={`${ui.textarea} min-h-[180px]`}
+            placeholder="Расскажите о мастерской…"
+          />
+          <p className="text-[12px] text-[#888] mt-1">
+            Чтобы разбить текст на абзацы — оставьте между ними <b>пустую строку</b>.
+          </p>
+        </div>
+
+        <div>
+          <label className={ui.label}>Фотография справа от текста</label>
+          <div className="flex gap-2 items-center flex-wrap">
+            <input
+              value={val.image ?? ""}
+              onChange={(e) => upd({ image: e.target.value })}
+              className={ui.input}
+              placeholder="URL или загрузите файл"
+            />
+            <label className={`px-3 py-2 flex items-center gap-2 border border-[#444] rounded-lg cursor-pointer hover:border-[#666] text-[13px] whitespace-nowrap ${uploading ? "opacity-50" : ""}`}>
+              <Upload size={16} />
+              {uploading ? "..." : "Файл"}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  if (!f) return;
+                  setUploading(true);
+                  try {
+                    const url = await adminUploadFile("site-images", f, { prefix: "about/" });
+                    upd({ image: url });
+                    toast.success("Фото загружено");
+                  } catch (err: any) { toast.error(err.message); }
+                  setUploading(false);
+                }}
+              />
+            </label>
+          </div>
+          {val.image && (
+            <img src={val.image} alt="О нас" className="mt-3 w-56 h-36 object-cover rounded-lg border border-[#3a3a3a]" />
+          )}
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className={ui.label}>Цифры (блок из 4 плиток)</label>
+            <button
+              onClick={() => setVal((v) => ({ ...v, stats: [...(v.stats ?? []), { value: "", label: "" }] }))}
+              className={`${ui.btn} ${ui.btnSecondary}`}
+            >
+              <Plus size={16} /> Добавить
+            </button>
+          </div>
+          <div className="grid gap-3">
+            {(val.stats ?? []).map((s, i) => (
+              <div key={i} className="grid grid-cols-[120px_1fr_auto] gap-3 items-center">
+                <input
+                  value={s.value ?? ""}
+                  onChange={(e) => updStat(i, { value: e.target.value })}
+                  className={ui.input}
+                  placeholder="10+"
+                />
+                <input
+                  value={s.label ?? ""}
+                  onChange={(e) => updStat(i, { label: e.target.value })}
+                  className={ui.input}
+                  placeholder="лет в дереве"
+                />
+                <button
+                  onClick={() => setVal((v) => ({ ...v, stats: (v.stats ?? []).filter((_, idx) => idx !== i) }))}
+                  className={`${ui.btn} ${ui.btnDanger}`}
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))}
+            {!(val.stats ?? []).length && (
+              <p className="text-[13px] text-[#888]">Пусто — показываются стандартные цифры.</p>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className={ui.label}>Принципы работы (блок «Как мы работаем»)</label>
+            <button
+              onClick={() => setVal((v) => ({ ...v, values: [...(v.values ?? []), { title: "", desc: "" }] }))}
+              className={`${ui.btn} ${ui.btnSecondary}`}
+            >
+              <Plus size={16} /> Добавить
+            </button>
+          </div>
+          <div className="grid gap-3">
+            {(val.values ?? []).map((v2, i) => (
+              <div key={i} className="grid md:grid-cols-[240px_1fr_auto] gap-3 items-start">
+                <input
+                  value={v2.title ?? ""}
+                  onChange={(e) => updValue(i, { title: e.target.value })}
+                  className={ui.input}
+                  placeholder="Только массив"
+                />
+                <textarea
+                  value={v2.desc ?? ""}
+                  onChange={(e) => updValue(i, { desc: e.target.value })}
+                  className={ui.textarea}
+                  placeholder="Короткое пояснение"
+                />
+                <button
+                  onClick={() => setVal((v) => ({ ...v, values: (v.values ?? []).filter((_, idx) => idx !== i) }))}
+                  className={`${ui.btn} ${ui.btnDanger}`}
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))}
+            {!(val.values ?? []).length && (
+              <p className="text-[13px] text-[#888]">Пусто — показываются стандартные принципы.</p>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <label className={ui.label}>Блок призыва внизу страницы</label>
+          <div className="grid md:grid-cols-2 gap-4">
+            <input
+              value={val.cta?.title ?? ""}
+              onChange={(e) => upd({ cta: { ...(val.cta ?? {}), title: e.target.value } })}
+              className={ui.input}
+              placeholder="Заголовок"
+            />
+            <input
+              value={val.cta?.primary ?? ""}
+              onChange={(e) => upd({ cta: { ...(val.cta ?? {}), primary: e.target.value } })}
+              className={ui.input}
+              placeholder="Текст кнопки"
+            />
+            <textarea
+              value={val.cta?.text ?? ""}
+              onChange={(e) => upd({ cta: { ...(val.cta ?? {}), text: e.target.value } })}
+              className={ui.textarea}
+              placeholder="Пояснение под заголовком"
+            />
+            <input
+              value={val.cta?.phone ?? ""}
+              onChange={(e) => upd({ cta: { ...(val.cta ?? {}), phone: e.target.value } })}
+              className={ui.input}
+              placeholder="Телефон для кнопки звонка"
+            />
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-[#3a3a3a]">
+          <button onClick={save} disabled={saving} className={`${ui.btn} ${ui.btnPrimary}`}>
+            <Check size={18} /> {saving ? "Сохранение…" : "Сохранить «О нас»"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+// ===================================================================
 // CONTENT PANEL — редактирование контента и страниц сайта
 // ===================================================================
 type ContentSubTab =
