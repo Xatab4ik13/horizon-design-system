@@ -779,6 +779,27 @@ const ProductsPanel = () => {
     }
   };
 
+  // Перемещение товара в списке. Порядок сохраняется в поле sort_order:
+  // чем меньше значение — тем выше товар в каталоге и на сайте.
+  const move = async (index: number, dir: -1 | 1) => {
+    const target = index + dir;
+    if (target < 0 || target >= items.length) return;
+    const next = [...items];
+    [next[index], next[target]] = [next[target], next[index]];
+    const withOrder = next.map((p, i) => ({ ...p, sort_order: (i + 1) * 10 }));
+    const prev = items;
+    setItems(withOrder);
+    try {
+      await adminCall("products.reorder", {
+        items: withOrder.map((p) => ({ id: p.id, sort_order: p.sort_order })),
+      });
+      invalidateAdminCache("products.");
+    } catch (e: any) {
+      setItems(prev);
+      toast.error(e.message ?? "Не удалось изменить порядок");
+    }
+  };
+
 
   if (editing) {
     return (
