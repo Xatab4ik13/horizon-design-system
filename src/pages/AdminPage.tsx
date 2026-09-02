@@ -3712,7 +3712,7 @@ const ContentPanel = () => {
     prefetchAdminSettings([
       "homepage", "pages", "nav_menu", "homepage_blocks",
       "services_docs", "contacts_page", "services_page",
-      "delivery_page", "seo",
+      "delivery_page", "seo", "about_page",
     ]);
   }, []);
 
