@@ -3687,7 +3687,7 @@ const DeliveryDiagnose = () => {
 // ===================================================================
 type ContentSubTab =
   | "home" | "catalog" | "services" | "gallery" | "blog"
-  | "delivery" | "contacts" | "seo" | "nav";
+  | "delivery" | "about" | "contacts" | "seo" | "nav";
 
 const CONTENT_SUBTABS: { id: ContentSubTab; label: string; hint: string }[] = [
   { id: "home",     label: "Главная",       hint: "Hero, порядок блоков и содержание секций главной страницы." },
@@ -3696,6 +3696,7 @@ const CONTENT_SUBTABS: { id: ContentSubTab; label: string; hint: string }[] = [
   { id: "gallery",  label: "Галерея",       hint: "Заголовок страницы. Сами изображения — в разделе «Галерея»." },
   { id: "blog",     label: "Блог",          hint: "Публикации редактируются в разделе «Блог»." },
   { id: "delivery", label: "Доставка",      hint: "Условия доставки, партнёры и заголовок страницы." },
+  { id: "about",    label: "О нас",         hint: "Текст страницы «О нас»: описание мастерской, цифры, принципы работы." },
   { id: "contacts", label: "Контакты",      hint: "Адрес, телефоны, соцсети, карта и заголовок страницы." },
   { id: "seo",      label: "SEO",           hint: "Meta title / description для каждой страницы." },
   { id: "nav",      label: "Меню и футер",  hint: "Пункты навигации сверху и в футере." },
