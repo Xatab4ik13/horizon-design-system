@@ -277,6 +277,8 @@ const ProductPage = () => {
       const next = { ...selectedVariations, [type]: value };
       setSelectedVariations(next);
       if (!product) return;
+      // Свои варианты из админки — просто меняют цену/вес, без перехода на другой товар
+      if (ownVariations.length) return;
       // Score siblings by how many selected attributes they match; prefer the requested one
       const scored = siblings
         .filter((s) => s.id !== product.id)
