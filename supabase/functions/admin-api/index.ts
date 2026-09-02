@@ -212,6 +212,18 @@ Deno.serve(async (req) => {
         if (error) throw error;
         return json({ ok: true });
       }
+      // Изменение порядка товаров (sort_order) — используется стрелками в админке.
+      case "products.reorder": {
+        const items: { id: string; sort_order: number }[] = Array.isArray(payload?.items) ? payload.items : [];
+        for (const it of items) {
+          const { error } = await admin
+            .from("products")
+            .update({ sort_order: it.sort_order })
+            .eq("id", it.id);
+          if (error) throw error;
+        }
+        return json({ ok: true, count: items.length });
+      }
       // Массовый импорт из 1С: upsert по sku. Если sku отсутствует — создаём как новый.
       case "products.bulkUpsert": {
         const items = Array.isArray(payload?.items) ? payload.items : [];
