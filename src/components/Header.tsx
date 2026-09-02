@@ -17,6 +17,7 @@ const defaultNavItems = [
   { name: "Галерея", url: "/gallery" },
   { name: "Блог", url: "/blog" },
   { name: "Доставка и оплата", url: "/delivery" },
+  { name: "О нас", url: "/about" },
   { name: "Контакты", url: "/contacts" },
 ];
 

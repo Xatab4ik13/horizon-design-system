@@ -235,15 +235,32 @@ const ProductPage = () => {
     return vars;
   }, [siblings, product]);
 
+  // Варианты, заданные в админке, имеют приоритет над «синтетическими»
+  const ownVariations = useMemo(
+    () => (product?.variations ?? []).filter((v) => v?.options?.length),
+    [product]
+  );
+  const displayVariations = useMemo(
+    () => (ownVariations.length ? ownVariations : syntheticVariations),
+    [ownVariations, syntheticVariations]
+  );
+
   // Preselect current product attributes
   useEffect(() => {
     if (!product) return;
+    if (ownVariations.length) {
+      const init: Record<string, string> = {};
+      ownVariations.forEach((v) => { init[v.type] = v.options[0].value; });
+      setSelectedVariations(init);
+      return;
+    }
     setSelectedVariations({
       wood: product.material || "",
       coating: product.coating || "",
       size: product.dimensions || "",
     });
-  }, [product?.id]);
+  }, [product?.id, ownVariations]);
+
 
   // Автоматический запуск AR при переходе с QR-кода (?ar=1)
   useEffect(() => {
@@ -260,6 +277,8 @@ const ProductPage = () => {
       const next = { ...selectedVariations, [type]: value };
       setSelectedVariations(next);
       if (!product) return;
+      // Свои варианты из админки — просто меняют цену/вес, без перехода на другой товар
+      if (ownVariations.length) return;
       // Score siblings by how many selected attributes they match; prefer the requested one
       const scored = siblings
         .filter((s) => s.id !== product.id)
@@ -282,7 +301,7 @@ const ProductPage = () => {
         navigate(`/product/${best.id}`);
       }
     },
-    [selectedVariations, siblings, product, navigate]
+    [selectedVariations, siblings, product, navigate, ownVariations]
   );
 
 
@@ -312,6 +331,22 @@ const ProductPage = () => {
     () => selectedVariations["size"] || product?.dimensions || "",
     [selectedVariations, product]
   );
+  // Вес: базовый вес товара + надбавки выбранных вариантов (например, размера)
+  const currentWeight = useMemo(() => {
+    if (!product) return "";
+    const base = parseFloat(String(product.weight).replace(",", ".").replace(/[^\d.]/g, ""));
+    if (!isFinite(base)) return product.weight;
+    let w = base;
+    (product.variations || []).forEach((v) => {
+      const sel = selectedVariations[v.type];
+      if (!sel) return;
+      const opt = v.options.find((o) => o.value === sel);
+      if (opt?.weightModifier) w += opt.weightModifier;
+    });
+    if (w <= 0) return product.weight;
+    return `${Math.round(w * 100) / 100} кг`;
+  }, [product, selectedVariations]);
+
 
 
   // Подмена основного фото при выборе варианта (например, по породе)
@@ -456,9 +491,9 @@ const ProductPage = () => {
               <p className="text-foreground/80 leading-relaxed mb-6">{product.description}</p>
 
               {/* ─── Variations (dropdowns) ─── */}
-              {syntheticVariations.length > 0 && (
+              {displayVariations.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                  {syntheticVariations.map((v) => {
+                  {displayVariations.map((v) => {
                     const selected = selectedVariations[v.type] ?? "";
                     return (
                       <div key={v.type}>
@@ -487,7 +522,7 @@ const ProductPage = () => {
                   { icon: TreePine, label: "Порода", value: currentMaterial },
                   { icon: Ruler, label: "Размеры", value: currentDimensions },
                   { icon: Droplets, label: "Покрытие", value: currentCoating },
-                  { icon: Weight, label: "Вес", value: product.weight },
+                  { icon: Weight, label: "Вес", value: currentWeight },
                   { icon: Check, label: "Наличие", value: product.inStock ? "В наличии" : "Под заказ (2–3 нед.)" },
                 ].map((spec) => {
                   const isWood = spec.label === "Порода";
@@ -563,7 +598,7 @@ const ProductPage = () => {
                     variations: Object.keys(selectedVariations).length > 0 ? selectedVariations : undefined,
                     variationLabels: Object.keys(labels).length > 0 ? labels : undefined,
                     dimensions: currentDimensions,
-                    weight: product.weight,
+                    weight: currentWeight,
                   });
                   toast.success("Товар добавлен в корзину");
                 }}>
