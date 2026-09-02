@@ -25,10 +25,19 @@ export interface QA {
 }
 
 // --- Variations ---
+export interface VariationOption {
+  value: string;
+  label: string;
+  /** Надбавка к базовой цене товара, ₽ (может быть отрицательной). */
+  priceModifier?: number;
+  /** Надбавка к базовому весу товара, кг (может быть отрицательной). */
+  weightModifier?: number;
+}
+
 export interface Variation {
   type: "size" | "coating" | "wood";
   label: string;
-  options: { value: string; label: string; priceModifier?: number }[];
+  options: VariationOption[];
 }
 
 // --- Product ---
