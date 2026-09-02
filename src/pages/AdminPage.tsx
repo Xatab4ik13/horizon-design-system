@@ -34,6 +34,10 @@ import {
   Phone,
   Key,
   CreditCard,
+  ArrowUp,
+  ArrowDown,
+
+
 
 } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
