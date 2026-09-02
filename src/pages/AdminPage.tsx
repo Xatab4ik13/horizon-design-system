@@ -972,10 +972,21 @@ const ProductEditor = ({
     }
     setSaving(true);
     try {
+      // Чистим пустые варианты, чтобы на сайте не появлялись пустые строки в списках
+      const cleanVariations = (Array.isArray(form.options?.variations) ? form.options.variations : [])
+        .map((v: any) => ({
+          ...v,
+          options: (v.options ?? []).filter((o: any) => String(o.label ?? "").trim()),
+        }))
+        .filter((v: any) => v.options.length > 0);
+      const payload = {
+        ...form,
+        options: { ...(form.options ?? {}), variations: cleanVariations },
+      };
       if (form.id) {
-        await adminCall("products.update", form);
+        await adminCall("products.update", payload);
       } else {
-        await adminCall("products.create", form);
+        await adminCall("products.create", payload);
       }
       invalidateAdminCache("products.");
       toast.success("Сохранено");
