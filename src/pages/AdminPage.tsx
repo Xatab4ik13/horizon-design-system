@@ -855,8 +855,30 @@ const ProductsPanel = () => {
         </div>
       ) : (
         <div className="grid gap-3">
-          {items.map((p) => (
+          <p className="text-[14px] text-[#888]">
+            Порядок товаров в списке = порядок на сайте. Меняйте стрелками ↑ ↓ слева.
+          </p>
+          {items.map((p, idx) => (
             <div key={p.id} className={`${ui.card} flex items-center gap-4`}>
+              <div className="flex flex-col gap-1 flex-shrink-0">
+                <button
+                  onClick={() => move(idx, -1)}
+                  disabled={idx === 0}
+                  className="p-1.5 rounded border border-[#3a3a3a] text-[#bbb] hover:border-[#666] disabled:opacity-30"
+                  title="Поднять выше"
+                >
+                  <ArrowUp size={14} />
+                </button>
+                <button
+                  onClick={() => move(idx, 1)}
+                  disabled={idx === items.length - 1}
+                  className="p-1.5 rounded border border-[#3a3a3a] text-[#bbb] hover:border-[#666] disabled:opacity-30"
+                  title="Опустить ниже"
+                >
+                  <ArrowDown size={14} />
+                </button>
+              </div>
+
               <div className="relative w-20 h-20 bg-[#1a1a1a] rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center">
                 {p.images?.[0] ? (
                   <>
