@@ -301,7 +301,7 @@ const ProductPage = () => {
         navigate(`/product/${best.id}`);
       }
     },
-    [selectedVariations, siblings, product, navigate]
+    [selectedVariations, siblings, product, navigate, ownVariations]
   );
 
 
@@ -491,9 +491,9 @@ const ProductPage = () => {
               <p className="text-foreground/80 leading-relaxed mb-6">{product.description}</p>
 
               {/* ─── Variations (dropdowns) ─── */}
-              {syntheticVariations.length > 0 && (
+              {displayVariations.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                  {syntheticVariations.map((v) => {
+                  {displayVariations.map((v) => {
                     const selected = selectedVariations[v.type] ?? "";
                     return (
                       <div key={v.type}>
