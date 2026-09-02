@@ -3798,6 +3798,7 @@ const ContentPanel = () => {
           <DeliveryPageEditor />
         </>
       )}
+      {sub === "about" && <AboutPageEditor />}
       {sub === "contacts" && (
         <>
           <PagesHeadersEditor only={["contacts"]} />
