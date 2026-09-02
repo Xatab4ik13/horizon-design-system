@@ -1008,6 +1008,39 @@ const ProductEditor = ({
     setForm((f: any) => ({ ...f, images: (f.images ?? []).filter((_: any, i: number) => i !== idx) }));
   };
 
+  // ── Варианты товара (хранятся в products.options.variations) ──
+  const variations: any[] = Array.isArray(form.options?.variations) ? form.options.variations : [];
+  const setVariations = (next: any[]) =>
+    setForm((f: any) => ({ ...f, options: { ...(f.options ?? {}), variations: next } }));
+
+  const addVariationGroup = (type: string, label: string) => {
+    if (variations.some((v) => v.type === type)) {
+      toast.error(`Список «${label}» уже добавлен`);
+      return;
+    }
+    setVariations([...variations, { type, label, options: [{ value: "", label: "" }] }]);
+  };
+  const updateVariation = (vi: number, patch: any) =>
+    setVariations(variations.map((v, i) => (i === vi ? { ...v, ...patch } : v)));
+  const removeVariation = (vi: number) => setVariations(variations.filter((_, i) => i !== vi));
+  const addOption = (vi: number) =>
+    setVariations(
+      variations.map((v, i) => (i === vi ? { ...v, options: [...(v.options ?? []), { value: "", label: "" }] } : v))
+    );
+  const updateOption = (vi: number, oi: number, patch: any) =>
+    setVariations(
+      variations.map((v, i) =>
+        i === vi
+          ? { ...v, options: (v.options ?? []).map((o: any, j: number) => (j === oi ? { ...o, ...patch } : o)) }
+          : v
+      )
+    );
+  const removeOption = (vi: number, oi: number) =>
+    setVariations(
+      variations.map((v, i) => (i === vi ? { ...v, options: (v.options ?? []).filter((_: any, j: number) => j !== oi) } : v))
+    );
+
+
   const [arUploading, setArUploading] = useState<"glb" | "usdz" | null>(null);
   const handleArUpload = async (file: File, kind: "glb" | "usdz") => {
     setArUploading(kind);
