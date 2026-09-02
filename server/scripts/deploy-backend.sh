@@ -15,7 +15,7 @@ DB_CONTAINER="${DB_CONTAINER:-supabase-db}"
 cd "$SERVER_DIR"
 
 echo "==> Обновляю код из GitHub"
-git pull --ff-only
+env GIT_TERMINAL_PROMPT=0 git -c credential.helper= -c http.version=HTTP/1.1 pull --ff-only
 
 echo "==> Проверяю backend-контейнеры"
 docker compose ps >/dev/null
