@@ -325,7 +325,7 @@ const ProductPage = () => {
   const selectedOptions = useMemo(() => {
     return displayVariations
       .map((v) => v.options.find((o) => o.value === selectedVariations[v.type]))
-      .filter(Boolean) as NonNullable<ReturnType<typeof Object>>[] as any[];
+      .filter(Boolean) as any[];
   }, [displayVariations, selectedVariations]);
 
   const computedPrice = useMemo(() => {
