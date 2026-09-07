@@ -1453,8 +1453,9 @@ const ProductEditor = ({
           </div>
           <p className="text-[13px] text-[#888] mb-4">
             Покупатель выбирает вариант в карточке товара из выпадающего списка.
-            «± цена» и «± вес» — это надбавки к базовой цене и базовому весу выше
-            (можно ставить минус). Пусто = без изменений.
+            «Цена» и «Вес» указываются вручную — итоговые значения для этого варианта.
+            Пусто = берётся базовая цена и базовый вес товара выше.
+            «Фото» — какое изображение из галереи товара показать при выборе варианта.
           </p>
 
           {variations.length === 0 ? (
@@ -1478,7 +1479,7 @@ const ProductEditor = ({
                   </div>
                   <div className="grid gap-2">
                     {(v.options ?? []).map((o: any, oi: number) => (
-                      <div key={oi} className="grid grid-cols-[1fr_130px_130px_auto] gap-2 items-center">
+                      <div key={oi} className="grid grid-cols-[1fr_130px_130px_170px_auto] gap-2 items-center">
                         <input
                           value={o.label ?? ""}
                           onChange={(e) => updateOption(vi, oi, { label: e.target.value, value: e.target.value })}
@@ -1487,27 +1488,41 @@ const ProductEditor = ({
                         />
                         <input
                           type="number"
-                          value={o.priceModifier ?? ""}
+                          value={o.price ?? ""}
                           onChange={(e) =>
                             updateOption(vi, oi, {
-                              priceModifier: e.target.value === "" ? undefined : Number(e.target.value),
+                              price: e.target.value === "" ? undefined : Number(e.target.value),
+                              priceModifier: undefined,
                             })
                           }
                           className={ui.input}
-                          placeholder="± цена, ₽"
+                          placeholder="Цена, ₽"
                         />
                         <input
                           type="number"
                           step="0.01"
-                          value={o.weightModifier ?? ""}
+                          value={o.weight ?? ""}
                           onChange={(e) =>
                             updateOption(vi, oi, {
-                              weightModifier: e.target.value === "" ? undefined : Number(e.target.value),
+                              weight: e.target.value === "" ? undefined : Number(e.target.value),
+                              weightModifier: undefined,
                             })
                           }
                           className={ui.input}
-                          placeholder="± вес, кг"
+                          placeholder="Вес, кг"
                         />
+                        <select
+                          value={o.image ?? ""}
+                          onChange={(e) => updateOption(vi, oi, { image: e.target.value || undefined })}
+                          className={ui.input}
+                        >
+                          <option value="">Фото: без привязки</option>
+                          {(form.images ?? []).map((img: string, ii: number) => (
+                            <option key={img} value={img}>
+                              Фото {ii + 1}
+                            </option>
+                          ))}
+                        </select>
                         <button onClick={() => removeOption(vi, oi)} className={`${ui.btn} ${ui.btnDanger}`}>
                           <X size={16} />
                         </button>
