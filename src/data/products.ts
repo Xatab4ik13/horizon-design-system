@@ -28,14 +28,20 @@ export interface QA {
 export interface VariationOption {
   value: string;
   label: string;
-  /** Надбавка к базовой цене товара, ₽ (может быть отрицательной). */
+  /** Надбавка к базовой цене товара, ₽ (может быть отрицательной). Устаревшее. */
   priceModifier?: number;
-  /** Надбавка к базовому весу товара, кг (может быть отрицательной). */
+  /** Надбавка к базовому весу товара, кг (может быть отрицательной). Устаревшее. */
   weightModifier?: number;
+  /** Итоговая цена варианта, ₽ (задаётся вручную и перекрывает базовую). */
+  price?: number;
+  /** Итоговый вес варианта, кг (задаётся вручную и перекрывает базовый). */
+  weight?: number;
+  /** Фото товара для этого варианта (URL из галереи товара). */
+  image?: string;
 }
 
 export interface Variation {
-  type: "size" | "coating" | "wood";
+  type: string;
   label: string;
   options: VariationOption[];
 }
