@@ -52,6 +52,11 @@ const ProductGallery = ({
   const [lightbox, setLightbox] = useState(false);
   const thumbRef = useRef<HTMLDivElement>(null);
 
+  // При смене варианта (первое фото меняется) показываем именно это фото
+  useEffect(() => {
+    setActive(0);
+  }, [images[0]]);
+
   const navigate = useCallback(
     (dir: number) => setActive((a) => (a + dir + images.length) % images.length),
     [images.length]
@@ -240,17 +245,28 @@ const ProductPage = () => {
     () => (product?.variations ?? []).filter((v) => v?.options?.length),
     [product]
   );
-  const displayVariations = useMemo(
-    () => (ownVariations.length ? ownVariations : syntheticVariations),
-    [ownVariations, syntheticVariations]
-  );
+  const displayVariations = useMemo(() => {
+    if (!ownVariations.length) return syntheticVariations;
+    // Базовые значения товара всегда доступны в списке первыми
+    const baseByType: Record<string, string> = {
+      wood: product?.material || "",
+      coating: product?.coating || "",
+      size: product?.dimensions || "",
+    };
+    return ownVariations.map((v) => {
+      const base = (baseByType[v.type] || "").trim();
+      const has = v.options.some((o) => o.value.trim() === base);
+      if (!base || has) return v;
+      return { ...v, options: [{ value: base, label: base }, ...v.options] };
+    });
+  }, [ownVariations, syntheticVariations, product]);
 
   // Preselect current product attributes
   useEffect(() => {
     if (!product) return;
-    if (ownVariations.length) {
+    if (displayVariations.length && ownVariations.length) {
       const init: Record<string, string> = {};
-      ownVariations.forEach((v) => { init[v.type] = v.options[0].value; });
+      displayVariations.forEach((v) => { init[v.type] = v.options[0].value; });
       setSelectedVariations(init);
       return;
     }
@@ -259,7 +275,7 @@ const ProductPage = () => {
       coating: product.coating || "",
       size: product.dimensions || "",
     });
-  }, [product?.id, ownVariations]);
+  }, [product?.id, ownVariations, displayVariations]);
 
 
   // Автоматический запуск AR при переходе с QR-кода (?ar=1)
@@ -305,18 +321,24 @@ const ProductPage = () => {
   );
 
 
+  // Выбранные опции по каждому списку вариантов
+  const selectedOptions = useMemo(() => {
+    return displayVariations
+      .map((v) => v.options.find((o) => o.value === selectedVariations[v.type]))
+      .filter(Boolean) as NonNullable<ReturnType<typeof Object>>[] as any[];
+  }, [displayVariations, selectedVariations]);
+
   const computedPrice = useMemo(() => {
     if (!product) return 0;
     let p = product.price;
-    (product.variations || []).forEach((v) => {
-      const sel = selectedVariations[v.type];
-      if (sel) {
-        const opt = v.options.find((o) => o.value === sel);
-        if (opt?.priceModifier) p += opt.priceModifier;
-      }
+    // Цена «от руки» у варианта перекрывает базовую цену
+    const absolute = selectedOptions.filter((o: any) => typeof o.price === "number" && isFinite(o.price));
+    if (absolute.length) p = Number(absolute[absolute.length - 1].price);
+    selectedOptions.forEach((o: any) => {
+      if (typeof o.price !== "number" && o.priceModifier) p += o.priceModifier;
     });
     return p;
-  }, [product, selectedVariations]);
+  }, [product, selectedOptions]);
 
   // Compute dynamic specs based on variations
   const currentMaterial = useMemo(
@@ -337,21 +359,26 @@ const ProductPage = () => {
     const base = parseFloat(String(product.weight).replace(",", ".").replace(/[^\d.]/g, ""));
     if (!isFinite(base)) return product.weight;
     let w = base;
-    (product.variations || []).forEach((v) => {
-      const sel = selectedVariations[v.type];
-      if (!sel) return;
-      const opt = v.options.find((o) => o.value === sel);
-      if (opt?.weightModifier) w += opt.weightModifier;
+    const absolute = selectedOptions.filter((o: any) => typeof o.weight === "number" && isFinite(o.weight));
+    if (absolute.length) w = Number(absolute[absolute.length - 1].weight);
+    selectedOptions.forEach((o: any) => {
+      if (typeof o.weight !== "number" && o.weightModifier) w += o.weightModifier;
     });
     if (w <= 0) return product.weight;
     return `${Math.round(w * 100) / 100} кг`;
-  }, [product, selectedVariations]);
+  }, [product, selectedOptions]);
 
 
 
   // Подмена основного фото при выборе варианта (например, по породе)
   const displayImages = useMemo(() => {
     if (!product) return [];
+    // Фото, привязанное к выбранному варианту
+    const optImg = selectedOptions.find((o: any) => typeof o.image === "string" && o.image)?.image as string | undefined;
+    if (optImg) {
+      const rest = product.images.filter((i) => i !== optImg);
+      return [optImg, ...rest];
+    }
     const map = product.imagesByVariation;
     if (!map) return product.images;
     for (const [type, val] of Object.entries(selectedVariations)) {
@@ -364,21 +391,21 @@ const ProductPage = () => {
       }
     }
     return product.images;
-  }, [product, selectedVariations]);
+  }, [product, selectedVariations, selectedOptions]);
 
   // Build variation labels for cart
   const variationLabels = useMemo(() => {
     if (!product) return {};
     const labels: Record<string, string> = {};
-    (product.variations || []).forEach(v => {
+    displayVariations.forEach((v) => {
       const sel = selectedVariations[v.type];
       if (sel) {
-        const opt = v.options.find(o => o.value === sel);
+        const opt = v.options.find((o) => o.value === sel);
         if (opt) labels[v.label] = opt.label;
       }
     });
     return labels;
-  }, [product, selectedVariations]);
+  }, [product, selectedVariations, displayVariations]);
 
   if (productLoading) {
     return (
@@ -518,14 +545,29 @@ const ProductPage = () => {
 
               {/* ─── Specs grid (dynamic) ─── */}
               <div className="grid grid-cols-2 gap-3 mb-8">
-                {[
-                  { icon: TreePine, label: "Порода", value: currentMaterial },
-                  { icon: Ruler, label: "Размеры", value: currentDimensions },
-                  { icon: Droplets, label: "Покрытие", value: currentCoating },
-                  { icon: Weight, label: "Вес", value: currentWeight },
-                  { icon: Check, label: "Наличие", value: product.inStock ? "В наличии" : "Под заказ (2–3 нед.)" },
-                ].map((spec) => {
-                  const isWood = spec.label === "Порода";
+                {(() => {
+                  const iconByType: Record<string, typeof TreePine> = { wood: TreePine, coating: Droplets, size: Ruler };
+                  const valueByType: Record<string, string> = { wood: currentMaterial, coating: currentCoating, size: currentDimensions };
+                  const fromVariations = displayVariations.map((v) => ({
+                    icon: iconByType[v.type] ?? Ruler,
+                    label: v.label,
+                    value: selectedVariations[v.type] || valueByType[v.type] || "",
+                    isWood: v.type === "wood",
+                  }));
+                  const usedTypes = new Set(displayVariations.map((v) => v.type));
+                  const fallback = [
+                    { icon: TreePine, label: "Порода", value: currentMaterial, isWood: true, type: "wood" },
+                    { icon: Ruler, label: "Размеры", value: currentDimensions, isWood: false, type: "size" },
+                    { icon: Droplets, label: "Покрытие", value: currentCoating, isWood: false, type: "coating" },
+                  ].filter((r) => !usedTypes.has(r.type) && r.value);
+                  return [
+                    ...fromVariations,
+                    ...fallback,
+                    { icon: Weight, label: "Вес", value: currentWeight, isWood: false },
+                    { icon: Check, label: "Наличие", value: product.inStock ? "В наличии" : "Под заказ (2–3 нед.)", isWood: false },
+                  ];
+                })().map((spec) => {
+                  const isWood = spec.isWood;
                   return (
                     <div
                       key={spec.label}
