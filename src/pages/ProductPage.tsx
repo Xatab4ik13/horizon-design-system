@@ -427,7 +427,7 @@ const ProductPage = () => {
       }
     }
     return product.images;
-  }, [product, selectedVariations, selectedOptions]);
+  }, [product, selectedVariations, selectedOptions, pricingActive, pm]);
 
   // Build variation labels for cart
   const variationLabels = useMemo(() => {
@@ -553,8 +553,49 @@ const ProductPage = () => {
               {/* Description */}
               <p className="text-foreground/80 leading-relaxed mb-6">{product.description}</p>
 
+              {/* ─── Калькулятор за м²: Порода → Размер → Покрытие ─── */}
+              {pricingActive && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                  {[
+                    {
+                      key: "m" as const,
+                      label: "Порода",
+                      items: pricing!.materials.map((x, i) => ({ i, label: x.label })),
+                    },
+                    {
+                      key: "s" as const,
+                      label: "Размер",
+                      items: pricing!.sizes.map((x, i) => ({ i, label: x.label })),
+                    },
+                    {
+                      key: "c" as const,
+                      label: "Покрытие",
+                      items: (pricing!.coatings ?? []).map((x, i) => ({ i, label: x.label })),
+                    },
+                  ]
+                    .filter((g) => g.items.length > 0)
+                    .map((g) => (
+                      <div key={g.key}>
+                        <label className="text-sm font-medium text-foreground mb-2 block">{g.label}</label>
+                        <select
+                          value={selPricing[g.key]}
+                          onChange={(e) => setSelPricing((p) => ({ ...p, [g.key]: Number(e.target.value) }))}
+                          className="w-full px-4 py-2.5 rounded-xl bg-background/60 border border-border text-foreground focus:border-primary focus:outline-none transition-colors text-sm appearance-none cursor-pointer bg-[url('data:image/svg+xml;utf8,<svg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%23999%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27><polyline%20points=%276%209%2012%2015%2018%209%27/></svg>')] bg-no-repeat bg-[right_14px_center] pr-10"
+                        >
+                          {g.items.map((o) => (
+                            <option key={o.i} value={o.i}>{o.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    ))}
+                  <p className="sm:col-span-3 text-xs text-muted-foreground">
+                    Цена: {pricingAreaM2 > 0 ? `${Math.round(pricingAreaM2 * 10000) / 10000} м²` : ""} × ({pm?.pricePerM2.toLocaleString("ru-RU")} ₽/м²{pc ? ` + ${pc.pricePerM2.toLocaleString("ru-RU")} ₽/м² покрытие` : ""})
+                  </p>
+                </div>
+              )}
+
               {/* ─── Variations (dropdowns) ─── */}
-              {displayVariations.length > 0 && (
+              {!pricingActive && displayVariations.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                   {displayVariations.map((v) => {
                     const selected = selectedVariations[v.type] ?? "";
