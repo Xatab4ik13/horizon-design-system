@@ -11,6 +11,7 @@ import Footer from "@/components/Footer";
 import { useCart } from "@/contexts/CartContext";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { reachGoal } from "@/lib/metrika";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import DadataAddressInput from "@/components/DadataAddressInput";
@@ -250,6 +251,7 @@ const CheckoutPage = () => {
     }
 
     const orderId = (data as any)?.data?.order_id as string | undefined;
+    reachGoal("order_placed", { total: grandTotal });
     const deliveryRes = (data as any)?.data?.delivery as
       | { ok: boolean; tracking?: string; error?: string }
       | undefined;

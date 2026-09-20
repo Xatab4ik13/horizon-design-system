@@ -14,6 +14,7 @@ import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/contexts/CartContext";
+import { reachGoal } from "@/lib/metrika";
 import SEO, { buildProductJsonLd, buildBreadcrumbJsonLd, buildFAQJsonLd } from "@/components/SEO";
 import ARModal from "@/components/ARModal";
 
@@ -642,6 +643,7 @@ const ProductPage = () => {
                     dimensions: currentDimensions,
                     weight: currentWeight,
                   });
+                  reachGoal("add_to_cart", { product: product.name, price: computedPrice });
                   toast.success("Товар добавлен в корзину");
                 }}>
 

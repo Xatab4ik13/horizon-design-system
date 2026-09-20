@@ -9,6 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { reachGoal } from "@/lib/metrika";
 import { useHomepageContent } from "@/hooks/useSiteContent";
 import workshopBg from "@/assets/workshop-bg.jpg";
 
@@ -64,6 +65,7 @@ const ContactForm = () => {
       });
       return;
     }
+    reachGoal("form_submit");
     toast({
       title: "Заявка отправлена!",
       description: "Наш менеджер свяжется с вами в течение часа.",
