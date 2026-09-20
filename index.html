@@ -43,10 +43,14 @@
       })(window, document, 'script', 'https://mc.yandex.ru/metrika/tag.js?id=112838914', 'ym');
 
       ym(112838914, 'init', {
+        ssr: true,
+        webvisor: true,
         clickmap: true,
         trackLinks: true,
         accurateTrackBounce: true,
-        ecommerce: 'dataLayer'
+        ecommerce: 'dataLayer',
+        referrer: document.referrer,
+        url: location.href
       });
     </script>
     <noscript><div><img src="https://mc.yandex.ru/watch/112838914" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
