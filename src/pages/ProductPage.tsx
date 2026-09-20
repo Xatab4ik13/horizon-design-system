@@ -216,6 +216,8 @@ const ProductPage = () => {
   const [showAR, setShowAR] = useState(false);
   const [arAutoLaunch, setArAutoLaunch] = useState(false);
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
+  // Калькулятор цены за м²: индексы выбранных материала/размера/покрытия
+  const [selPricing, setSelPricing] = useState({ m: 0, s: 0, c: 0 });
   const [activeTab, setActiveTab] = useState<"reviews" | "qa">("reviews");
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -262,9 +264,32 @@ const ProductPage = () => {
     });
   }, [ownVariations, syntheticVariations, product]);
 
+  // ─── Калькулятор цены за м² (включён в админке у конкретного товара) ───
+  const pricing = product?.pricing;
+  const pricingActive = !!(
+    pricing?.enabled &&
+    (pricing.materials ?? []).length > 0 &&
+    (pricing.sizes ?? []).length > 0
+  );
+  const pm = pricingActive ? pricing!.materials[Math.min(selPricing.m, pricing!.materials.length - 1)] : undefined;
+  const ps = pricingActive ? pricing!.sizes[Math.min(selPricing.s, pricing!.sizes.length - 1)] : undefined;
+  const pc = pricingActive && (pricing!.coatings ?? []).length
+    ? pricing!.coatings[Math.min(selPricing.c, pricing!.coatings.length - 1)]
+    : undefined;
+  const pricingAreaM2 = ps ? (ps.widthCm * ps.heightCm) / 10000 : 0;
+  const pricingPrice = pm && ps ? Math.round(pricingAreaM2 * (pm.pricePerM2 + (pc?.pricePerM2 ?? 0))) : 0;
+  const pricingWeight = pm?.densityKgM3 && ps
+    ? pricingAreaM2 * ((ps.thicknessCm ?? 0) / 100) * pm.densityKgM3
+    : 0;
+
+  useEffect(() => {
+    setSelPricing({ m: 0, s: 0, c: 0 });
+  }, [product?.id]);
+
   // Preselect current product attributes
   useEffect(() => {
     if (!product) return;
+    if (pricingActive) return; // при калькуляторе варианты не используются
     if (displayVariations.length && ownVariations.length) {
       const init: Record<string, string> = {};
       displayVariations.forEach((v) => { init[v.type] = v.options[0].value; });
@@ -331,6 +356,7 @@ const ProductPage = () => {
 
   const computedPrice = useMemo(() => {
     if (!product) return 0;
+    if (pricingActive) return pricingPrice;
     let p = product.price;
     // Цена «от руки» у варианта перекрывает базовую цену
     const absolute = selectedOptions.filter((o: any) => typeof o.price === "number" && isFinite(o.price));
@@ -339,24 +365,28 @@ const ProductPage = () => {
       if (typeof o.price !== "number" && o.priceModifier) p += o.priceModifier;
     });
     return p;
-  }, [product, selectedOptions]);
+  }, [product, selectedOptions, pricingActive, pricingPrice]);
 
   // Compute dynamic specs based on variations
   const currentMaterial = useMemo(
-    () => selectedVariations["wood"] || product?.material || "",
-    [selectedVariations, product]
+    () => (pricingActive ? pm?.label ?? "" : selectedVariations["wood"] || product?.material || ""),
+    [selectedVariations, product, pricingActive, pm]
   );
   const currentCoating = useMemo(
-    () => selectedVariations["coating"] || product?.coating || "",
-    [selectedVariations, product]
+    () => (pricingActive ? pc?.label ?? product?.coating ?? "" : selectedVariations["coating"] || product?.coating || ""),
+    [selectedVariations, product, pricingActive, pc]
   );
   const currentDimensions = useMemo(
-    () => selectedVariations["size"] || product?.dimensions || "",
-    [selectedVariations, product]
+    () => (pricingActive ? ps?.label ?? "" : selectedVariations["size"] || product?.dimensions || ""),
+    [selectedVariations, product, pricingActive, ps]
   );
-  // Вес: базовый вес товара + надбавки выбранных вариантов (например, размера)
+  // Вес: при калькуляторе — объём × удельный вес; иначе базовый вес + надбавки вариантов
   const currentWeight = useMemo(() => {
     if (!product) return "";
+    if (pricingActive) {
+      if (!pricingWeight) return product.weight;
+      return `${Math.round(pricingWeight * 100) / 100} кг`;
+    }
     const base = parseFloat(String(product.weight).replace(",", ".").replace(/[^\d.]/g, ""));
     if (!isFinite(base)) return product.weight;
     let w = base;
@@ -367,13 +397,18 @@ const ProductPage = () => {
     });
     if (w <= 0) return product.weight;
     return `${Math.round(w * 100) / 100} кг`;
-  }, [product, selectedOptions]);
+  }, [product, selectedOptions, pricingActive, pricingWeight]);
 
 
 
   // Подмена основного фото при выборе варианта (например, по породе)
   const displayImages = useMemo(() => {
     if (!product) return [];
+    // При калькуляторе — фото, привязанное к выбранному материалу
+    if (pricingActive && pm?.image) {
+      const rest = product.images.filter((i) => i !== pm.image);
+      return [pm.image, ...rest];
+    }
     // Фото, привязанное к выбранному варианту
     const optImg = selectedOptions.find((o: any) => typeof o.image === "string" && o.image)?.image as string | undefined;
     if (optImg) {
@@ -392,7 +427,7 @@ const ProductPage = () => {
       }
     }
     return product.images;
-  }, [product, selectedVariations, selectedOptions]);
+  }, [product, selectedVariations, selectedOptions, pricingActive, pm]);
 
   // Build variation labels for cart
   const variationLabels = useMemo(() => {
@@ -518,8 +553,49 @@ const ProductPage = () => {
               {/* Description */}
               <p className="text-foreground/80 leading-relaxed mb-6">{product.description}</p>
 
+              {/* ─── Калькулятор за м²: Порода → Размер → Покрытие ─── */}
+              {pricingActive && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                  {[
+                    {
+                      key: "m" as const,
+                      label: "Порода",
+                      items: pricing!.materials.map((x, i) => ({ i, label: x.label })),
+                    },
+                    {
+                      key: "s" as const,
+                      label: "Размер",
+                      items: pricing!.sizes.map((x, i) => ({ i, label: x.label })),
+                    },
+                    {
+                      key: "c" as const,
+                      label: "Покрытие",
+                      items: (pricing!.coatings ?? []).map((x, i) => ({ i, label: x.label })),
+                    },
+                  ]
+                    .filter((g) => g.items.length > 0)
+                    .map((g) => (
+                      <div key={g.key}>
+                        <label className="text-sm font-medium text-foreground mb-2 block">{g.label}</label>
+                        <select
+                          value={selPricing[g.key]}
+                          onChange={(e) => setSelPricing((p) => ({ ...p, [g.key]: Number(e.target.value) }))}
+                          className="w-full px-4 py-2.5 rounded-xl bg-background/60 border border-border text-foreground focus:border-primary focus:outline-none transition-colors text-sm appearance-none cursor-pointer bg-[url('data:image/svg+xml;utf8,<svg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%23999%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27><polyline%20points=%276%209%2012%2015%2018%209%27/></svg>')] bg-no-repeat bg-[right_14px_center] pr-10"
+                        >
+                          {g.items.map((o) => (
+                            <option key={o.i} value={o.i}>{o.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    ))}
+                  <p className="sm:col-span-3 text-xs text-muted-foreground">
+                    Цена: {pricingAreaM2 > 0 ? `${Math.round(pricingAreaM2 * 10000) / 10000} м²` : ""} × ({pm?.pricePerM2.toLocaleString("ru-RU")} ₽/м²{pc ? ` + ${pc.pricePerM2.toLocaleString("ru-RU")} ₽/м² покрытие` : ""})
+                  </p>
+                </div>
+              )}
+
               {/* ─── Variations (dropdowns) ─── */}
-              {displayVariations.length > 0 && (
+              {!pricingActive && displayVariations.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                   {displayVariations.map((v) => {
                     const selected = selectedVariations[v.type] ?? "";
@@ -547,6 +623,16 @@ const ProductPage = () => {
               {/* ─── Specs grid (dynamic) ─── */}
               <div className="grid grid-cols-2 gap-3 mb-8">
                 {(() => {
+                  if (pricingActive) {
+                    return [
+                      { icon: TreePine, label: "Порода", value: currentMaterial, isWood: true },
+                      { icon: Ruler, label: "Размеры", value: currentDimensions, isWood: false },
+                      { icon: Droplets, label: "Покрытие", value: currentCoating || "Без покрытия", isWood: false },
+                      { icon: Ruler, label: "Площадь", value: `${Math.round(pricingAreaM2 * 10000) / 10000} м²`, isWood: false },
+                      { icon: Weight, label: "Вес", value: currentWeight, isWood: false },
+                      { icon: Check, label: "Наличие", value: product.inStock ? "В наличии" : "Под заказ (2–3 нед.)", isWood: false },
+                    ].filter((r) => r.value);
+                  }
                   const iconByType: Record<string, typeof TreePine> = { wood: TreePine, coating: Droplets, size: Ruler };
                   const valueByType: Record<string, string> = { wood: currentMaterial, coating: currentCoating, size: currentDimensions };
                   const fromVariations = displayVariations.map((v) => ({
@@ -638,7 +724,9 @@ const ProductPage = () => {
                     name: product.name,
                     price: computedPrice,
                     image: displayImages[0] ?? product.images[0],
-                    variations: Object.keys(selectedVariations).length > 0 ? selectedVariations : undefined,
+                    variations: pricingActive
+                      ? { wood: currentMaterial, size: currentDimensions, coating: currentCoating }
+                      : Object.keys(selectedVariations).length > 0 ? selectedVariations : undefined,
                     variationLabels: Object.keys(labels).length > 0 ? labels : undefined,
                     dimensions: currentDimensions,
                     weight: currentWeight,

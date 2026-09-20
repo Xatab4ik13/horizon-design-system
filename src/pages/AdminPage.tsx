@@ -979,9 +979,19 @@ const ProductEditor = ({
           options: (v.options ?? []).filter((o: any) => String(o.label ?? "").trim()),
         }))
         .filter((v: any) => v.options.length > 0);
+      // Чистим пустые строки калькулятора
+      const rawPricing = form.options?.pricing;
+      const cleanPricing = rawPricing
+        ? {
+            ...rawPricing,
+            materials: (rawPricing.materials ?? []).filter((r: any) => String(r.label ?? "").trim()),
+            coatings: (rawPricing.coatings ?? []).filter((r: any) => String(r.label ?? "").trim()),
+            sizes: (rawPricing.sizes ?? []).filter((r: any) => String(r.label ?? "").trim()),
+          }
+        : undefined;
       const payload = {
         ...form,
-        options: { ...(form.options ?? {}), variations: cleanVariations },
+        options: { ...(form.options ?? {}), variations: cleanVariations, ...(cleanPricing ? { pricing: cleanPricing } : {}) },
       };
       if (form.id) {
         await adminCall("products.update", payload);
@@ -1050,6 +1060,24 @@ const ProductEditor = ({
     setVariations(
       variations.map((v, i) => (i === vi ? { ...v, options: (v.options ?? []).filter((_: any, j: number) => j !== oi) } : v))
     );
+
+  // ── Калькулятор цены за м² (хранится в products.options.pricing) ──
+  const pricing: any = form.options?.pricing ?? {};
+  const pricingEnabled = !!pricing.enabled;
+  const setPricing = (patch: any) =>
+    setForm((f: any) => ({
+      ...f,
+      options: {
+        ...(f.options ?? {}),
+        pricing: { enabled: false, materials: [], coatings: [], sizes: [], ...(f.options?.pricing ?? {}), ...patch },
+      },
+    }));
+  const pricingList = (key: string): any[] => (Array.isArray(pricing[key]) ? pricing[key] : []);
+  const addPricingRow = (key: string, row: any) => setPricing({ [key]: [...pricingList(key), row] });
+  const updatePricingRow = (key: string, i: number, patch: any) =>
+    setPricing({ [key]: pricingList(key).map((r: any, j: number) => (j === i ? { ...r, ...patch } : r)) });
+  const removePricingRow = (key: string, i: number) =>
+    setPricing({ [key]: pricingList(key).filter((_: any, j: number) => j !== i) });
 
 
   const [arUploading, setArUploading] = useState<"glb" | "usdz" | null>(null);
@@ -1429,6 +1457,152 @@ const ProductEditor = ({
               </div>
             )}
           </div>
+        </div>
+
+        {/* ── Калькулятор цены за м² ── */}
+        <div className="pt-4 border-t border-[#3a3a3a]">
+          <div className="flex items-center gap-3 mb-2">
+            <input
+              type="checkbox"
+              id="pricing-enabled"
+              checked={pricingEnabled}
+              onChange={(e) => setPricing({ enabled: e.target.checked })}
+              className="w-5 h-5"
+            />
+            <label htmlFor="pricing-enabled" className={ui.label}>
+              Калькулятор цены за м²
+            </label>
+          </div>
+          <p className="text-[13px] text-[#888] mb-4">
+            Цена = площадь размера × (цена материала за м² + цена покрытия за м²). Вес = объём × удельный вес.
+            Покупатель выбирает последовательно: порода → размер → покрытие.
+            Когда калькулятор включён, ручные «Варианты товара» ниже на сайте не показываются.
+          </p>
+
+          {pricingEnabled && (
+            <div className="grid gap-6">
+              {/* Материалы */}
+              <div className="border border-[#3a3a3a] rounded-lg p-4">
+                <p className="text-[15px] font-medium mb-3">Материалы (порода, МДФ, пластик)</p>
+                <div className="grid gap-2">
+                  {pricingList("materials").map((m: any, i: number) => (
+                    <div key={i} className="grid grid-cols-[1fr_140px_150px_170px_auto] gap-2 items-center">
+                      <input
+                        value={m.label ?? ""}
+                        onChange={(e) => updatePricingRow("materials", i, { label: e.target.value })}
+                        className={ui.input}
+                        placeholder="Например «Дуб» или «МДФ»"
+                      />
+                      <input
+                        type="number"
+                        value={m.pricePerM2 ?? ""}
+                        onChange={(e) => updatePricingRow("materials", i, { pricePerM2: e.target.value === "" ? undefined : Number(e.target.value) })}
+                        className={ui.input}
+                        placeholder="₽/м²"
+                      />
+                      <input
+                        type="number"
+                        value={m.densityKgM3 ?? ""}
+                        onChange={(e) => updatePricingRow("materials", i, { densityKgM3: e.target.value === "" ? undefined : Number(e.target.value) })}
+                        className={ui.input}
+                        placeholder="кг/м³ (вес)"
+                      />
+                      <select
+                        value={m.image ?? ""}
+                        onChange={(e) => updatePricingRow("materials", i, { image: e.target.value || undefined })}
+                        className={ui.input}
+                      >
+                        <option value="">Фото: без привязки</option>
+                        {(form.images ?? []).map((img: string, ii: number) => (
+                          <option key={img} value={img}>Фото {ii + 1}</option>
+                        ))}
+                      </select>
+                      <button onClick={() => removePricingRow("materials", i)} className={`${ui.btn} ${ui.btnDanger}`}>
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => addPricingRow("materials", { label: "", pricePerM2: undefined, densityKgM3: undefined })} className={`${ui.btn} ${ui.btnSecondary} mt-3`}>
+                  <Plus size={16} /> Добавить материал
+                </button>
+              </div>
+
+              {/* Размеры */}
+              <div className="border border-[#3a3a3a] rounded-lg p-4">
+                <p className="text-[15px] font-medium mb-3">Размеры (список для выбора)</p>
+                <div className="grid gap-2">
+                  {pricingList("sizes").map((s: any, i: number) => (
+                    <div key={i} className="grid grid-cols-[1fr_110px_110px_130px_auto] gap-2 items-center">
+                      <input
+                        value={s.label ?? ""}
+                        onChange={(e) => updatePricingRow("sizes", i, { label: e.target.value })}
+                        className={ui.input}
+                        placeholder="Например «120 × 50 см»"
+                      />
+                      <input
+                        type="number"
+                        value={s.widthCm ?? ""}
+                        onChange={(e) => updatePricingRow("sizes", i, { widthCm: e.target.value === "" ? undefined : Number(e.target.value) })}
+                        className={ui.input}
+                        placeholder="Шир., см"
+                      />
+                      <input
+                        type="number"
+                        value={s.heightCm ?? ""}
+                        onChange={(e) => updatePricingRow("sizes", i, { heightCm: e.target.value === "" ? undefined : Number(e.target.value) })}
+                        className={ui.input}
+                        placeholder="Дл., см"
+                      />
+                      <input
+                        type="number"
+                        value={s.thicknessCm ?? ""}
+                        onChange={(e) => updatePricingRow("sizes", i, { thicknessCm: e.target.value === "" ? undefined : Number(e.target.value) })}
+                        className={ui.input}
+                        placeholder="Толщ., см"
+                      />
+                      <button onClick={() => removePricingRow("sizes", i)} className={`${ui.btn} ${ui.btnDanger}`}>
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => addPricingRow("sizes", { label: "", widthCm: undefined, heightCm: undefined, thicknessCm: undefined })} className={`${ui.btn} ${ui.btnSecondary} mt-3`}>
+                  <Plus size={16} /> Добавить размер
+                </button>
+              </div>
+
+              {/* Покрытия */}
+              <div className="border border-[#3a3a3a] rounded-lg p-4">
+                <p className="text-[15px] font-medium mb-3">Покрытия (плюсуются к стоимости)</p>
+                <div className="grid gap-2">
+                  {pricingList("coatings").map((c: any, i: number) => (
+                    <div key={i} className="grid grid-cols-[1fr_140px_auto] gap-2 items-center">
+                      <input
+                        value={c.label ?? ""}
+                        onChange={(e) => updatePricingRow("coatings", i, { label: e.target.value })}
+                        className={ui.input}
+                        placeholder="Например «Лак матовый» или «Масло»"
+                      />
+                      <input
+                        type="number"
+                        value={c.pricePerM2 ?? ""}
+                        onChange={(e) => updatePricingRow("coatings", i, { pricePerM2: e.target.value === "" ? undefined : Number(e.target.value) })}
+                        className={ui.input}
+                        placeholder="₽/м²"
+                      />
+                      <button onClick={() => removePricingRow("coatings", i)} className={`${ui.btn} ${ui.btnDanger}`}>
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => addPricingRow("coatings", { label: "", pricePerM2: 0 })} className={`${ui.btn} ${ui.btnSecondary} mt-3`}>
+                  <Plus size={16} /> Добавить покрытие
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ── Варианты товара ── */}

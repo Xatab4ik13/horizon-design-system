@@ -97,6 +97,12 @@ export const dbToUiProduct = (row: DbProductRow): Product => {
       ? ((opts as any).imagesByVariation as Record<string, string>)
       : undefined;
 
+  // Калькулятор цены за м²
+  const pricing =
+    (opts as any).pricing && typeof (opts as any).pricing === "object"
+      ? ((opts as any).pricing as Product["pricing"])
+      : undefined;
+
   return {
     id: row.id,
     sku: row.sku ?? row.id.slice(0, 8).toUpperCase(),
@@ -115,6 +121,7 @@ export const dbToUiProduct = (row: DbProductRow): Product => {
     inStock: isInStockStatus(row.stock_status),
     arModel,
     variations,
+    pricing,
     packageInfo: row.package_info ?? (typeof (opts as any).package_info === "string" ? (opts as any).package_info : (typeof (opts as any)["Упаковка"] === "string" ? (opts as any)["Упаковка"] : undefined)),
     imagesByVariation,
     reviews: [],
