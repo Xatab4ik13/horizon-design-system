@@ -78,7 +78,8 @@ const App = () => {
         </CartProvider>
       </AuthProvider>
     </QueryClientProvider>
-  </ThemeProvider>
-);
+    </ThemeProvider>
+  );
+};
 
 export default App;
