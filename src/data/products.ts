@@ -46,6 +46,38 @@ export interface Variation {
   options: VariationOption[];
 }
 
+// --- Калькулятор цены за м² (ТЗ на карточку товара) ---
+export interface PricingMaterial {
+  label: string;
+  /** Цена за м² (материал + упаковка), ₽ */
+  pricePerM2: number;
+  /** Удельный вес, кг/м³ — для расчёта веса от объёма */
+  densityKgM3?: number;
+  /** Фото из галереи товара, показываемое при выборе */
+  image?: string;
+}
+
+export interface PricingCoating {
+  label: string;
+  /** Цена за м², плюсуется к стоимости, ₽ */
+  pricePerM2: number;
+}
+
+export interface PricingSize {
+  label: string;
+  widthCm: number;
+  heightCm: number;
+  /** Толщина, см — для расчёта объёма и веса */
+  thicknessCm?: number;
+}
+
+export interface ProductPricing {
+  enabled?: boolean;
+  materials: PricingMaterial[];
+  coatings: PricingCoating[];
+  sizes: PricingSize[];
+}
+
 // --- Product ---
 export interface Product {
   id: string;
@@ -66,6 +98,8 @@ export interface Product {
   isNew?: boolean;
   arModel?: { glb: string; usdz: string };
   variations?: Variation[];
+  /** Калькулятор цены за м². Если включён — перекрывает ручные варианты. */
+  pricing?: ProductPricing;
   packageInfo?: string;
   imagesByVariation?: Record<string, string>;
   reviews: Review[];
