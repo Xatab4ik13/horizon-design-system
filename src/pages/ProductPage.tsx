@@ -216,6 +216,8 @@ const ProductPage = () => {
   const [showAR, setShowAR] = useState(false);
   const [arAutoLaunch, setArAutoLaunch] = useState(false);
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
+  // Калькулятор цены за м²: индексы выбранных материала/размера/покрытия
+  const [selPricing, setSelPricing] = useState({ m: 0, s: 0, c: 0 });
   const [activeTab, setActiveTab] = useState<"reviews" | "qa">("reviews");
   const [isFavorite, setIsFavorite] = useState(false);
 
