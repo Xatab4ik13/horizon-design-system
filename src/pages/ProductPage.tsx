@@ -365,24 +365,28 @@ const ProductPage = () => {
       if (typeof o.price !== "number" && o.priceModifier) p += o.priceModifier;
     });
     return p;
-  }, [product, selectedOptions]);
+  }, [product, selectedOptions, pricingActive, pricingPrice]);
 
   // Compute dynamic specs based on variations
   const currentMaterial = useMemo(
-    () => selectedVariations["wood"] || product?.material || "",
-    [selectedVariations, product]
+    () => (pricingActive ? pm?.label ?? "" : selectedVariations["wood"] || product?.material || ""),
+    [selectedVariations, product, pricingActive, pm]
   );
   const currentCoating = useMemo(
-    () => selectedVariations["coating"] || product?.coating || "",
-    [selectedVariations, product]
+    () => (pricingActive ? pc?.label ?? product?.coating ?? "" : selectedVariations["coating"] || product?.coating || ""),
+    [selectedVariations, product, pricingActive, pc]
   );
   const currentDimensions = useMemo(
-    () => selectedVariations["size"] || product?.dimensions || "",
-    [selectedVariations, product]
+    () => (pricingActive ? ps?.label ?? "" : selectedVariations["size"] || product?.dimensions || ""),
+    [selectedVariations, product, pricingActive, ps]
   );
-  // Вес: базовый вес товара + надбавки выбранных вариантов (например, размера)
+  // Вес: при калькуляторе — объём × удельный вес; иначе базовый вес + надбавки вариантов
   const currentWeight = useMemo(() => {
     if (!product) return "";
+    if (pricingActive) {
+      if (!pricingWeight) return product.weight;
+      return `${Math.round(pricingWeight * 100) / 100} кг`;
+    }
     const base = parseFloat(String(product.weight).replace(",", ".").replace(/[^\d.]/g, ""));
     if (!isFinite(base)) return product.weight;
     let w = base;
@@ -393,13 +397,18 @@ const ProductPage = () => {
     });
     if (w <= 0) return product.weight;
     return `${Math.round(w * 100) / 100} кг`;
-  }, [product, selectedOptions]);
+  }, [product, selectedOptions, pricingActive, pricingWeight]);
 
 
 
   // Подмена основного фото при выборе варианта (например, по породе)
   const displayImages = useMemo(() => {
     if (!product) return [];
+    // При калькуляторе — фото, привязанное к выбранному материалу
+    if (pricingActive && pm?.image) {
+      const rest = product.images.filter((i) => i !== pm.image);
+      return [pm.image, ...rest];
+    }
     // Фото, привязанное к выбранному варианту
     const optImg = selectedOptions.find((o: any) => typeof o.image === "string" && o.image)?.image as string | undefined;
     if (optImg) {
