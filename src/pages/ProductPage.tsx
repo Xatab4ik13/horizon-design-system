@@ -264,9 +264,32 @@ const ProductPage = () => {
     });
   }, [ownVariations, syntheticVariations, product]);
 
+  // ─── Калькулятор цены за м² (включён в админке у конкретного товара) ───
+  const pricing = product?.pricing;
+  const pricingActive = !!(
+    pricing?.enabled &&
+    (pricing.materials ?? []).length > 0 &&
+    (pricing.sizes ?? []).length > 0
+  );
+  const pm = pricingActive ? pricing!.materials[Math.min(selPricing.m, pricing!.materials.length - 1)] : undefined;
+  const ps = pricingActive ? pricing!.sizes[Math.min(selPricing.s, pricing!.sizes.length - 1)] : undefined;
+  const pc = pricingActive && (pricing!.coatings ?? []).length
+    ? pricing!.coatings[Math.min(selPricing.c, pricing!.coatings.length - 1)]
+    : undefined;
+  const pricingAreaM2 = ps ? (ps.widthCm * ps.heightCm) / 10000 : 0;
+  const pricingPrice = pm && ps ? Math.round(pricingAreaM2 * (pm.pricePerM2 + (pc?.pricePerM2 ?? 0))) : 0;
+  const pricingWeight = pm?.densityKgM3 && ps
+    ? pricingAreaM2 * ((ps.thicknessCm ?? 0) / 100) * pm.densityKgM3
+    : 0;
+
+  useEffect(() => {
+    setSelPricing({ m: 0, s: 0, c: 0 });
+  }, [product?.id]);
+
   // Preselect current product attributes
   useEffect(() => {
     if (!product) return;
+    if (pricingActive) return; // при калькуляторе варианты не используются
     if (displayVariations.length && ownVariations.length) {
       const init: Record<string, string> = {};
       displayVariations.forEach((v) => { init[v.type] = v.options[0].value; });
@@ -333,6 +356,7 @@ const ProductPage = () => {
 
   const computedPrice = useMemo(() => {
     if (!product) return 0;
+    if (pricingActive) return pricingPrice;
     let p = product.price;
     // Цена «от руки» у варианта перекрывает базовую цену
     const absolute = selectedOptions.filter((o: any) => typeof o.price === "number" && isFinite(o.price));
