@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { motion } from "framer-motion";
-import heroVideo from "@/assets/hero-video.mp4";
+// Видео лежит в public/, чтобы не попадало в бандл сборки (экономит ~10 МБ)
+const heroVideo = "/hero-video.mp4";
 import Logo from "@/components/Logo";
 import { useHomepageContent } from "@/hooks/useSiteContent";
 
