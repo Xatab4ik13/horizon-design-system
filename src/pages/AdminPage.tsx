@@ -979,9 +979,19 @@ const ProductEditor = ({
           options: (v.options ?? []).filter((o: any) => String(o.label ?? "").trim()),
         }))
         .filter((v: any) => v.options.length > 0);
+      // Чистим пустые строки калькулятора
+      const rawPricing = form.options?.pricing;
+      const cleanPricing = rawPricing
+        ? {
+            ...rawPricing,
+            materials: (rawPricing.materials ?? []).filter((r: any) => String(r.label ?? "").trim()),
+            coatings: (rawPricing.coatings ?? []).filter((r: any) => String(r.label ?? "").trim()),
+            sizes: (rawPricing.sizes ?? []).filter((r: any) => String(r.label ?? "").trim()),
+          }
+        : undefined;
       const payload = {
         ...form,
-        options: { ...(form.options ?? {}), variations: cleanVariations },
+        options: { ...(form.options ?? {}), variations: cleanVariations, ...(cleanPricing ? { pricing: cleanPricing } : {}) },
       };
       if (form.id) {
         await adminCall("products.update", payload);
@@ -1050,6 +1060,24 @@ const ProductEditor = ({
     setVariations(
       variations.map((v, i) => (i === vi ? { ...v, options: (v.options ?? []).filter((_: any, j: number) => j !== oi) } : v))
     );
+
+  // ── Калькулятор цены за м² (хранится в products.options.pricing) ──
+  const pricing: any = form.options?.pricing ?? {};
+  const pricingEnabled = !!pricing.enabled;
+  const setPricing = (patch: any) =>
+    setForm((f: any) => ({
+      ...f,
+      options: {
+        ...(f.options ?? {}),
+        pricing: { enabled: false, materials: [], coatings: [], sizes: [], ...(f.options?.pricing ?? {}), ...patch },
+      },
+    }));
+  const pricingList = (key: string): any[] => (Array.isArray(pricing[key]) ? pricing[key] : []);
+  const addPricingRow = (key: string, row: any) => setPricing({ [key]: [...pricingList(key), row] });
+  const updatePricingRow = (key: string, i: number, patch: any) =>
+    setPricing({ [key]: pricingList(key).map((r: any, j: number) => (j === i ? { ...r, ...patch } : r)) });
+  const removePricingRow = (key: string, i: number) =>
+    setPricing({ [key]: pricingList(key).filter((_: any, j: number) => j !== i) });
 
 
   const [arUploading, setArUploading] = useState<"glb" | "usdz" | null>(null);
