@@ -623,6 +623,16 @@ const ProductPage = () => {
               {/* ─── Specs grid (dynamic) ─── */}
               <div className="grid grid-cols-2 gap-3 mb-8">
                 {(() => {
+                  if (pricingActive) {
+                    return [
+                      { icon: TreePine, label: "Порода", value: currentMaterial, isWood: true },
+                      { icon: Ruler, label: "Размеры", value: currentDimensions, isWood: false },
+                      { icon: Droplets, label: "Покрытие", value: currentCoating || "Без покрытия", isWood: false },
+                      { icon: Ruler, label: "Площадь", value: `${Math.round(pricingAreaM2 * 10000) / 10000} м²`, isWood: false },
+                      { icon: Weight, label: "Вес", value: currentWeight, isWood: false },
+                      { icon: Check, label: "Наличие", value: product.inStock ? "В наличии" : "Под заказ (2–3 нед.)", isWood: false },
+                    ].filter((r) => r.value);
+                  }
                   const iconByType: Record<string, typeof TreePine> = { wood: TreePine, coating: Droplets, size: Ruler };
                   const valueByType: Record<string, string> = { wood: currentMaterial, coating: currentCoating, size: currentDimensions };
                   const fromVariations = displayVariations.map((v) => ({
@@ -714,7 +724,9 @@ const ProductPage = () => {
                     name: product.name,
                     price: computedPrice,
                     image: displayImages[0] ?? product.images[0],
-                    variations: Object.keys(selectedVariations).length > 0 ? selectedVariations : undefined,
+                    variations: pricingActive
+                      ? { wood: currentMaterial, size: currentDimensions, coating: currentCoating }
+                      : Object.keys(selectedVariations).length > 0 ? selectedVariations : undefined,
                     variationLabels: Object.keys(labels).length > 0 ? labels : undefined,
                     dimensions: currentDimensions,
                     weight: currentWeight,
