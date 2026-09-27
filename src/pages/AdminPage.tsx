@@ -984,7 +984,13 @@ const ProductEditor = ({
       const cleanPricing = rawPricing
         ? {
             ...rawPricing,
-            materials: (rawPricing.materials ?? []).filter((r: any) => String(r.label ?? "").trim()),
+            materials: (rawPricing.materials ?? [])
+              .filter((r: any) => String(r.label ?? "").trim())
+              .map((r: any) => ({
+                ...r,
+                sizes: (r.sizes ?? []).filter((x: any) => String(x.label ?? "").trim()),
+                coatings: (r.coatings ?? []).filter((x: any) => String(x.label ?? "").trim()),
+              })),
             coatings: (rawPricing.coatings ?? []).filter((r: any) => String(r.label ?? "").trim()),
             sizes: (rawPricing.sizes ?? []).filter((r: any) => String(r.label ?? "").trim()),
           }
@@ -1475,242 +1481,90 @@ const ProductEditor = ({
           </div>
           <p className="text-[13px] text-[#888] mb-4">
             Цена = площадь размера × (цена материала за м² + цена покрытия за м²). Вес = объём × удельный вес.
-            Покупатель выбирает последовательно: порода → размер → покрытие.
-            Когда калькулятор включён, ручные «Варианты товара» ниже на сайте не показываются.
+            Каждый блок — отдельный материал со своими размерами и покрытиями.
+            Покупатель выбирает последовательно: материал → размер → покрытие.
           </p>
 
           {pricingEnabled && (
             <div className="grid gap-6">
-              {/* Материалы */}
-              <div className="border border-[#3a3a3a] rounded-lg p-4">
-                <p className="text-[15px] font-medium mb-3">Материалы (порода, МДФ, пластик)</p>
-                <div className="grid gap-2">
-                  {pricingList("materials").map((m: any, i: number) => (
-                    <div key={i} className="grid grid-cols-[1fr_140px_150px_170px_auto] gap-2 items-center">
-                      <input
-                        value={m.label ?? ""}
-                        onChange={(e) => updatePricingRow("materials", i, { label: e.target.value })}
-                        className={ui.input}
-                        placeholder="Например «Дуб» или «МДФ»"
-                      />
-                      <input
-                        type="number"
-                        value={m.pricePerM2 ?? ""}
-                        onChange={(e) => updatePricingRow("materials", i, { pricePerM2: e.target.value === "" ? undefined : Number(e.target.value) })}
-                        className={ui.input}
-                        placeholder="₽/м²"
-                      />
-                      <input
-                        type="number"
-                        value={m.densityKgM3 ?? ""}
-                        onChange={(e) => updatePricingRow("materials", i, { densityKgM3: e.target.value === "" ? undefined : Number(e.target.value) })}
-                        className={ui.input}
-                        placeholder="кг/м³ (вес)"
-                      />
-                      <select
-                        value={m.image ?? ""}
-                        onChange={(e) => updatePricingRow("materials", i, { image: e.target.value || undefined })}
-                        className={ui.input}
-                      >
-                        <option value="">Фото: без привязки</option>
-                        {(form.images ?? []).map((img: string, ii: number) => (
-                          <option key={img} value={img}>Фото {ii + 1}</option>
-                        ))}
-                      </select>
-                      <button onClick={() => removePricingRow("materials", i)} className={`${ui.btn} ${ui.btnDanger}`}>
-                        <X size={16} />
+              {pricingList("materials").map((m: any, mi: number) => {
+                const sizes: any[] = Array.isArray(m.sizes) ? m.sizes : [];
+                const coatings: any[] = Array.isArray(m.coatings) ? m.coatings : [];
+                const setSub = (key: "sizes" | "coatings", list: any[]) => updatePricingRow("materials", mi, { [key]: list });
+                const num = (v: string) => (v === "" ? undefined : Number(v));
+                return (
+                  <div key={mi} className="border border-[#3a3a3a] rounded-lg p-4 grid gap-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[15px] font-medium">Блок {mi + 1}{m.label ? ` — ${m.label}` : ""}</p>
+                      <button onClick={() => removePricingRow("materials", mi)} className={`${ui.btn} ${ui.btnDanger}`}>
+                        <Trash2 size={16} /> Удалить блок
                       </button>
                     </div>
-                  ))}
-                </div>
-                <button onClick={() => addPricingRow("materials", { label: "", pricePerM2: undefined, densityKgM3: undefined })} className={`${ui.btn} ${ui.btnSecondary} mt-3`}>
-                  <Plus size={16} /> Добавить материал
-                </button>
-              </div>
 
-              {/* Размеры */}
-              <div className="border border-[#3a3a3a] rounded-lg p-4">
-                <p className="text-[15px] font-medium mb-3">Размеры (список для выбора)</p>
-                <div className="grid gap-2">
-                  {pricingList("sizes").map((s: any, i: number) => (
-                    <div key={i} className="grid grid-cols-[1fr_110px_110px_130px_auto] gap-2 items-center">
-                      <input
-                        value={s.label ?? ""}
-                        onChange={(e) => updatePricingRow("sizes", i, { label: e.target.value })}
-                        className={ui.input}
-                        placeholder="Например «120 × 50 см»"
-                      />
-                      <input
-                        type="number"
-                        value={s.widthCm ?? ""}
-                        onChange={(e) => updatePricingRow("sizes", i, { widthCm: e.target.value === "" ? undefined : Number(e.target.value) })}
-                        className={ui.input}
-                        placeholder="Шир., см"
-                      />
-                      <input
-                        type="number"
-                        value={s.heightCm ?? ""}
-                        onChange={(e) => updatePricingRow("sizes", i, { heightCm: e.target.value === "" ? undefined : Number(e.target.value) })}
-                        className={ui.input}
-                        placeholder="Дл., см"
-                      />
-                      <input
-                        type="number"
-                        value={s.thicknessCm ?? ""}
-                        onChange={(e) => updatePricingRow("sizes", i, { thicknessCm: e.target.value === "" ? undefined : Number(e.target.value) })}
-                        className={ui.input}
-                        placeholder="Толщ., см"
-                      />
-                      <button onClick={() => removePricingRow("sizes", i)} className={`${ui.btn} ${ui.btnDanger}`}>
-                        <X size={16} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                <button onClick={() => addPricingRow("sizes", { label: "", widthCm: undefined, heightCm: undefined, thicknessCm: undefined })} className={`${ui.btn} ${ui.btnSecondary} mt-3`}>
-                  <Plus size={16} /> Добавить размер
-                </button>
-              </div>
-
-              {/* Покрытия */}
-              <div className="border border-[#3a3a3a] rounded-lg p-4">
-                <p className="text-[15px] font-medium mb-3">Покрытия (плюсуются к стоимости)</p>
-                <div className="grid gap-2">
-                  {pricingList("coatings").map((c: any, i: number) => (
-                    <div key={i} className="grid grid-cols-[1fr_140px_auto] gap-2 items-center">
-                      <input
-                        value={c.label ?? ""}
-                        onChange={(e) => updatePricingRow("coatings", i, { label: e.target.value })}
-                        className={ui.input}
-                        placeholder="Например «Лак матовый» или «Масло»"
-                      />
-                      <input
-                        type="number"
-                        value={c.pricePerM2 ?? ""}
-                        onChange={(e) => updatePricingRow("coatings", i, { pricePerM2: e.target.value === "" ? undefined : Number(e.target.value) })}
-                        className={ui.input}
-                        placeholder="₽/м²"
-                      />
-                      <button onClick={() => removePricingRow("coatings", i)} className={`${ui.btn} ${ui.btnDanger}`}>
-                        <X size={16} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                <button onClick={() => addPricingRow("coatings", { label: "", pricePerM2: 0 })} className={`${ui.btn} ${ui.btnSecondary} mt-3`}>
-                  <Plus size={16} /> Добавить покрытие
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ── Варианты товара ── */}
-        <div className="pt-4 border-t border-[#3a3a3a]">
-          <div className="flex items-center justify-between mb-2 gap-3 flex-wrap">
-            <label className={ui.label}>Варианты товара (порода, покрытие, размеры)</label>
-            <div className="flex gap-2 flex-wrap">
-              {[
-                { type: "wood", label: "Порода" },
-                { type: "coating", label: "Покрытие" },
-                { type: "size", label: "Размеры" },
-              ].map((g) => (
-                <button
-                  key={g.type}
-                  onClick={() => addVariationGroup(g.type, g.label)}
-                  className={`${ui.btn} ${ui.btnSecondary}`}
-                >
-                  <Plus size={16} /> {g.label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <p className="text-[13px] text-[#888] mb-4">
-            Покупатель выбирает вариант в карточке товара из выпадающего списка.
-            «Цена» и «Вес» указываются вручную — итоговые значения для этого варианта.
-            Пусто = берётся базовая цена и базовый вес товара выше.
-            «Фото» — какое изображение из галереи товара показать при выборе варианта.
-          </p>
-
-          {variations.length === 0 ? (
-            <p className="text-[14px] text-[#888]">
-              Вариантов нет — в карточке будет показан только базовый товар.
-            </p>
-          ) : (
-            <div className="grid gap-4">
-              {variations.map((v: any, vi: number) => (
-                <div key={vi} className="border border-[#3a3a3a] rounded-lg p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <input
-                      value={v.label ?? ""}
-                      onChange={(e) => updateVariation(vi, { label: e.target.value })}
-                      className={ui.input}
-                      placeholder="Название списка (например «Порода»)"
-                    />
-                    <button onClick={() => removeVariation(vi)} className={`${ui.btn} ${ui.btnDanger}`}>
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                  <div className="grid gap-2">
-                    {(v.options ?? []).map((o: any, oi: number) => (
-                      <div key={oi} className="grid grid-cols-[1fr_130px_130px_170px_auto] gap-2 items-center">
-                        <input
-                          value={o.label ?? ""}
-                          onChange={(e) => updateOption(vi, oi, { label: e.target.value, value: e.target.value })}
-                          className={ui.input}
-                          placeholder="Например «Дуб» или «1200 × 600 см»"
-                        />
-                        <input
-                          type="number"
-                          value={o.price ?? ""}
-                          onChange={(e) =>
-                            updateOption(vi, oi, {
-                              price: e.target.value === "" ? undefined : Number(e.target.value),
-                              priceModifier: undefined,
-                            })
-                          }
-                          className={ui.input}
-                          placeholder="Цена, ₽"
-                        />
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={o.weight ?? ""}
-                          onChange={(e) =>
-                            updateOption(vi, oi, {
-                              weight: e.target.value === "" ? undefined : Number(e.target.value),
-                              weightModifier: undefined,
-                            })
-                          }
-                          className={ui.input}
-                          placeholder="Вес, кг"
-                        />
-                        <select
-                          value={o.image ?? ""}
-                          onChange={(e) => updateOption(vi, oi, { image: e.target.value || undefined })}
-                          className={ui.input}
-                        >
+                    <div>
+                      <p className="text-[13px] text-[#888] mb-2">Материал: название · ₽/м² · кг/м³ · вес упаковки, кг · фото</p>
+                      <div className="grid grid-cols-[1fr_130px_130px_130px_170px] gap-2 items-center">
+                        <input value={m.label ?? ""} onChange={(e) => updatePricingRow("materials", mi, { label: e.target.value })} className={ui.input} placeholder="Например «Дерево»" />
+                        <input type="number" value={m.pricePerM2 ?? ""} onChange={(e) => updatePricingRow("materials", mi, { pricePerM2: num(e.target.value) })} className={ui.input} placeholder="₽/м²" />
+                        <input type="number" value={m.densityKgM3 ?? ""} onChange={(e) => updatePricingRow("materials", mi, { densityKgM3: num(e.target.value) })} className={ui.input} placeholder="кг/м³" />
+                        <input type="number" step="0.01" value={m.packWeightKg ?? ""} onChange={(e) => updatePricingRow("materials", mi, { packWeightKg: num(e.target.value) })} className={ui.input} placeholder="Упак., кг" />
+                        <select value={m.image ?? ""} onChange={(e) => updatePricingRow("materials", mi, { image: e.target.value || undefined })} className={ui.input}>
                           <option value="">Фото: без привязки</option>
                           {(form.images ?? []).map((img: string, ii: number) => (
-                            <option key={img} value={img}>
-                              Фото {ii + 1}
-                            </option>
+                            <option key={img} value={img}>Фото {ii + 1}</option>
                           ))}
                         </select>
-                        <button onClick={() => removeOption(vi, oi)} className={`${ui.btn} ${ui.btnDanger}`}>
-                          <X size={16} />
-                        </button>
                       </div>
-                    ))}
+                    </div>
+
+                    <div>
+                      <p className="text-[13px] text-[#888] mb-2">Размеры: название · Ш · Д · Т (см) · упаковка Ш · Д · Т (см, видно только при оформлении заказа)</p>
+                      <div className="grid gap-2">
+                        {sizes.map((s: any, si: number) => {
+                          const upd = (patch: any) => setSub("sizes", sizes.map((r, j) => (j === si ? { ...r, ...patch } : r)));
+                          return (
+                            <div key={si} className="grid grid-cols-[1fr_80px_80px_80px_80px_80px_80px_auto] gap-2 items-center">
+                              <input value={s.label ?? ""} onChange={(e) => upd({ label: e.target.value })} className={ui.input} placeholder="100×200×5" />
+                              <input type="number" value={s.widthCm ?? ""} onChange={(e) => upd({ widthCm: num(e.target.value) })} className={ui.input} placeholder="Ш" />
+                              <input type="number" value={s.heightCm ?? ""} onChange={(e) => upd({ heightCm: num(e.target.value) })} className={ui.input} placeholder="Д" />
+                              <input type="number" value={s.thicknessCm ?? ""} onChange={(e) => upd({ thicknessCm: num(e.target.value) })} className={ui.input} placeholder="Т" />
+                              <input type="number" value={s.packWidthCm ?? ""} onChange={(e) => upd({ packWidthCm: num(e.target.value) })} className={`${ui.input} border-dashed`} placeholder="+Ш" />
+                              <input type="number" value={s.packHeightCm ?? ""} onChange={(e) => upd({ packHeightCm: num(e.target.value) })} className={`${ui.input} border-dashed`} placeholder="+Д" />
+                              <input type="number" value={s.packThicknessCm ?? ""} onChange={(e) => upd({ packThicknessCm: num(e.target.value) })} className={`${ui.input} border-dashed`} placeholder="+Т" />
+                              <button onClick={() => setSub("sizes", sizes.filter((_, j) => j !== si))} className={`${ui.btn} ${ui.btnDanger}`}><X size={16} /></button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <button onClick={() => setSub("sizes", [...sizes, { label: "" }])} className={`${ui.btn} ${ui.btnSecondary} mt-2`}>
+                        <Plus size={16} /> Добавить размер
+                      </button>
+                    </div>
+
+                    <div>
+                      <p className="text-[13px] text-[#888] mb-2">Покрытия: название · ₽/м² (плюсуется к стоимости)</p>
+                      <div className="grid gap-2">
+                        {coatings.map((c: any, ci: number) => {
+                          const upd = (patch: any) => setSub("coatings", coatings.map((r, j) => (j === ci ? { ...r, ...patch } : r)));
+                          return (
+                            <div key={ci} className="grid grid-cols-[1fr_140px_auto] gap-2 items-center">
+                              <input value={c.label ?? ""} onChange={(e) => upd({ label: e.target.value })} className={ui.input} placeholder="Лак матовый" />
+                              <input type="number" value={c.pricePerM2 ?? ""} onChange={(e) => upd({ pricePerM2: num(e.target.value) })} className={ui.input} placeholder="₽/м²" />
+                              <button onClick={() => setSub("coatings", coatings.filter((_, j) => j !== ci))} className={`${ui.btn} ${ui.btnDanger}`}><X size={16} /></button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <button onClick={() => setSub("coatings", [...coatings, { label: "", pricePerM2: 0 }])} className={`${ui.btn} ${ui.btnSecondary} mt-2`}>
+                        <Plus size={16} /> Добавить покрытие
+                      </button>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => addOption(vi)}
-                    className={`${ui.btn} ${ui.btnSecondary} mt-3`}
-                  >
-                    <Plus size={16} /> Добавить вариант
-                  </button>
-                </div>
-              ))}
+                );
+              })}
+              <button onClick={() => addPricingRow("materials", { label: "", sizes: [], coatings: [] })} className={`${ui.btn} ${ui.btnSecondary} justify-self-start`}>
+                <Plus size={16} /> Добавить блок (материал)
+              </button>
             </div>
           )}
         </div>
