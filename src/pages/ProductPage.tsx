@@ -282,6 +282,13 @@ const ProductPage = () => {
   const packedDimensions = ps && (ps.packWidthCm || ps.packHeightCm || ps.packThicknessCm)
     ? `${ps.widthCm + (ps.packWidthCm ?? 0)} × ${ps.heightCm + (ps.packHeightCm ?? 0)} × ${(ps.thicknessCm ?? 0) + (ps.packThicknessCm ?? 0)} см`
     : undefined;
+  const pricingDims = ps ? `${ps.widthCm} × ${ps.heightCm} × ${ps.thicknessCm ?? 0} см` : undefined;
+  const pricingVolumeM3 = ps ? pricingAreaM2 * ((ps.thicknessCm ?? 0) / 100) : 0;
+  const packW = ps ? ps.widthCm + (ps.packWidthCm ?? 0) : 0;
+  const packH = ps ? ps.heightCm + (ps.packHeightCm ?? 0) : 0;
+  const packT = ps ? (ps.thicknessCm ?? 0) + (ps.packThicknessCm ?? 0) : 0;
+  const packedAreaM2 = (packW * packH) / 10000;
+  const packedVolumeM3 = packedAreaM2 * (packT / 100);
   const packedWeight = pm?.packWeightKg
     ? `${Math.round((pricingWeight + pm.packWeightKg) * 100) / 100} кг`
     : undefined;
@@ -555,7 +562,7 @@ const ProductPage = () => {
               </div>
 
               {/* Description */}
-              <p className="text-foreground/80 leading-relaxed mb-6">{product.description}</p>
+              <p className="text-foreground/80 leading-relaxed mb-6 text-justify hyphens-auto">{product.description}</p>
 
               {/* ─── Калькулятор за м²: Порода → Размер → Покрытие ─── */}
               {pricingActive && (
@@ -580,7 +587,7 @@ const ProductPage = () => {
                     .filter((g) => g.items.length > 0)
                     .map((g) => (
                       <div key={g.key}>
-                        <label className="text-sm font-medium text-foreground mb-2 block">{g.label}</label>
+                        <label className="text-sm font-medium text-foreground mb-2 block text-center">{g.label}</label>
                         <select
                           value={selPricing[g.key]}
                           onChange={(e) => { const v = Number(e.target.value); setSelPricing((p) => (g.key === "m" ? { m: v, s: 0, c: 0 } : { ...p, [g.key]: v })); }}
@@ -624,82 +631,23 @@ const ProductPage = () => {
               )}
 
 
-              {/* ─── Specs grid (dynamic) ─── */}
-              <div className="grid grid-cols-2 gap-3 mb-8">
-                {(() => {
-                  if (pricingActive) {
-                    return [
-                      { icon: TreePine, label: "Порода", value: currentMaterial, isWood: true },
-                      { icon: Ruler, label: "Размеры", value: currentDimensions, isWood: false },
-                      { icon: Droplets, label: "Покрытие", value: currentCoating || "Без покрытия", isWood: false },
-                      { icon: Ruler, label: "Площадь", value: `${Math.round(pricingAreaM2 * 10000) / 10000} м²`, isWood: false },
-                      { icon: Weight, label: "Вес", value: currentWeight, isWood: false },
-                      { icon: Check, label: "Наличие", value: product.inStock ? "В наличии" : "Под заказ (2–3 нед.)", isWood: false },
-                    ].filter((r) => r.value);
-                  }
-                  const iconByType: Record<string, typeof TreePine> = { wood: TreePine, coating: Droplets, size: Ruler };
-                  const valueByType: Record<string, string> = { wood: currentMaterial, coating: currentCoating, size: currentDimensions };
-                  const fromVariations = displayVariations.map((v) => ({
-                    icon: iconByType[v.type] ?? Ruler,
-                    label: v.label,
-                    value: selectedVariations[v.type] || valueByType[v.type] || "",
-                    isWood: v.type === "wood",
-                  }));
-                  const usedTypes = new Set(displayVariations.map((v) => v.type));
-                  const fallback = [
-                    { icon: TreePine, label: "Порода", value: currentMaterial, isWood: true, type: "wood" },
-                    { icon: Ruler, label: "Размеры", value: currentDimensions, isWood: false, type: "size" },
-                    { icon: Droplets, label: "Покрытие", value: currentCoating, isWood: false, type: "coating" },
-                  ].filter((r) => !usedTypes.has(r.type) && r.value);
-                  return [
-                    ...fromVariations,
-                    ...fallback,
-                    { icon: Weight, label: "Вес", value: currentWeight, isWood: false },
-                    { icon: Check, label: "Наличие", value: product.inStock ? "В наличии" : "Под заказ (2–3 нед.)", isWood: false },
-                  ];
-                })().map((spec) => {
-                  const isWood = spec.isWood;
-                  return (
-                    <div
-                      key={spec.label}
-                      className={`flex items-center gap-3 p-3 rounded-xl border ${
-                        isWood
-                          ? "border-amber-900/40"
-                          : "bg-card/50 border-border/50"
-                      }`}
-                      style={
-                        isWood
-                          ? {
-                              background:
-                                "linear-gradient(135deg, hsl(28 45% 22%) 0%, hsl(25 35% 14%) 40%, hsl(22 28% 10%) 100%)",
-                              boxShadow: "inset 0 0 30px hsl(20 30% 5% / 0.6)",
-                            }
-                          : undefined
-                      }
-                    >
-                      <spec.icon className={`h-4 w-4 shrink-0 ${isWood ? "text-amber-200" : "text-primary"}`} />
-                      <div className="min-w-0">
-                        <p className={`text-[11px] ${isWood ? "text-amber-100/70" : "text-muted-foreground"}`}>{spec.label}</p>
-                        <p className={`text-sm font-medium truncate ${isWood ? "text-amber-50" : "text-foreground"}`}>{spec.value}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* ─── Дополнительные характеристики (из БД / 1С) ─── */}
+              {/* ─── Характеристики (таблица, меняется от выбора) ─── */}
               {(() => {
-                const s = product.specs ?? {};
-                const rows: { label: string; value: string }[] = [];
-                if (s.brand) rows.push({ label: "Бренд", value: s.brand });
-                if (s.manufacturer) rows.push({ label: "Производитель", value: s.manufacturer });
-                if (s.country) rows.push({ label: "Страна", value: s.country });
-                if (s.stock_status) rows.push({ label: "Наличие на складе", value: s.stock_status });
-                if (s.area_m2 != null) rows.push({ label: "Площадь", value: `${s.area_m2} м²` });
-                if (s.volume_m3 != null) rows.push({ label: "Объём", value: `${s.volume_m3} м³` });
-                if (s.weight_gross_kg != null) rows.push({ label: "Вес брутто", value: `${s.weight_gross_kg} кг` });
-                if (product.packageInfo) rows.push({ label: "Упаковка", value: product.packageInfo });
-                if (!rows.length) return null;
+                const sp = product.specs ?? {};
+                const area = pricingActive
+                  ? `${Math.round(pricingAreaM2 * 10000) / 10000} м²`
+                  : sp.area_m2 != null ? `${sp.area_m2} м²` : "";
+                const rows = [
+                  { label: "Страна", value: sp.country },
+                  { label: "Бренд", value: sp.brand },
+                  { label: "Производитель", value: sp.manufacturer },
+                  { label: "Наличие на складе", value: sp.stock_status || (product.inStock ? "В наличии" : "Под заказ (2–3 нед.)") },
+                  { label: "Наименование товара", value: product.name },
+                  { label: "Порода", value: currentMaterial },
+                  { label: "Размер", value: currentDimensions },
+                  { label: "Покрытие", value: currentCoating },
+                  { label: "Площадь", value: area },
+                ].filter((r) => r.value);
                 return (
                   <div className="mb-8 rounded-2xl border border-border bg-card/40 overflow-hidden">
                     <div className="px-4 py-3 border-b border-border text-sm font-semibold text-foreground">Характеристики</div>
@@ -734,7 +682,17 @@ const ProductPage = () => {
                     variationLabels: Object.keys(labels).length > 0 ? labels : undefined,
                     dimensions: currentDimensions,
                     weight: currentWeight,
-                    ...(pricingActive ? { packedDimensions, packedWeight } : {}),
+                    ...(pricingActive
+                      ? {
+                          dimensions: pricingDims,
+                          packedDimensions: packedDimensions ?? pricingDims,
+                          packedWeight: packedWeight ?? currentWeight,
+                          areaM2: pricingAreaM2,
+                          volumeM3: pricingVolumeM3,
+                          packedAreaM2,
+                          packedVolumeM3,
+                        }
+                      : {}),
                   });
                   reachGoal("add_to_cart", { product: product.name, price: computedPrice });
                   toast.success("Товар добавлен в корзину");
