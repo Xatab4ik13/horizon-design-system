@@ -491,7 +491,7 @@ const CatalogPage = () => {
                     </h3>
                     <div className="flex items-center gap-2 mb-4">
                       <span className="text-primary font-bold text-lg">
-                        {product.price.toLocaleString("ru-RU")} ₽
+                        от {(minPricingPrice(product.pricing) ?? product.price).toLocaleString("ru-RU")} ₽
                       </span>
                       {product.oldPrice && (
                         <span className="text-muted-foreground line-through text-sm">
@@ -499,25 +499,11 @@ const CatalogPage = () => {
                         </span>
                       )}
                     </div>
-                    <Button
-                      size="sm"
-                      className="w-full gap-2"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        addItem({
-                          productId: product.id,
-                          name: product.name,
-                          price: product.price,
-                          image: product.images[0],
-                          dimensions: product.dimensions,
-                          weight: product.weight,
-                        });
-                        toast.success("Товар добавлен в корзину");
-                      }}
-                    >
-                      <ShoppingCart className="h-4 w-4" />
-                      В корзину
+                    <Button size="sm" className="w-full gap-2" asChild>
+                      <span>
+                        К товару
+                        <ArrowRight className="h-4 w-4" />
+                      </span>
                     </Button>
                   </div>
                 </Link>
