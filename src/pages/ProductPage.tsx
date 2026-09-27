@@ -6,7 +6,7 @@ import {
   X, Droplets, MessageCircle, ThumbsUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { categories } from "@/data/products";
+import { categories, isPricingActive, materialSizes, materialCoatings } from "@/data/products";
 import { useDbProduct, useDbProducts } from "@/lib/dbProducts";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -266,21 +266,25 @@ const ProductPage = () => {
 
   // ─── Калькулятор цены за м² (включён в админке у конкретного товара) ───
   const pricing = product?.pricing;
-  const pricingActive = !!(
-    pricing?.enabled &&
-    (pricing.materials ?? []).length > 0 &&
-    (pricing.sizes ?? []).length > 0
-  );
-  const pm = pricingActive ? pricing!.materials[Math.min(selPricing.m, pricing!.materials.length - 1)] : undefined;
-  const ps = pricingActive ? pricing!.sizes[Math.min(selPricing.s, pricing!.sizes.length - 1)] : undefined;
-  const pc = pricingActive && (pricing!.coatings ?? []).length
-    ? pricing!.coatings[Math.min(selPricing.c, pricing!.coatings.length - 1)]
-    : undefined;
+  const pricingActive = isPricingActive(pricing);
+  const pmList = pricingActive ? pricing!.materials.filter((m) => materialSizes(pricing!, m).length > 0) : [];
+  const pm = pricingActive ? pmList[Math.min(selPricing.m, pmList.length - 1)] : undefined;
+  const psList = pricingActive ? materialSizes(pricing!, pm) : [];
+  const pcList = pricingActive ? materialCoatings(pricing!, pm) : [];
+  const ps = psList.length ? psList[Math.min(selPricing.s, psList.length - 1)] : undefined;
+  const pc = pcList.length ? pcList[Math.min(selPricing.c, pcList.length - 1)] : undefined;
   const pricingAreaM2 = ps ? (ps.widthCm * ps.heightCm) / 10000 : 0;
   const pricingPrice = pm && ps ? Math.round(pricingAreaM2 * (pm.pricePerM2 + (pc?.pricePerM2 ?? 0))) : 0;
   const pricingWeight = pm?.densityKgM3 && ps
     ? pricingAreaM2 * ((ps.thicknessCm ?? 0) / 100) * pm.densityKgM3
     : 0;
+  // Упаковка — показывается только при оформлении заказа
+  const packedDimensions = ps && (ps.packWidthCm || ps.packHeightCm || ps.packThicknessCm)
+    ? `${ps.widthCm + (ps.packWidthCm ?? 0)} × ${ps.heightCm + (ps.packHeightCm ?? 0)} × ${(ps.thicknessCm ?? 0) + (ps.packThicknessCm ?? 0)} см`
+    : undefined;
+  const packedWeight = pm?.packWeightKg
+    ? `${Math.round((pricingWeight + pm.packWeightKg) * 100) / 100} кг`
+    : undefined;
 
   useEffect(() => {
     setSelPricing({ m: 0, s: 0, c: 0 });
@@ -560,17 +564,17 @@ const ProductPage = () => {
                     {
                       key: "m" as const,
                       label: "Порода",
-                      items: pricing!.materials.map((x, i) => ({ i, label: x.label })),
+                      items: pmList.map((x, i) => ({ i, label: x.label })),
                     },
                     {
                       key: "s" as const,
                       label: "Размер",
-                      items: pricing!.sizes.map((x, i) => ({ i, label: x.label })),
+                      items: psList.map((x, i) => ({ i, label: x.label })),
                     },
                     {
                       key: "c" as const,
                       label: "Покрытие",
-                      items: (pricing!.coatings ?? []).map((x, i) => ({ i, label: x.label })),
+                      items: pcList.map((x, i) => ({ i, label: x.label })),
                     },
                   ]
                     .filter((g) => g.items.length > 0)
@@ -579,7 +583,7 @@ const ProductPage = () => {
                         <label className="text-sm font-medium text-foreground mb-2 block">{g.label}</label>
                         <select
                           value={selPricing[g.key]}
-                          onChange={(e) => setSelPricing((p) => ({ ...p, [g.key]: Number(e.target.value) }))}
+                          onChange={(e) => { const v = Number(e.target.value); setSelPricing((p) => (g.key === "m" ? { m: v, s: 0, c: 0 } : { ...p, [g.key]: v })); }}
                           className="w-full px-4 py-2.5 rounded-xl bg-background/60 border border-border text-foreground focus:border-primary focus:outline-none transition-colors text-sm appearance-none cursor-pointer bg-[url('data:image/svg+xml;utf8,<svg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%23999%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27><polyline%20points=%276%209%2012%2015%2018%209%27/></svg>')] bg-no-repeat bg-[right_14px_center] pr-10"
                         >
                           {g.items.map((o) => (
@@ -730,6 +734,7 @@ const ProductPage = () => {
                     variationLabels: Object.keys(labels).length > 0 ? labels : undefined,
                     dimensions: currentDimensions,
                     weight: currentWeight,
+                    ...(pricingActive ? { packedDimensions, packedWeight } : {}),
                   });
                   reachGoal("add_to_cart", { product: product.name, price: computedPrice });
                   toast.success("Товар добавлен в корзину");
