@@ -55,6 +55,11 @@ export interface PricingMaterial {
   densityKgM3?: number;
   /** Фото из галереи товара, показываемое при выборе */
   image?: string;
+  /** Вес упаковки, кг — плюсуется к весу, видно только при оформлении заказа */
+  packWeightKg?: number;
+  /** Размеры и покрытия, привязанные к этому материалу */
+  sizes?: PricingSize[];
+  coatings?: PricingCoating[];
 }
 
 export interface PricingCoating {
@@ -69,14 +74,43 @@ export interface PricingSize {
   heightCm: number;
   /** Толщина, см — для расчёта объёма и веса */
   thicknessCm?: number;
+  /** Упаковка, см — плюсуется к размерам, видно только при оформлении заказа */
+  packWidthCm?: number;
+  packHeightCm?: number;
+  packThicknessCm?: number;
 }
 
 export interface ProductPricing {
   enabled?: boolean;
   materials: PricingMaterial[];
+  /** Устарело: общие списки (до привязки к материалам) */
   coatings: PricingCoating[];
   sizes: PricingSize[];
 }
+
+/** Размеры/покрытия материала (с фолбэком на старые общие списки) */
+export const materialSizes = (p: ProductPricing, m?: PricingMaterial): PricingSize[] =>
+  m?.sizes && m.sizes.length ? m.sizes : p.sizes ?? [];
+export const materialCoatings = (p: ProductPricing, m?: PricingMaterial): PricingCoating[] =>
+  m?.coatings && m.coatings.length ? m.coatings : p.coatings ?? [];
+
+export const isPricingActive = (p?: ProductPricing): p is ProductPricing =>
+  !!(p?.enabled && (p.materials ?? []).some((m) => materialSizes(p, m).length > 0));
+
+/** Минимальная предварительная цена по калькулятору */
+export const minPricingPrice = (p?: ProductPricing): number | null => {
+  if (!isPricingActive(p)) return null;
+  let min = Infinity;
+  for (const m of p.materials) {
+    const cs = materialCoatings(p, m);
+    const minC = cs.length ? Math.min(...cs.map((c) => c.pricePerM2 || 0)) : 0;
+    for (const s of materialSizes(p, m)) {
+      const v = Math.round(((s.widthCm * s.heightCm) / 10000) * ((m.pricePerM2 || 0) + minC));
+      if (v < min) min = v;
+    }
+  }
+  return Number.isFinite(min) ? min : null;
+};
 
 // --- Product ---
 export interface Product {
