@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
-import { useCart } from "@/contexts/CartContext";
+import { useCart, cartLineId } from "@/contexts/CartContext";
+import OrderDimsSummary from "@/components/OrderDimsSummary";
 
 const CartPage = () => {
   const { items, updateQuantity, removeItem, totalPrice, totalItems } = useCart();
@@ -63,7 +64,7 @@ const CartPage = () => {
               <div className="lg:col-span-2 space-y-4">
                 {items.map((item) => (
                   <div
-                    key={item.productId}
+                    key={cartLineId(item)}
                     className="bg-card/60 border border-border rounded-2xl p-4 md:p-6 flex gap-4 md:gap-6"
                   >
                     <Link to={`/product/${item.productId}`} className="shrink-0">
@@ -98,7 +99,7 @@ const CartPage = () => {
                       <div className="flex items-center justify-between mt-3">
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                            onClick={() => updateQuantity(cartLineId(item), item.quantity - 1)}
                             className="w-8 h-8 rounded-lg bg-background/60 border border-border flex items-center justify-center hover:border-primary/30 transition-colors"
                           >
                             <Minus className="h-3.5 w-3.5" />
@@ -107,14 +108,14 @@ const CartPage = () => {
                             {item.quantity}
                           </span>
                           <button
-                            onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                            onClick={() => updateQuantity(cartLineId(item), item.quantity + 1)}
                             className="w-8 h-8 rounded-lg bg-background/60 border border-border flex items-center justify-center hover:border-primary/30 transition-colors"
                           >
                             <Plus className="h-3.5 w-3.5" />
                           </button>
                         </div>
                         <button
-                          onClick={() => removeItem(item.productId)}
+                          onClick={() => removeItem(cartLineId(item))}
                           className="text-muted-foreground hover:text-destructive transition-colors p-2"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -149,18 +150,7 @@ const CartPage = () => {
                           </div>
                         )}
 
-                        {/* Dimensions per item */}
-                        {items.some((i) => i.dimensions) && (
-                          <div className="border-t border-border/30 pt-2 space-y-1.5">
-                            <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Габариты</p>
-                            {items.map((item) => item.dimensions && (
-                              <div key={item.productId} className="text-xs text-muted-foreground">
-                                <span className="text-foreground/70">{item.name}:</span> {item.dimensions}
-                                {item.quantity > 1 && <span className="text-foreground/50"> × {item.quantity}</span>}
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                        <OrderDimsSummary items={items} />
 
                         <div className="flex justify-between text-sm border-t border-border/30 pt-3">
                           <span className="text-muted-foreground">Доставка</span>

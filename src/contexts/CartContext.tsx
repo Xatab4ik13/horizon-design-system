@@ -13,7 +13,15 @@ export interface CartItem {
   /** Габариты/вес с упаковкой — только для оформления заказа */
   packedDimensions?: string;
   packedWeight?: string;
+  areaM2?: number;
+  volumeM3?: number;
+  packedAreaM2?: number;
+  packedVolumeM3?: number;
+  /** Уникальная строка корзины: товар + выбранные параметры */
+  lineId?: string;
 }
+
+export const cartLineId = (i: { productId: string; lineId?: string }) => i.lineId ?? i.productId;
 
 interface CartContextType {
   items: CartItem[];
@@ -44,31 +52,26 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [items]);
 
   const addItem = (item: Omit<CartItem, "quantity">, quantity = 1) => {
+    const lineId = item.lineId ?? `${item.productId}|${JSON.stringify(item.variations ?? {})}|${item.price}`;
     setItems((prev) => {
-      const existing = prev.find((i) => i.productId === item.productId);
+      const existing = prev.find((i) => cartLineId(i) === lineId);
       if (existing) {
-        return prev.map((i) =>
-          i.productId === item.productId
-            ? { ...i, quantity: i.quantity + quantity }
-            : i
-        );
+        return prev.map((i) => (cartLineId(i) === lineId ? { ...i, quantity: i.quantity + quantity } : i));
       }
-      return [...prev, { ...item, quantity }];
+      return [...prev, { ...item, lineId, quantity }];
     });
   };
 
-  const removeItem = (productId: string) => {
-    setItems((prev) => prev.filter((i) => i.productId !== productId));
+  const removeItem = (id: string) => {
+    setItems((prev) => prev.filter((i) => cartLineId(i) !== id));
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = (id: string, quantity: number) => {
     if (quantity <= 0) {
-      removeItem(productId);
+      removeItem(id);
       return;
     }
-    setItems((prev) =>
-      prev.map((i) => (i.productId === productId ? { ...i, quantity } : i))
-    );
+    setItems((prev) => prev.map((i) => (cartLineId(i) === id ? { ...i, quantity } : i)));
   };
 
   const clearCart = () => setItems([]);
