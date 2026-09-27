@@ -6,7 +6,7 @@ import {
   X, Droplets, MessageCircle, ThumbsUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { categories } from "@/data/products";
+import { categories, isPricingActive, materialSizes, materialCoatings } from "@/data/products";
 import { useDbProduct, useDbProducts } from "@/lib/dbProducts";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -266,21 +266,25 @@ const ProductPage = () => {
 
   // ─── Калькулятор цены за м² (включён в админке у конкретного товара) ───
   const pricing = product?.pricing;
-  const pricingActive = !!(
-    pricing?.enabled &&
-    (pricing.materials ?? []).length > 0 &&
-    (pricing.sizes ?? []).length > 0
-  );
-  const pm = pricingActive ? pricing!.materials[Math.min(selPricing.m, pricing!.materials.length - 1)] : undefined;
-  const ps = pricingActive ? pricing!.sizes[Math.min(selPricing.s, pricing!.sizes.length - 1)] : undefined;
-  const pc = pricingActive && (pricing!.coatings ?? []).length
-    ? pricing!.coatings[Math.min(selPricing.c, pricing!.coatings.length - 1)]
-    : undefined;
+  const pricingActive = isPricingActive(pricing);
+  const pmList = pricingActive ? pricing!.materials.filter((m) => materialSizes(pricing!, m).length > 0) : [];
+  const pm = pricingActive ? pmList[Math.min(selPricing.m, pmList.length - 1)] : undefined;
+  const psList = pricingActive ? materialSizes(pricing!, pm) : [];
+  const pcList = pricingActive ? materialCoatings(pricing!, pm) : [];
+  const ps = psList.length ? psList[Math.min(selPricing.s, psList.length - 1)] : undefined;
+  const pc = pcList.length ? pcList[Math.min(selPricing.c, pcList.length - 1)] : undefined;
   const pricingAreaM2 = ps ? (ps.widthCm * ps.heightCm) / 10000 : 0;
   const pricingPrice = pm && ps ? Math.round(pricingAreaM2 * (pm.pricePerM2 + (pc?.pricePerM2 ?? 0))) : 0;
   const pricingWeight = pm?.densityKgM3 && ps
     ? pricingAreaM2 * ((ps.thicknessCm ?? 0) / 100) * pm.densityKgM3
     : 0;
+  // Упаковка — показывается только при оформлении заказа
+  const packedDimensions = ps && (ps.packWidthCm || ps.packHeightCm || ps.packThicknessCm)
+    ? `${ps.widthCm + (ps.packWidthCm ?? 0)} × ${ps.heightCm + (ps.packHeightCm ?? 0)} × ${(ps.thicknessCm ?? 0) + (ps.packThicknessCm ?? 0)} см`
+    : undefined;
+  const packedWeight = pm?.packWeightKg
+    ? `${Math.round((pricingWeight + pm.packWeightKg) * 100) / 100} кг`
+    : undefined;
 
   useEffect(() => {
     setSelPricing({ m: 0, s: 0, c: 0 });
