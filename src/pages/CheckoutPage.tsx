@@ -143,10 +143,10 @@ const CheckoutPage = () => {
           city: city.trim(),
           address: address.trim(),
           items: items.map((i) => {
-            const d = parseDims(i.dimensions);
+            const d = parseDims(i.packedDimensions ?? i.dimensions);
             return {
               width_cm: d.w, height_cm: d.h, depth_cm: d.d,
-              weight_kg: parseWeight(i.weight),
+              weight_kg: parseWeight(i.packedWeight ?? i.weight),
               price: i.price, quantity: i.quantity,
             };
           }),
@@ -629,6 +629,7 @@ const CheckoutPage = () => {
                           )}
                           <p className="text-xs text-muted-foreground">{item.quantity} × {formatPrice(item.price)}</p>
                           {item.dimensions && <p className="text-[10px] text-muted-foreground/70">{item.dimensions} · {item.weight}</p>}
+                          {(item.packedDimensions || item.packedWeight) && <p className="text-[10px] text-muted-foreground/70">С упаковкой: {[item.packedDimensions, item.packedWeight].filter(Boolean).join(" · ")}</p>}
                         </div>
                       </div>
                     ))}

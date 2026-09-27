@@ -564,17 +564,17 @@ const ProductPage = () => {
                     {
                       key: "m" as const,
                       label: "Порода",
-                      items: pricing!.materials.map((x, i) => ({ i, label: x.label })),
+                      items: pmList.map((x, i) => ({ i, label: x.label })),
                     },
                     {
                       key: "s" as const,
                       label: "Размер",
-                      items: pricing!.sizes.map((x, i) => ({ i, label: x.label })),
+                      items: psList.map((x, i) => ({ i, label: x.label })),
                     },
                     {
                       key: "c" as const,
                       label: "Покрытие",
-                      items: (pricing!.coatings ?? []).map((x, i) => ({ i, label: x.label })),
+                      items: pcList.map((x, i) => ({ i, label: x.label })),
                     },
                   ]
                     .filter((g) => g.items.length > 0)
@@ -583,7 +583,7 @@ const ProductPage = () => {
                         <label className="text-sm font-medium text-foreground mb-2 block">{g.label}</label>
                         <select
                           value={selPricing[g.key]}
-                          onChange={(e) => setSelPricing((p) => ({ ...p, [g.key]: Number(e.target.value) }))}
+                          onChange={(e) => { const v = Number(e.target.value); setSelPricing((p) => (g.key === "m" ? { m: v, s: 0, c: 0 } : { ...p, [g.key]: v })); }}
                           className="w-full px-4 py-2.5 rounded-xl bg-background/60 border border-border text-foreground focus:border-primary focus:outline-none transition-colors text-sm appearance-none cursor-pointer bg-[url('data:image/svg+xml;utf8,<svg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%23999%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27><polyline%20points=%276%209%2012%2015%2018%209%27/></svg>')] bg-no-repeat bg-[right_14px_center] pr-10"
                         >
                           {g.items.map((o) => (
@@ -734,6 +734,7 @@ const ProductPage = () => {
                     variationLabels: Object.keys(labels).length > 0 ? labels : undefined,
                     dimensions: currentDimensions,
                     weight: currentWeight,
+                    ...(pricingActive ? { packedDimensions, packedWeight } : {}),
                   });
                   reachGoal("add_to_cart", { product: product.name, price: computedPrice });
                   toast.success("Товар добавлен в корзину");

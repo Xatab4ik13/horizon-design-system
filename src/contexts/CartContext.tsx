@@ -10,6 +10,9 @@ export interface CartItem {
   variationLabels?: Record<string, string>;
   dimensions?: string;
   weight?: string;
+  /** Габариты/вес с упаковкой — только для оформления заказа */
+  packedDimensions?: string;
+  packedWeight?: string;
 }
 
 interface CartContextType {
