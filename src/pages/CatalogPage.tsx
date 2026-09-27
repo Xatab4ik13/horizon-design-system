@@ -1,9 +1,9 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Heart, ShoppingCart, SlidersHorizontal, ArrowLeft, ArrowUpDown } from "lucide-react";
+import { Heart, ArrowRight, SlidersHorizontal, ArrowLeft, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { categories, type Category } from "@/data/products";
+import { categories, minPricingPrice, type Category } from "@/data/products";
 import { useDbProducts } from "@/lib/dbProducts";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
@@ -75,7 +75,6 @@ const CatalogPage = () => {
   const header = usePageHeader("catalog", { title: "Категории каталога", subtitle: "" });
   const dbCategories = useProductCategories();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { addItem } = useCart();
   const { products, loading: productsLoading } = useDbProducts();
   const activeCategory = searchParams.get("category") || null;
   const activeSubcategory = searchParams.get("sub") || null;
