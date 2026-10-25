@@ -531,25 +531,28 @@ const CheckoutPage = () => {
                         <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
                         <span>Самовывоз выбран. Можно переходить к оплате.</span>
                       </div>
-                    ) : !quotes ? (
-                      <div className="flex items-start gap-2 text-xs text-foreground/80 bg-amber-500/5 border border-amber-500/30 rounded-xl p-3 mb-4">
-                        <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-amber-500" />
-                        <div>
-                          <p className="font-medium text-foreground mb-1">Расчёт стоимости доставки</p>
-                          <p className="text-muted-foreground">
-                            Введите город и адрес, выберите перевозчика и нажмите «Рассчитать стоимость».
-                            Стоимость считает сама транспортная компания по её тарифам: учитываются
-                            размеры и вес каждого товара с упаковкой (из карточки товара), количество и адрес доставки.
-                            Если расчёт недоступен — оформите заказ, менеджер уточнит стоимость доставки и свяжется с вами.
-                          </p>
+                    ) : (
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-start gap-2 text-xs text-foreground/80 bg-amber-500/5 border border-amber-500/30 rounded-xl p-3">
+                          <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-amber-500" />
+                          <div>
+                            <p className="font-medium text-foreground mb-1">Как считается стоимость доставки</p>
+                            <p className="text-muted-foreground">
+                              Введите город и адрес, выберите перевозчика и нажмите «Рассчитать стоимость».
+                              Стоимость считает сама транспортная компания по её тарифам: учитываются
+                              размеры и вес каждого товара с упаковкой (из карточки товара), количество и адрес доставки.
+                              Если расчёт недоступен — оформите заказ, менеджер уточнит стоимость доставки и свяжется с вами.
+                            </p>
+                          </div>
                         </div>
+                        {quotes && !selectedQuote?.ok && (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <AlertCircle className="h-3.5 w-3.5 text-primary/60" />
+                            <span>Тариф недоступен автоматически — менеджер пересчитает после оформления заказа.</span>
+                          </div>
+                        )}
                       </div>
-                    ) : !selectedQuote?.ok ? (
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
-                        <AlertCircle className="h-3.5 w-3.5 text-primary/60" />
-                        <span>Тариф недоступен автоматически — менеджер пересчитает после оформления заказа.</span>
-                      </div>
-                    ) : null}
+                    )}
 
                     <div className="flex gap-3">
                       <Button variant="outline" onClick={() => setStep(0)} className="rounded-xl">Назад</Button>
