@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import type { Context } from "react";
 
 export interface CartItem {
   productId: string;
@@ -55,7 +56,15 @@ interface CartContextType {
   totalPrice: number;
 }
 
-const CartContext = createContext<CartContextType | undefined>(undefined);
+// Контекст живёт на globalThis. При горячей перезагрузке модуля в dev-режиме
+// создаётся тот же объект контекста, иначе уже открытые компоненты (Header,
+// корзина, оформление) теряют провайдера и экран гаснет с ошибкой
+// «useCart must be used within CartProvider».
+type CartCtxStore = { ctx?: Context<CartContextType | undefined> };
+const cartCtxStore: CartCtxStore =
+  ((globalThis as unknown as Record<string, CartCtxStore | undefined>).__fakturaCartCtx ??= {});
+if (!cartCtxStore.ctx) cartCtxStore.ctx = createContext<CartContextType | undefined>(undefined);
+const CartContext = cartCtxStore.ctx;
 
 const STORAGE_KEY = "wood-shop-cart";
 
