@@ -280,9 +280,9 @@ const ProductPage = () => {
     : 0;
   // Упаковка — показывается только при оформлении заказа
   const packedDimensions = ps && (ps.packWidthCm || ps.packHeightCm || ps.packThicknessCm)
-    ? `${ps.widthCm + (ps.packWidthCm ?? 0)} × ${ps.heightCm + (ps.packHeightCm ?? 0)} × ${(ps.thicknessCm ?? 0) + (ps.packThicknessCm ?? 0)} см`
+    ? `${ps.heightCm + (ps.packHeightCm ?? 0)} × ${ps.widthCm + (ps.packWidthCm ?? 0)} × ${(ps.thicknessCm ?? 0) + (ps.packThicknessCm ?? 0)} см`
     : undefined;
-  const pricingDims = ps ? `${ps.widthCm} × ${ps.heightCm} × ${ps.thicknessCm ?? 0} см` : undefined;
+  const pricingDims = ps ? `${ps.heightCm} × ${ps.widthCm} × ${ps.thicknessCm ?? 0} см` : undefined;
   const pricingVolumeM3 = ps ? pricingAreaM2 * ((ps.thicknessCm ?? 0) / 100) : 0;
   const packW = ps ? ps.widthCm + (ps.packWidthCm ?? 0) : 0;
   const packH = ps ? ps.heightCm + (ps.packHeightCm ?? 0) : 0;

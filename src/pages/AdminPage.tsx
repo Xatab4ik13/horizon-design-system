@@ -1518,18 +1518,18 @@ const ProductEditor = ({
                     </div>
 
                     <div>
-                      <p className="text-[13px] text-[#888] mb-2">Размеры: название · Ш · Д · Т (см) · упаковка Ш · Д · Т (см, видно только при оформлении заказа)</p>
+                      <p className="text-[13px] text-[#888] mb-2">Размеры: название · Д · Ш · Т (см) · упаковка Д · Ш · Т (см, видно только при оформлении заказа)</p>
                       <div className="grid gap-2">
                         {sizes.map((s: any, si: number) => {
                           const upd = (patch: any) => setSub("sizes", sizes.map((r, j) => (j === si ? { ...r, ...patch } : r)));
                           return (
                             <div key={si} className="grid grid-cols-[1fr_80px_80px_80px_80px_80px_80px_auto] gap-2 items-center">
-                              <input value={s.label ?? ""} onChange={(e) => upd({ label: e.target.value })} className={ui.input} placeholder="100×200×5" />
-                              <input type="number" value={s.widthCm ?? ""} onChange={(e) => upd({ widthCm: num(e.target.value) })} className={ui.input} placeholder="Ш" />
+                              <input value={s.label ?? ""} onChange={(e) => upd({ label: e.target.value })} className={ui.input} placeholder="200×100×5" />
                               <input type="number" value={s.heightCm ?? ""} onChange={(e) => upd({ heightCm: num(e.target.value) })} className={ui.input} placeholder="Д" />
+                              <input type="number" value={s.widthCm ?? ""} onChange={(e) => upd({ widthCm: num(e.target.value) })} className={ui.input} placeholder="Ш" />
                               <input type="number" value={s.thicknessCm ?? ""} onChange={(e) => upd({ thicknessCm: num(e.target.value) })} className={ui.input} placeholder="Т" />
-                              <input type="number" value={s.packWidthCm ?? ""} onChange={(e) => upd({ packWidthCm: num(e.target.value) })} className={`${ui.input} border-dashed`} placeholder="+Ш" />
                               <input type="number" value={s.packHeightCm ?? ""} onChange={(e) => upd({ packHeightCm: num(e.target.value) })} className={`${ui.input} border-dashed`} placeholder="+Д" />
+                              <input type="number" value={s.packWidthCm ?? ""} onChange={(e) => upd({ packWidthCm: num(e.target.value) })} className={`${ui.input} border-dashed`} placeholder="+Ш" />
                               <input type="number" value={s.packThicknessCm ?? ""} onChange={(e) => upd({ packThicknessCm: num(e.target.value) })} className={`${ui.input} border-dashed`} placeholder="+Т" />
                               <button onClick={() => setSub("sizes", sizes.filter((_, j) => j !== si))} className={`${ui.btn} ${ui.btnDanger}`}><X size={16} /></button>
                             </div>
