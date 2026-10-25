@@ -238,8 +238,8 @@ const ProductPage = () => {
     const sizes = uniq([product.dimensions, ...siblings.map((p) => p.dimensions)]);
     const vars: { type: string; label: string; options: { value: string; label: string }[] }[] = [];
     if (woods.length) vars.push({ type: "wood", label: "Материал", options: woods.map((v) => ({ value: v, label: v })) });
-    if (coatings.length) vars.push({ type: "coating", label: "Покрытие", options: coatings.map((v) => ({ value: v, label: v })) });
     if (sizes.length) vars.push({ type: "size", label: "Размеры", options: sizes.map((v) => ({ value: v, label: v })) });
+    if (coatings.length) vars.push({ type: "coating", label: "Покрытие", options: coatings.map((v) => ({ value: v, label: v })) });
     return vars;
   }, [siblings, product]);
 
