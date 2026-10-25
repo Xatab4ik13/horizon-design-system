@@ -35,3 +35,13 @@ services:
       GOTRUE_MAILER_TEMPLATES_RECOVERY: http://email-templates/recovery.html
       GOTRUE_MAILER_TEMPLATES_MAGIC_LINK: http://email-templates/magic_link.html
       GOTRUE_MAILER_TEMPLATES_EMAIL_CHANGE: http://email-templates/email_change.html
+
+  # Т-Касса (securepay.tinkoff.ru) подписана российским корневым сертификатом
+  # Минцифры, которого нет в стандартном наборе Deno. Без него оплата падает
+  # с "invalid peer certificate: UnknownIssuer". DENO_CERT добавляет его
+  # к стандартным доверенным сертификатам.
+  functions:
+    volumes:
+      - ./certs/russian_trusted_ca.pem:/etc/ssl/russian_trusted_ca.pem:ro,z
+    environment:
+      DENO_CERT: /etc/ssl/russian_trusted_ca.pem
