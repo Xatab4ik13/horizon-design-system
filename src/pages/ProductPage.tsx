@@ -237,7 +237,7 @@ const ProductPage = () => {
     const coatings = uniq([product.coating, ...siblings.map((p) => p.coating)]);
     const sizes = uniq([product.dimensions, ...siblings.map((p) => p.dimensions)]);
     const vars: { type: string; label: string; options: { value: string; label: string }[] }[] = [];
-    if (woods.length) vars.push({ type: "wood", label: "Порода", options: woods.map((v) => ({ value: v, label: v })) });
+    if (woods.length) vars.push({ type: "wood", label: "Материал", options: woods.map((v) => ({ value: v, label: v })) });
     if (coatings.length) vars.push({ type: "coating", label: "Покрытие", options: coatings.map((v) => ({ value: v, label: v })) });
     if (sizes.length) vars.push({ type: "size", label: "Размеры", options: sizes.map((v) => ({ value: v, label: v })) });
     return vars;
@@ -564,13 +564,13 @@ const ProductPage = () => {
               {/* Description */}
               <p className="text-foreground/80 leading-relaxed mb-6 text-justify hyphens-auto">{product.description}</p>
 
-              {/* ─── Калькулятор за м²: Порода → Размер → Покрытие ─── */}
+              {/* ─── Калькулятор за м²: Материал → Размер → Покрытие ─── */}
               {pricingActive && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                   {[
                     {
                       key: "m" as const,
-                      label: "Порода",
+                      label: "Материал",
                       items: pmList.map((x, i) => ({ i, label: x.label })),
                     },
                     {
@@ -643,8 +643,8 @@ const ProductPage = () => {
                   { label: "Производитель", value: sp.manufacturer },
                   { label: "Наличие на складе", value: sp.stock_status || (product.inStock ? "В наличии" : "Под заказ (2–3 нед.)") },
                   { label: "Наименование товара", value: product.name },
-                  { label: "Порода", value: currentMaterial },
-                  { label: "Размер", value: currentDimensions },
+                  { label: "Материал", value: currentMaterial },
+                  { label: "Размер", value: pricingActive && pricingDims ? pricingDims : currentDimensions },
                   { label: "Покрытие", value: currentCoating },
                   { label: "Площадь", value: area },
                 ].filter((r) => r.value);
@@ -667,17 +667,17 @@ const ProductPage = () => {
               <div className="flex gap-3 mb-4 mt-auto">
                 <Button size="lg" className="flex-1 gap-2 rounded-full" onClick={() => {
                   const labels: Record<string, string> = {};
-                  if (currentMaterial) labels["Порода"] = currentMaterial;
+                  if (currentMaterial) labels["Материал"] = currentMaterial;
+                  const dimsLabel = pricingActive && pricingDims ? pricingDims : currentDimensions;
+                  if (dimsLabel) labels["Размеры"] = dimsLabel;
                   if (currentCoating) labels["Покрытие"] = currentCoating;
-                  if (currentDimensions) labels["Размеры"] = currentDimensions;
-                  if (product.packageInfo) labels["Комплектация"] = product.packageInfo;
                   addItem({
                     productId: product.id,
                     name: product.name,
                     price: computedPrice,
                     image: displayImages[0] ?? product.images[0],
                     variations: pricingActive
-                      ? { wood: currentMaterial, size: currentDimensions, coating: currentCoating }
+                      ? { wood: currentMaterial, size: dimsLabel, coating: currentCoating }
                       : Object.keys(selectedVariations).length > 0 ? selectedVariations : undefined,
                     variationLabels: Object.keys(labels).length > 0 ? labels : undefined,
                     dimensions: currentDimensions,
