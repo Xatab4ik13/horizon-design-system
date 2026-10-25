@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
-import { useCart, cartLineId } from "@/contexts/CartContext";
+import { useCart, cartLineId, cartLineSummary } from "@/contexts/CartContext";
 import OrderDimsSummary from "@/components/OrderDimsSummary";
 
 const CartPage = () => {
@@ -81,16 +81,26 @@ const CartPage = () => {
                         {item.name}
                       </Link>
 
-                      {/* Variation labels */}
-                      {item.variationLabels && Object.keys(item.variationLabels).length > 0 && (
-                        <div className="mt-1.5 space-y-0.5">
-                          {Object.entries(item.variationLabels).map(([key, val]) => (
-                            <p key={key} className="text-xs text-muted-foreground">
-                              {key}: <span className="text-foreground/70">{val}</span>
-                            </p>
-                          ))}
-                        </div>
-                      )}
+                      {/* Параметры строки: материал, размер, покрытие, вес */}
+                      {(() => {
+                        const s = cartLineSummary(item);
+                        const rows = [
+                          ["Материал", s.material],
+                          ["Размер (Д-Ш-Т)", s.size],
+                          ["Покрытие", s.coating],
+                          ["Вес", s.weight],
+                        ].filter(([, v]) => v);
+                        if (!rows.length) return null;
+                        return (
+                          <div className="mt-1.5 space-y-0.5">
+                            {rows.map(([k, v]) => (
+                              <p key={k} className="text-xs text-muted-foreground">
+                                {k}: <span className="text-foreground/70">{v}</span>
+                              </p>
+                            ))}
+                          </div>
+                        );
+                      })()}
 
                       <p className="text-primary font-bold text-lg mt-2">
                         {formatPrice(item.price)}

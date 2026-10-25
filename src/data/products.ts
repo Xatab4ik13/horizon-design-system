@@ -280,7 +280,7 @@ export const products: Product[] = [
     variations: [
       {
         type: "wood",
-        label: "Порода дерева",
+        label: "Материал",
         options: [
           { value: "ash", label: "Ясень" },
           { value: "oak", label: "Дуб", priceModifier: 8000 },
@@ -330,7 +330,7 @@ export const products: Product[] = [
       },
       {
         type: "wood",
-        label: "Порода дерева",
+        label: "Материал",
         options: [
           { value: "beech", label: "Бук" },
           { value: "oak", label: "Дуб", priceModifier: 10000 },
@@ -383,7 +383,7 @@ export const products: Product[] = [
       },
       {
         type: "wood",
-        label: "Порода дерева",
+        label: "Материал",
         options: [
           { value: "birch", label: "Берёза" },
           { value: "oak", label: "Дуб", priceModifier: 5000 },
@@ -436,7 +436,7 @@ export const products: Product[] = [
       },
       {
         type: "wood",
-        label: "Порода дерева",
+        label: "Материал",
         options: [
           { value: "oak", label: "Дуб" },
           { value: "ash", label: "Ясень", priceModifier: -2000 },
@@ -479,7 +479,7 @@ export const products: Product[] = [
     variations: [
       {
         type: "size",
-        label: "Комплектация",
+        label: "Размеры",
         options: [
           { value: "single-l", label: "Одна большая (90 см)", priceModifier: -7000 },
           { value: "single-s", label: "Одна малая (60 см)", priceModifier: -11000 },
@@ -488,7 +488,7 @@ export const products: Product[] = [
       },
       {
         type: "wood",
-        label: "Порода дерева",
+        label: "Материал",
         options: [
           { value: "ash", label: "Ясень" },
           { value: "oak", label: "Дуб", priceModifier: 5000 },

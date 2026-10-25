@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { useCart, cartLineId } from "@/contexts/CartContext";
+import { useCart, cartLineId, cartLineSummary } from "@/contexts/CartContext";
 import OrderDimsSummary from "@/components/OrderDimsSummary";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -539,7 +539,7 @@ const CheckoutPage = () => {
                           <p className="text-muted-foreground">
                             Введите город и адрес, выберите перевозчика и нажмите «Рассчитать стоимость».
                             Стоимость считает сама транспортная компания по её тарифам: учитываются
-                            габариты и вес каждого товара с упаковкой (из карточки товара), количество и адрес доставки.
+                            размеры и вес каждого товара с упаковкой (из карточки товара), количество и адрес доставки.
                             Если расчёт недоступен — оформите заказ, менеджер уточнит стоимость доставки и свяжется с вами.
                           </p>
                         </div>
@@ -621,21 +621,35 @@ const CheckoutPage = () => {
                 <div className="bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-6 sticky top-36">
                   <h3 className="text-lg font-bold text-foreground mb-4">Ваш заказ</h3>
                   <div className="space-y-3 mb-4 max-h-60 overflow-y-auto">
-                    {items.map((item) => (
-                      <div key={cartLineId(item)} className="flex gap-3">
-                        <img src={item.image} alt={item.name} loading="lazy" decoding="async" className="w-14 h-14 object-cover rounded-lg shrink-0" />
-                        <div className="min-w-0">
-                          <p className="text-foreground text-sm font-medium line-clamp-1">{item.name}</p>
-                          {item.variationLabels && Object.keys(item.variationLabels).length > 0 && (
-                            <p className="text-[10px] text-muted-foreground mt-0.5">
-                              {Object.entries(item.variationLabels).map(([k, v]) => `${k}: ${v}`).join(" · ")}
+                    {items.map((item) => {
+                      const s = cartLineSummary(item);
+                      const rows = [
+                        ["Материал", s.material],
+                        ["Размер (Д-Ш-Т)", s.size],
+                        ["Покрытие", s.coating],
+                        ["Вес", s.weight],
+                      ].filter(([, v]) => v);
+                      return (
+                        <div key={cartLineId(item)} className="flex gap-3">
+                          <img src={item.image} alt={item.name} loading="lazy" decoding="async" className="w-14 h-14 object-cover rounded-lg shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-foreground text-sm font-medium line-clamp-1">
+                              {item.name}{item.quantity > 1 ? ` × ${item.quantity}` : ""}
                             </p>
-                          )}
-                          <p className="text-xs text-muted-foreground">{item.quantity} × {formatPrice(item.price)}</p>
-                          {item.dimensions && <p className="text-[10px] text-muted-foreground/70">{item.dimensions} · {item.weight}</p>}
+                            {rows.length > 0 && (
+                              <dl className="mt-1 space-y-0.5 text-[11px]">
+                                {rows.map(([k, v]) => (
+                                  <div key={k} className="flex items-baseline justify-between gap-3">
+                                    <dt className="text-muted-foreground shrink-0">{k}</dt>
+                                    <dd className="text-foreground/80 text-right truncate">{v}</dd>
+                                  </div>
+                                ))}
+                              </dl>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                   <div className="mb-4"><OrderDimsSummary items={items} packed /></div>
                   <div className="space-y-2 pt-4 border-t border-border/50 text-sm">

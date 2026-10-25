@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import type { Context } from "react";
 
 export interface CartItem {
   productId: string;
@@ -23,6 +24,28 @@ export interface CartItem {
 
 export const cartLineId = (i: { productId: string; lineId?: string }) => i.lineId ?? i.productId;
 
+const pickLabel = (labels: Record<string, string> | undefined, names: string[]) => {
+  if (!labels) return "";
+  for (const n of names) {
+    const key = Object.keys(labels).find((k) => k.trim().toLowerCase() === n);
+    if (key && labels[key]) return labels[key].trim();
+  }
+  return "";
+};
+
+/** Краткие параметры строки корзины: материал, размер (Д-Ш-Т), покрытие, вес */
+export const cartLineSummary = (i: CartItem) => ({
+  material:
+    pickLabel(i.variationLabels, ["материал", "порода", "порода дерева"]) || i.variations?.wood || "",
+  size:
+    (i.dimensions || "").replace(/\s*см\s*$/i, "").trim() ||
+    pickLabel(i.variationLabels, ["размеры", "размер"]) ||
+    i.variations?.size ||
+    "",
+  coating: pickLabel(i.variationLabels, ["покрытие"]) || i.variations?.coating || "",
+  weight: (i.weight || "").trim(),
+});
+
 interface CartContextType {
   items: CartItem[];
   addItem: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
@@ -33,7 +56,15 @@ interface CartContextType {
   totalPrice: number;
 }
 
-const CartContext = createContext<CartContextType | undefined>(undefined);
+// Контекст живёт на globalThis. При горячей перезагрузке модуля в dev-режиме
+// создаётся тот же объект контекста, иначе уже открытые компоненты (Header,
+// корзина, оформление) теряют провайдера и экран гаснет с ошибкой
+// «useCart must be used within CartProvider».
+type CartCtxStore = { ctx?: Context<CartContextType | undefined> };
+const cartCtxStore: CartCtxStore =
+  ((globalThis as unknown as Record<string, CartCtxStore | undefined>).__fakturaCartCtx ??= {});
+if (!cartCtxStore.ctx) cartCtxStore.ctx = createContext<CartContextType | undefined>(undefined);
+const CartContext = cartCtxStore.ctx;
 
 const STORAGE_KEY = "wood-shop-cart";
 
