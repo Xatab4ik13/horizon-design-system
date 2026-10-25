@@ -1229,7 +1229,7 @@ const ProductEditor = ({
             />
           </div>
           <div>
-            <label className={ui.label}>Порода</label>
+            <label className={ui.label}>Материал</label>
             <input
               value={form.wood_species ?? ""}
               onChange={(e) => setForm((f: any) => ({ ...f, wood_species: e.target.value || null }))}

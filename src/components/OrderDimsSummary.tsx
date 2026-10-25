@@ -22,13 +22,13 @@ const OrderDimsSummary = ({ items, packed = false }: { items: CartItem[]; packed
   return (
     <div className="border-t border-border/30 pt-3 space-y-3">
       <p className="text-[11px] text-muted-foreground uppercase tracking-wider">
-        {packed ? "Габаритные размеры с упаковкой" : "Габариты"}
+        {packed ? "Размеры с упаковкой" : "Размеры"}
       </p>
       {rows.map((r) => (
         <dl key={r.id} className="text-xs grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
           <dt className="text-muted-foreground">Товар</dt>
           <dd className="text-foreground text-right">{r.name}{r.qty > 1 ? ` × ${r.qty}` : ""}</dd>
-          <dt className="text-muted-foreground">Габариты, см</dt>
+          <dt className="text-muted-foreground">Размеры, см</dt>
           <dd className="text-foreground text-right">{r.dims.replace(/\s*см$/, "")}</dd>
           <dt className="text-muted-foreground">Площадь, м²</dt>
           <dd className="text-foreground text-right">{r.area ? fmt(r.area, 4) : "—"}</dd>

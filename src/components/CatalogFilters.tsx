@@ -60,7 +60,7 @@ const CatalogFilters = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Wood type */}
               <div>
-                <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Порода дерева</p>
+                <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">Материал</p>
                 <div className="flex flex-wrap gap-2">
                   {woodTypes.map((wood) => (
                     <button
