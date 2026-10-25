@@ -22,7 +22,8 @@ import logoYandex from "@/assets/logo-yandex-delivery.png";
 const parseDims = (s?: string) => {
   if (!s) return { w: 30, h: 30, d: 30 };
   const nums = s.match(/\d+(?:[.,]\d+)?/g)?.map((n) => Number(n.replace(",", "."))) ?? [];
-  return { w: nums[0] ?? 30, h: nums[1] ?? 30, d: nums[2] ?? 30 };
+  // Порядок в строке габаритов: Д × Ш × Т
+  return { w: nums[1] ?? 30, h: nums[0] ?? 30, d: nums[2] ?? 30 };
 };
 const parseWeight = (s?: string) => {
   if (!s) return 1;
