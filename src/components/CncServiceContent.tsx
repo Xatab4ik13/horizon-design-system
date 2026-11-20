@@ -1,3 +1,4 @@
+import React from "react";
 import { CNC_SERVICE, workshopMapUrl } from "../data/cnc-service";
 
 // Used both in the live page and the generated HTML, without separate crawler copy.
