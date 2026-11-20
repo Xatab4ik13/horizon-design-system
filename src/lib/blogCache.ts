@@ -29,16 +29,17 @@ export function fetchBlogList(): Promise<BlogPostListRow[]> {
   if (listCache) return Promise.resolve(listCache);
   if (listInflight) return listInflight;
   listInflight = (async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("blog_posts")
       .select("id, slug, title, excerpt, cover_image, published_at, created_at, seo_title, seo_description")
       .eq("is_published", true)
       .order("published_at", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false });
+    if (error) throw error;
     listCache = (data as BlogPostListRow[]) ?? [];
     // Seed post cache partials so post page can render headers instantly
     return listCache;
-  })();
+  })().finally(() => { listInflight = null; });
   return listInflight;
 }
 
@@ -52,16 +53,16 @@ export function fetchBlogPost(slug: string): Promise<BlogPostFullRow | null> {
   const inflight = postInflight.get(slug);
   if (inflight) return inflight;
   const p = (async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("blog_posts")
       .select("*")
       .eq("slug", slug)
       .eq("is_published", true)
       .maybeSingle();
+    if (error) throw error;
     if (data) postCache.set(slug, data as BlogPostFullRow);
-    postInflight.delete(slug);
     return (data as BlogPostFullRow) ?? null;
-  })();
+  })().finally(() => { postInflight.delete(slug); });
   postInflight.set(slug, p);
   return p;
 }

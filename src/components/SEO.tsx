@@ -6,7 +6,6 @@ const SITE_URL = "https://faktura-wood.com";
 const SITE_NAME = "FAKTURA";
 const DEFAULT_TITLE = "FAKTURA — Мастерская изделий из натурального дерева";
 const DEFAULT_DESCRIPTION = "Уникальные изделия ручной работы из массива дерева: панно, зеркала, мебель, кухонные аксессуары. Индивидуальные заказы, доставка по России.";
-const DEFAULT_IMAGE = `${SITE_URL}/og-image.jpg`;
 
 interface SEOProps {
   title?: string;
@@ -31,7 +30,7 @@ interface SEOProps {
 const SEO = ({
   title,
   description = DEFAULT_DESCRIPTION,
-  image = DEFAULT_IMAGE,
+  image,
   type = "website",
   canonical,
   noindex = false,
@@ -55,7 +54,8 @@ const SEO = ({
     : effectiveTitle
       ? `${effectiveTitle} | ${SITE_NAME}`
       : DEFAULT_TITLE;
-  const canonicalUrl = canonical || `${SITE_URL}${location.pathname}`;
+  const category = location.pathname === "/catalog" ? new URLSearchParams(location.search).get("category") : null;
+  const canonicalUrl = canonical || `${SITE_URL}${location.pathname}${category ? `?category=${encodeURIComponent(category)}` : ""}`;
 
   useEffect(() => {
     document.title = fullTitle;
@@ -82,7 +82,8 @@ const SEO = ({
     setMeta("property", "og:description", effectiveDescription);
     setMeta("property", "og:type", type);
     setMeta("property", "og:url", canonicalUrl);
-    setMeta("property", "og:image", effectiveImage);
+    // Text-only messenger previews are intentional.
+    document.querySelectorAll('meta[property="og:image"], meta[name="twitter:image"]').forEach(el => el.remove());
     setMeta("property", "og:site_name", SITE_NAME);
     setMeta("property", "og:locale", "ru_RU");
 
@@ -92,10 +93,9 @@ const SEO = ({
       if (article.section) setMeta("property", "article:section", article.section);
     }
 
-    setMeta("name", "twitter:card", "summary_large_image");
+    setMeta("name", "twitter:card", "summary");
     setMeta("name", "twitter:title", fullTitle);
     setMeta("name", "twitter:description", effectiveDescription);
-    setMeta("name", "twitter:image", effectiveImage);
 
     let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
     if (!link) {

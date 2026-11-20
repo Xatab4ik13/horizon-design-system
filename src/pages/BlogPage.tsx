@@ -24,12 +24,17 @@ const BlogPage = () => {
   const cached = getCachedBlogList();
   const [posts, setPosts] = useState<BlogPostRow[]>(cached ?? []);
   const [loading, setLoading] = useState(!cached);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     fetchBlogList().then((data) => {
       if (cancelled) return;
       setPosts(data);
+      setLoading(false);
+    }).catch(() => {
+      if (cancelled) return;
+      setLoadError(true);
       setLoading(false);
     });
     return () => {
@@ -94,6 +99,8 @@ const BlogPage = () => {
             <div className="flex justify-center py-20">
               <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
+          ) : loadError ? (
+            <p role="alert" className="text-center py-20 text-muted-foreground">Не удалось загрузить статьи. Попробуйте обновить страницу позже.</p>
           ) : posts.length === 0 ? (
             <div className="text-center py-20 text-muted-foreground">
               Статьи скоро появятся

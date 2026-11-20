@@ -2,29 +2,19 @@
 // Fetches dynamic entries (blog posts, products, categories) from the same API the site uses,
 // reading VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY from .env at build time.
 
-import { readFileSync, writeFileSync, existsSync } from "fs";
+import { writeFileSync } from "fs";
 import { resolve } from "path";
+import { pathToFileURL } from "node:url";
+import { SITE_URL, publicRows, publishedArticles } from "./seo-data";
 
 // Домен боевого сайта (уже используется в robots.txt).
-const BASE_URL = "https://faktura-wood.com";
+const BASE_URL = SITE_URL;
 
 interface SitemapEntry {
   path: string;
   lastmod?: string;
   changefreq?: "always" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "never";
   priority?: string;
-}
-
-function loadEnv(): Record<string, string> {
-  const env: Record<string, string> = {};
-  for (const file of [".env", ".env.production", ".env.local"]) {
-    if (!existsSync(resolve(file))) continue;
-    for (const line of readFileSync(resolve(file), "utf8").split("\n")) {
-      const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*"?([^"\n]*)"?\s*$/);
-      if (m) env[m[1]] = m[2];
-    }
-  }
-  return env;
 }
 
 function xmlEscape(s: string): string {
@@ -39,45 +29,24 @@ const staticEntries: SitemapEntry[] = [
   { path: "/services", changefreq: "monthly", priority: "0.7" },
   { path: "/delivery", changefreq: "monthly", priority: "0.6" },
   { path: "/contacts", changefreq: "monthly", priority: "0.6" },
+  { path: "/about", changefreq: "monthly", priority: "0.6" },
 ];
 
-async function fetchRows(restUrl: string, headers: Record<string, string>): Promise<SitemapEntry[]> {
-  const entries: SitemapEntry[] = [];
-  // Категории каталога (активные)
-  try {
-    const res = await fetch(`${restUrl}/product_categories?select=slug&is_active=eq.true&order=sort_order.asc`, { headers });
-    if (res.ok) {
-      const rows = (await res.json()) as { slug: string }[];
-      for (const r of rows) {
-        entries.push({ path: `/catalog?category=${encodeURIComponent(r.slug)}`, changefreq: "weekly", priority: "0.8" });
-      }
-    }
-  } catch { /* категории опциональны */ }
-  // Товары (активные)
-  try {
-    const res = await fetch(`${restUrl}/products?select=id&is_active=eq.true`, { headers });
-    if (res.ok) {
-      const rows = (await res.json()) as { id: string }[];
-      for (const r of rows) {
-        entries.push({ path: `/product/${encodeURIComponent(r.id)}`, changefreq: "weekly", priority: "0.8" });
-      }
-    }
-  } catch { /* товары опциональны */ }
-  // Статьи блога (опубликованные)
-  try {
-    const res = await fetch(`${restUrl}/blog_posts?select=slug,published_at,created_at&is_published=eq.true&order=published_at.desc`, { headers });
-    if (res.ok) {
-      const rows = (await res.json()) as { slug: string; published_at: string | null; created_at: string | null }[];
-      for (const r of rows) {
-        const date = (r.published_at ?? r.created_at)?.slice(0, 10);
-        entries.push({ path: `/blog/${encodeURIComponent(r.slug)}`, lastmod: date, changefreq: "monthly", priority: "0.6" });
-      }
-    }
-  } catch { /* блог опционален */ }
-  return entries;
+async function fetchRows(): Promise<SitemapEntry[]> {
+  const [categories, products, posts] = await Promise.all([
+    publicRows<{ slug: string }>("product_categories?select=slug&is_active=eq.true&order=sort_order.asc,slug.asc"),
+    publicRows<{ id: string }>("products?select=id&is_active=eq.true&order=id.asc"),
+    publishedArticles(),
+  ]);
+  // Publication date is page-specific; never substitute build time or creation time.
+  return [
+    ...categories.map(r => ({ path: `/catalog?category=${encodeURIComponent(r.slug)}`, priority: "0.8" })),
+    ...products.map(r => ({ path: `/product/${encodeURIComponent(r.id)}`, priority: "0.8" })),
+    ...posts.map(r => ({ path: `/blog/${encodeURIComponent(r.slug)}`, lastmod: r.published_at?.slice(0, 10), priority: "0.6" })),
+  ];
 }
 
-function generateSitemap(entries: SitemapEntry[]) {
+export function generateSitemap(entries: SitemapEntry[]) {
   const urls = entries.map((e) =>
     [
       `  <url>`,
@@ -101,21 +70,13 @@ function generateSitemap(entries: SitemapEntry[]) {
 }
 
 async function main() {
-  const env = loadEnv();
-  const url = (env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL || "").replace(/\/$/, "");
-  const key = env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || "";
-
-  let dynamicEntries: SitemapEntry[] = [];
-  if (url && key) {
-    const headers = { apikey: key, Authorization: `Bearer ${key}` };
-    dynamicEntries = await fetchRows(`${url}/rest/v1`, headers);
-  } else {
-    console.warn("sitemap: VITE_SUPABASE_URL/KEY не найдены — пишем только статические страницы");
-  }
+  const dynamicEntries = await fetchRows();
 
   const entries = [...staticEntries, ...dynamicEntries];
   writeFileSync(resolve("public/sitemap.xml"), generateSitemap(entries));
   console.log(`sitemap.xml written (${entries.length} entries: ${staticEntries.length} static + ${dynamicEntries.length} dynamic)`);
 }
 
-main();
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+  main().catch(error => { console.error(error.message); process.exitCode = 1; });
+}

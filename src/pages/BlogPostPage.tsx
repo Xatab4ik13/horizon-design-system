@@ -47,6 +47,7 @@ const BlogPostPage = () => {
   const [post, setPost] = useState<BlogPostRow | null>(initial);
   const [loading, setLoading] = useState(!initial);
   const [notFound, setNotFound] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     if (!slug) {
@@ -62,6 +63,8 @@ const BlogPostPage = () => {
       return;
     }
     let cancelled = false;
+    setPost(null);
+    setLoadError(false);
     setLoading(true);
     setNotFound(false);
     fetchBlogPost(slug).then((data) => {
@@ -73,6 +76,10 @@ const BlogPostPage = () => {
         setPost(data);
       }
       setLoading(false);
+    }).catch(() => {
+      if (cancelled) return;
+      setLoading(false);
+      setLoadError(true);
     });
     return () => {
       cancelled = true;
@@ -108,6 +115,7 @@ const BlogPostPage = () => {
           ]}
         />
       )}
+      {notFound && <SEO title="Статья не найдена" noindex />}
       <Header />
       <main className="pt-32 pb-20">
         <div className="container mx-auto px-4 max-w-3xl">
@@ -123,6 +131,8 @@ const BlogPostPage = () => {
             <div className="flex justify-center py-20">
               <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
+          ) : loadError ? (
+            <p role="alert" className="text-center py-20 text-muted-foreground">Не удалось загрузить статью. Попробуйте обновить страницу позже.</p>
           ) : notFound || !post ? (
             <div className="text-center py-20">
               <p className="text-xl text-foreground mb-4">Статья не найдена</p>

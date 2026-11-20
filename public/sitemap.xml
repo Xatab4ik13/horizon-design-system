@@ -36,203 +36,269 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://faktura-wood.com/catalog?category=furniture</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <loc>https://faktura-wood.com/about</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://faktura-wood.com/catalog?category=kitchen</loc>
-    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/catalog?category=furniture</loc>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://faktura-wood.com/catalog?category=storage</loc>
-    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://faktura-wood.com/catalog?category=interior</loc>
-    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://faktura-wood.com/catalog?category=crafts</loc>
-    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://faktura-wood.com/catalog?category=doors</loc>
-    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://faktura-wood.com/product/579767e1-d918-49ae-b79a-0aa3e8246ad3</loc>
-    <changefreq>weekly</changefreq>
+    <loc>https://faktura-wood.com/product/2e1aa968-ad01-4e52-96c0-5a2aec2793d1</loc>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://faktura-wood.com/product/715a94ed-9331-4085-b524-13a786e86574</loc>
-    <changefreq>weekly</changefreq>
+    <loc>https://faktura-wood.com/product/33c188d6-083c-4ee8-876c-3cf92624b010</loc>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://faktura-wood.com/product/268d8a3d-6767-4180-af55-733a3a125944</loc>
-    <changefreq>weekly</changefreq>
+    <loc>https://faktura-wood.com/product/445221ad-11fc-46a3-b4a4-5ef6ebce2cff</loc>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://faktura-wood.com/product/407742f4-0731-4c17-8ede-4a69a2590e99</loc>
-    <changefreq>weekly</changefreq>
+    <loc>https://faktura-wood.com/product/451ed4f6-a213-4125-9720-bbe314b95d6e</loc>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://faktura-wood.com/blog/epoksidnaya-smola-i-derevo-stoly-reki</loc>
-    <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://faktura-wood.com/product/80ea9372-52ee-43b8-ad57-bcc2c2d1aa85</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/product/84659b7e-67c2-428b-bde5-fecaefef3589</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/product/8778b244-0c3d-4654-9de5-d795a971a78b</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/product/986cc96b-e4dd-4c70-9683-50b0813f1727</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/blog/dostavka-mebeli-iz-massiva-po-rossii</loc>
+    <lastmod>2026-10-25</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://faktura-wood.com/blog/tsena-mebeli-na-zakaz</loc>
-    <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://faktura-wood.com/blog/kakoy-razmer-obedennogo-stola-vybrat</loc>
+    <lastmod>2026-10-25</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://faktura-wood.com/blog/kak-zakazat-mebel-v-masterskoy</loc>
-    <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://faktura-wood.com/blog/kak-uhazhivat-za-stolom-iz-massiva</loc>
+    <lastmod>2026-10-25</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://faktura-wood.com/blog/uhod-za-derevyannymi-dveryami</loc>
-    <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://faktura-wood.com/blog/massiv-shpon-ili-mdf-kak-otlichit</loc>
+    <lastmod>2026-10-25</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/blog/kakoe-derevo-vybrat-dlya-mebeli-dub-yasen-klen-oreh</loc>
+    <lastmod>2026-10-25</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/blog/podarki-iz-dereva</loc>
+    <lastmod>2026-09-20</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/blog/komod-i-shkaf-iz-massiva-sosna-dub-buk</loc>
+    <lastmod>2026-09-20</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/blog/razdelochnaya-doska-iz-dereva</loc>
+    <lastmod>2026-09-20</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/blog/zerkalo-v-derevyannoy-rame</loc>
+    <lastmod>2026-09-20</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/blog/mebel-na-zakaz-spb-kak-prohodit-rabota</loc>
+    <lastmod>2026-09-20</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/blog/kak-otlichit-massiv-ot-shpona</loc>
+    <lastmod>2026-09-20</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/blog/derevyannaya-stoleshnica-na-kuhnyu</loc>
+    <lastmod>2026-09-20</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/blog/krovat-iz-massiva-kakoe-derevo-vybrat</loc>
+    <lastmod>2026-09-20</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/blog/stol-iz-sleba-i-epoksidnoy-smoly</loc>
+    <lastmod>2026-09-20</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/blog/chem-pokryt-stol-iz-sleba</loc>
+    <lastmod>2026-09-20</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/blog/skolko-stoit-stol-iz-sleba</loc>
+    <lastmod>2026-09-20</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://faktura-wood.com/blog/derevo-v-interere-sochetanie-porod</loc>
     <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://faktura-wood.com/blog/stoleshnica-iz-massiva-dlya-kuhni</loc>
+    <loc>https://faktura-wood.com/blog/epoksidnaya-smola-i-derevo-stoly-reki</loc>
     <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://faktura-wood.com/blog/restavraciya-derevyannoj-mebeli-chto-mozhno-spasti</loc>
+    <loc>https://faktura-wood.com/blog/kak-zakazat-mebel-v-masterskoy</loc>
     <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://faktura-wood.com/blog/sleb-stol-s-zhivym-kraem</loc>
+    <loc>https://faktura-wood.com/blog/tsena-mebeli-na-zakaz</loc>
     <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://faktura-wood.com/blog/tonirovanie-i-brashirovanie-dereva</loc>
+    <loc>https://faktura-wood.com/blog/uhod-za-derevyannymi-dveryami</loc>
     <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://faktura-wood.com/blog/kak-my-delaem-mebel-put-doski</loc>
     <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/blog/restavraciya-derevyannoj-mebeli-chto-mozhno-spasti</loc>
+    <lastmod>2026-08-22</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/blog/sleb-stol-s-zhivym-kraem</loc>
+    <lastmod>2026-08-22</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/blog/stoleshnica-iz-massiva-dlya-kuhni</loc>
+    <lastmod>2026-08-22</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/blog/tonirovanie-i-brashirovanie-dereva</loc>
+    <lastmod>2026-08-22</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://faktura-wood.com/blog/derevyannaya-kuhonnaya-utvar-vybor-i-uhod</loc>
     <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://faktura-wood.com/blog/zerkalo-v-derevyannoj-rame-kak-vybrat</loc>
-    <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://faktura-wood.com/blog/sistemy-hraneniya-iz-dereva</loc>
-    <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://faktura-wood.com/blog/zagotovki-iz-dereva-dlya-tvorchestva</loc>
-    <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://faktura-wood.com/blog/podarki-iz-dereva-ruchnoj-raboty</loc>
     <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://faktura-wood.com/blog/maslo-vosk-dlya-dereva-pokrytie</loc>
+    <loc>https://faktura-wood.com/blog/sistemy-hraneniya-iz-dereva</loc>
     <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://faktura-wood.com/blog/porody-dereva-dlya-mebeli</loc>
+    <loc>https://faktura-wood.com/blog/zagotovki-iz-dereva-dlya-tvorchestva</loc>
     <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/blog/zerkalo-v-derevyannoj-rame-kak-vybrat</loc>
+    <lastmod>2026-08-22</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://faktura-wood.com/blog/dveri-iz-massiva-kak-vybrat</loc>
     <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/blog/maslo-vosk-dlya-dereva-pokrytie</loc>
+    <lastmod>2026-08-22</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://faktura-wood.com/blog/mebel-na-zakaz-vs-serijnaya</loc>
     <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://faktura-wood.com/blog/porody-dereva-dlya-mebeli</loc>
+    <lastmod>2026-08-22</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://faktura-wood.com/blog/vlazhnost-i-derevyannaya-mebel</loc>
     <lastmod>2026-08-22</lastmod>
-    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://faktura-wood.com/blog/kak-zakazat-mebel-na-zakaz</loc>
     <lastmod>2026-04-19</lastmod>
-    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://faktura-wood.com/blog/trendy-interiera-2026-naturalnye-materialy</loc>
     <lastmod>2026-04-17</lastmod>
-    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://faktura-wood.com/blog/massiv-vs-shpon-vs-mdf</loc>
     <lastmod>2026-04-14</lastmod>
-    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://faktura-wood.com/blog/uhod-za-derevyannoy-mebelyu</loc>
     <lastmod>2026-04-12</lastmod>
-    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://faktura-wood.com/blog/kak-vybrat-derevyannoe-panno-dlya-interera</loc>
     <lastmod>2026-04-09</lastmod>
-    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
 </urlset>
