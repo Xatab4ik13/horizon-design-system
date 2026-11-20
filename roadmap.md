@@ -1,5 +1,11 @@
 # SEO recovery
 
+## Evidence-based article expansion
+- [x] Check all 41 published topics, Semrush RU data and competitor pages; avoid duplicate furniture guides.
+- [x] Prepare three CNC articles with ordering checklists, verified workshop facts and service links; Google editorial review applied, no invented prices or ranking guarantees.
+- [x] Validate PostgreSQL syntax, three generated HTML articles and draft desktop/mobile rendering; six existing SEO/CNC tests passed. Production SQL execution remains unverified.
+- [ ] Import into the production database and deploy generated article HTML (requires access to the VPS / Timeweb).
+
 ## CNC milling promotion
 - [x] Research Russian commercial search demand and competitor service pages: Semrush RU and four inspected commercial pages; limited volume evidence documented.
 - [x] Write and execute the SEO plan in docs/seo-cnc-plan.md: service page, links, confirmed materials, field and address.
