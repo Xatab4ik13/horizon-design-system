@@ -11,6 +11,7 @@ import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { usePageHeader, useServicesContent } from "@/hooks/useSiteContent";
+import { CNC_SERVICE } from "@/data/cnc-service";
 
 type ServiceDoc = { name: string; desc: string; url?: string; format?: string };
 
@@ -101,8 +102,8 @@ const ServicesPage = () => {
       }}
     >
       <SEO pageKey="services"
-        title="Мебель из массива на заказ и услуги деревообработки"
-        description="Изготовление мебели из массива дерева на заказ в Москве: проектирование, производство, реставрация, покрытие маслом-воском. Гарантия качества, сроки в договоре."
+        title="Фрезеровка ЧПУ и услуги мастерской в Клину"
+        description="Фрезеровка дерева, фанеры и МДФ на ЧПУ с рабочим полем 3 × 2 м. Мастерская FAKTURA в Клину: мебель на заказ и деревообработка."
       />
       <Header />
       <main className="pt-32 pb-20">
@@ -127,6 +128,14 @@ const ServicesPage = () => {
           </motion.div>
 
           {/* Services grid */}
+          <section aria-labelledby="cnc-service-title" className="mb-16 grid md:grid-cols-[1fr_auto] gap-6 items-center">
+            <div className="max-w-3xl">
+              <h2 id="cnc-service-title" className="text-2xl md:text-3xl font-bold mb-4">{CNC_SERVICE.title}</h2>
+              <p className="text-muted-foreground mb-3">Дерево, фанера и МДФ. Рабочее поле станка 3000 × 2000 мм. Стоимость и срок согласуем по вашей задаче.</p>
+              <p className="text-sm text-muted-foreground">{CNC_SERVICE.address}</p>
+            </div>
+            <Button asChild><Link to={CNC_SERVICE.path}>Подробнее о фрезеровке <ArrowRight className="ml-2 h-4 w-4" /></Link></Button>
+          </section>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20">
             {services.map((service, i) => (
               <motion.div

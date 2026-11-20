@@ -24,6 +24,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 const subjects = [
+  "Фрезеровка на ЧПУ",
   "Заказ изделия",
   "Индивидуальный проект",
   "Консультация по материалам",
@@ -32,17 +33,17 @@ const subjects = [
   "Другое",
 ];
 
-const ContactForm = () => {
+const ContactForm = ({ defaultSubject = "", title, subtitle, source }: { defaultSubject?: string; title?: string; subtitle?: string; source?: string } = {}) => {
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState(false);
   const content = useHomepageContent();
-  const cTitle = content.contact?.title?.trim() || "Оставить заявку";
-  const cSubtitle = content.contact?.subtitle?.trim() || "Расскажите о вашем проекте — мы подберём оптимальное решение и рассчитаем стоимость";
+  const cTitle = title || content.contact?.title?.trim() || "Оставить заявку";
+  const cSubtitle = subtitle || content.contact?.subtitle?.trim() || "Расскажите о вашем проекте — мы подберём оптимальное решение и рассчитаем стоимость";
   const cConsent = content.contact?.consent?.trim() || "Нажимая кнопку, вы соглашаетесь с обработкой персональных данных";
   const cSubmit = content.contact?.submitLabel?.trim() || "Отправить заявку";
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", phone: "", email: "", subject: "", message: "" },
+    defaultValues: { name: "", phone: "", email: "", subject: defaultSubject, message: "" },
   });
 
   const onSubmit = async (data: FormData) => {
@@ -65,7 +66,7 @@ const ContactForm = () => {
       });
       return;
     }
-    reachGoal("form_submit");
+    reachGoal("form_submit", { subject: data.subject, ...(source ? { source } : {}) });
     toast({
       title: "Заявка отправлена!",
       description: "Наш менеджер свяжется с вами в течение часа.",

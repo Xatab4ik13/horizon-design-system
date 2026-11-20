@@ -11,6 +11,7 @@ import SEO from "@/components/SEO";
 import ContactForm from "@/components/ContactForm";
 import { supabase } from "@/integrations/supabase/client";
 import { usePageHeader, useContactsContent } from "@/hooks/useSiteContent";
+import { CNC_SERVICE, workshopMapUrl } from "@/data/cnc-service";
 
 interface Vacancy {
   id: string;
@@ -24,7 +25,7 @@ const defaultContacts = [
   { type: "phone" as const, title: "Телефон", value: "+7 (900) 123-45-67", href: "tel:+79001234567", note: "Пн–Пт: 10:00 — 19:00" },
   { type: "email" as const, title: "Email", value: "info@derevo-master.ru", href: "mailto:info@derevo-master.ru", note: "Ответим в течение 2 часов" },
   { type: "messenger" as const, title: "WhatsApp / Telegram", value: "+7 (900) 123-45-67", href: "https://wa.me/79001234567", note: "Быстрые ответы и фото" },
-  { type: "address" as const, title: "Адрес мастерской", value: "г. Москва, ул. Примерная, д. 1", href: "https://yandex.ru/maps", note: "Бесплатная парковка" },
+  { type: "address" as const, title: "Адрес мастерской", value: CNC_SERVICE.address, href: workshopMapUrl, note: "Клин, Московская область" },
 ];
 
 const iconByType = {
@@ -55,8 +56,11 @@ const defaultCareers = {
 const ContactsPage = () => {
   const header = usePageHeader("contacts", { title: "Контакты", subtitle: "Свяжитесь с нами любым удобным способом — мы всегда на связи" });
   const cms = useContactsContent();
-  const contactInfo = (cms.contacts?.length ? cms.contacts : defaultContacts).map((c) => ({
+  const contacts = cms.contacts?.length ? cms.contacts : defaultContacts;
+  const contactsWithAddress = contacts.some(c => c.type === "address") ? contacts : [...contacts, defaultContacts[3]];
+  const contactInfo = contactsWithAddress.map((c) => ({
     ...c,
+    ...(c.type === "address" ? { value: CNC_SERVICE.address, href: workshopMapUrl, note: "Клин, Московская область" } : {}),
     icon: iconByType[(c.type as keyof typeof iconByType) ?? "phone"] ?? Phone,
   }));
   const hours = cms.hours?.length ? cms.hours : defaultHours;
@@ -93,7 +97,7 @@ const ContactsPage = () => {
     >
       <SEO pageKey="contacts"
         title="Контакты"
-        description="Контакты мастерской FAKTURA: телефон, email, адрес. Оставьте заявку на изготовление мебели и изделий из массива дерева на заказ."
+        description={`Контакты мастерской FAKTURA. ${CNC_SERVICE.address}. Мебель на заказ и фрезеровка дерева, фанеры и МДФ на ЧПУ.`}
       />
       <Header />
       <main className="pt-32 pb-20">
@@ -118,6 +122,7 @@ const ContactsPage = () => {
           </motion.div>
 
           {/* Contact cards */}
+          <p className="mb-8 text-muted-foreground">Услуги мастерской: <Link to={CNC_SERVICE.path} className="text-primary underline underline-offset-4">фрезеровка дерева, фанеры и МДФ на ЧПУ</Link>.</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
             {contactInfo.map((item, i) => (
               <motion.a

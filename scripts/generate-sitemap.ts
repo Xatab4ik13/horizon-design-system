@@ -30,6 +30,7 @@ const staticEntries: SitemapEntry[] = [
   { path: "/delivery", changefreq: "monthly", priority: "0.6" },
   { path: "/contacts", changefreq: "monthly", priority: "0.6" },
   { path: "/about", changefreq: "monthly", priority: "0.6" },
+  { path: "/services/cnc-milling", changefreq: "monthly", priority: "0.8" },
 ];
 
 async function fetchRows(): Promise<SitemapEntry[]> {

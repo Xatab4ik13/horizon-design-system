@@ -7,7 +7,7 @@ function escape(value: string) {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-function documentHtml(template: string, title: string, description: string, path: string, body: string, type: string) {
+export function documentHtml(template: string, title: string, description: string, path: string, body: string, type: string) {
   const url = `${SITE_URL}${path}`;
   return template
     .replace(/<title>[\s\S]*?<\/title>/, `<title>${escape(title)} | FAKTURA</title>`)

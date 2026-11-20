@@ -21,6 +21,7 @@ const BlogPostPage = lazy(() => import("./pages/BlogPostPage"));
 const ContactsPage = lazy(() => import("./pages/ContactsPage"));
 const AboutPage = lazy(() => import("./pages/AboutPage"));
 const ServicesPage = lazy(() => import("./pages/ServicesPage"));
+const CncMillingPage = lazy(() => import("./pages/CncMillingPage"));
 const CartPage = lazy(() => import("./pages/CartPage"));
 const CheckoutPage = lazy(() => import("./pages/CheckoutPage"));
 const AccountPage = lazy(() => import("./pages/AccountPage"));
@@ -62,6 +63,7 @@ const App = () => {
                   <Route path="/contacts" element={<ContactsPage />} />
                   <Route path="/about" element={<AboutPage />} />
                   <Route path="/services" element={<ServicesPage />} />
+                  <Route path="/services/cnc-milling" element={<CncMillingPage />} />
 
                   <Route path="/cart" element={<CartPage />} />
                   <Route path="/checkout" element={<CheckoutPage />} />
